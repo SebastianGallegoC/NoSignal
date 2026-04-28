@@ -25,3 +25,9 @@ frontend/.env.*.local
 # --- Logs / temp ---
 *.log
 *.tmp
+
+# --- Raíz (Docker Compose / secretos) ---
+.env
+
+# --- Traefik / ACME ---
+letsencrypt/acme.json

@@ -1,4 +1,45 @@
+# NoSignal — Traefik (80/443) + Let's Encrypt (HTTP-01)
+#
+# Antes del primer arranque en el host (Linux/macOS):
+#   mkdir -p letsencrypt
+#   touch letsencrypt/acme.json && chmod 600 letsencrypt/acme.json
+# Ver letsencrypt/README.txt
+#
+# Dominios y ACME: copia .env.example a .env y ajusta NO_SIGNAL_APP_DOMAIN,
+# NO_SIGNAL_API_DOMAIN, ACME_EMAIL, CORS_ORIGINS y VITE_API_URL.
+
 services:
+  traefik:
+    image: traefik:v2.10
+    container_name: nosignal-traefik
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /tmp
+    ports:
+      - "80:80"
+      - "443:443"
+    command:
+      - --providers.docker=true
+      - --providers.docker.exposedbydefault=false
+      - --providers.docker.network=nosignal-network
+      - --entrypoints.web.address=:80
+      - --entrypoints.websecure.address=:443
+      # Redirección global HTTP → HTTPS (el desafío ACME sigue atendiéndose en :80)
+      - --entrypoints.web.http.redirections.entrypoint.to=websecure
+      - --entrypoints.web.http.redirections.entrypoint.scheme=https
+      - --certificatesresolvers.le.acme.email=${ACME_EMAIL:-admin@tudominio.com}
+      - --certificatesresolvers.le.acme.storage=/letsencrypt/acme.json
+      - --certificatesresolvers.le.acme.httpchallenge=true
+      - --certificatesresolvers.le.acme.httpchallenge.entrypoint=web
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./letsencrypt/acme.json:/letsencrypt/acme.json
+    networks:
+      - nosignal-network
+
   db:
     image: postgis/postgis:16-3.4
     container_name: nosignal-db
@@ -16,6 +57,8 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    networks:
+      - nosignal-network
 
   backend:
     build:
@@ -30,7 +73,7 @@ services:
       JWT_ALGORITHM: "HS256"
       JWT_EXPIRES_MINUTES: "480"
       NOSIGNAL_AUTH_USERS: '{"demo":"demo"}'
-      CORS_ORIGINS: "http://localhost:5173"
+      CORS_ORIGINS: ${CORS_ORIGINS:-https://tudominio.com}
       DATABASE_URL: "postgresql+asyncpg://nosignal:nosignal@db:5432/nosignal"
       UPLOAD_ROOT: "uploads"
     depends_on:
@@ -38,22 +81,41 @@ services:
         condition: service_healthy
     volumes:
       - nosignal_uploads:/app/uploads
-    ports:
-      - "8000:8000"
+    networks:
+      - nosignal-network
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=nosignal-network
+      - "traefik.http.routers.nosignal-api.rule=Host(`${NO_SIGNAL_API_DOMAIN:-api.tudominio.com}`)"
+      - traefik.http.routers.nosignal-api.entrypoints=websecure
+      - traefik.http.routers.nosignal-api.tls.certresolver=le
+      - traefik.http.services.nosignal-api.loadbalancer.server.port=8000
 
   frontend:
     build:
       context: ./frontend
       dockerfile: Dockerfile
       args:
-        VITE_API_URL: ""
+        VITE_API_URL: ${VITE_API_URL:-https://api.tudominio.com}
     container_name: nosignal-frontend
     restart: unless-stopped
     depends_on:
       - backend
-    ports:
-      - "5173:80"
+    networks:
+      - nosignal-network
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=nosignal-network
+      - "traefik.http.routers.nosignal-frontend.rule=Host(`${NO_SIGNAL_APP_DOMAIN:-tudominio.com}`)"
+      - traefik.http.routers.nosignal-frontend.entrypoints=websecure
+      - traefik.http.routers.nosignal-frontend.tls.certresolver=le
+      - traefik.http.services.nosignal-frontend.loadbalancer.server.port=80
 
 volumes:
   nosignal_db:
   nosignal_uploads:
+
+networks:
+  nosignal-network:
+    name: nosignal-network
+    driver: bridge
