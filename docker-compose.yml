@@ -1,0 +1,21 @@
+services:
+  db:
+    image: postgis/postgis:16-3.4
+    container_name: nosignal-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: nosignal
+      POSTGRES_USER: nosignal
+      POSTGRES_PASSWORD: nosignal
+    ports:
+      - "5433:5432"
+    volumes:
+      - nosignal_db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U nosignal -d nosignal"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  nosignal_db:

@@ -1,0 +1,33 @@
+from pydantic import Field, computed_field
+from pydantic_settings import BaseSettings, SettingsConfigDict
+
+
+class Settings(BaseSettings):
+    app_name: str = "NoSignal API"
+    api_v1_prefix: str = "/api/v1"
+    jwt_secret: str = "CHANGE_ME"
+    jwt_algorithm: str = "HS256"
+    jwt_expires_minutes: int = Field(default=480, alias="JWT_EXPIRES_MINUTES")
+    database_url: str = "postgresql+asyncpg://user:pass@localhost:5432/nosignal"
+    upload_root: str = "uploads"
+    auth_users_json: str = Field(
+        default="{}",
+        alias="NOSIGNAL_AUTH_USERS",
+        description='JSON object {"usuario":"clave",...} para login MVP.',
+    )
+    cors_origins: str = Field(
+        default="http://localhost:5173",
+        alias="CORS_ORIGINS",
+        description="Orígenes permitidos separados por coma.",
+    )
+
+    model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
+
+    @computed_field  # type: ignore[prop-decorator]
+    @property
+    def cors_origins_list(self) -> list[str]:
+        parts = [o.strip() for o in self.cors_origins.split(",") if o.strip()]
+        return parts if parts else ["http://localhost:5173"]
+
+
+settings = Settings()
