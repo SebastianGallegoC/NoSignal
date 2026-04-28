@@ -17,5 +17,43 @@ services:
       timeout: 5s
       retries: 5
 
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: nosignal-backend
+    restart: unless-stopped
+    environment:
+      APP_NAME: "NoSignal API"
+      API_V1_PREFIX: "/api/v1"
+      JWT_SECRET: "CHANGE_ME"
+      JWT_ALGORITHM: "HS256"
+      JWT_EXPIRES_MINUTES: "480"
+      NOSIGNAL_AUTH_USERS: '{"demo":"demo"}'
+      CORS_ORIGINS: "http://localhost:5173"
+      DATABASE_URL: "postgresql+asyncpg://nosignal:nosignal@db:5432/nosignal"
+      UPLOAD_ROOT: "uploads"
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - nosignal_uploads:/app/uploads
+    ports:
+      - "8000:8000"
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        VITE_API_URL: ""
+    container_name: nosignal-frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+    ports:
+      - "5173:80"
+
 volumes:
   nosignal_db:
+  nosignal_uploads:
