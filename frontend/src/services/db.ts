@@ -22,6 +22,17 @@ export interface OfflineForm {
   ultimo_error?: string;
 }
 
+export type EstadoHistorial = 'PENDIENTE' | 'ERROR' | 'ENVIADO';
+
+export interface HistorialForm {
+  id_formulario: string;
+  id_usuario: string;
+  fecha_hora: string;
+  estado: EstadoHistorial;
+  fecha_envio?: string;
+  ultimo_error?: string;
+}
+
 export interface SesionLocalRow {
   id: 'current';
   accessToken: string;
@@ -30,6 +41,7 @@ export interface SesionLocalRow {
 
 export class NoSignalDB extends Dexie {
   formularios!: Table<OfflineForm>;
+  historialFormularios!: Table<HistorialForm>;
   sesionLocal!: Table<SesionLocalRow>;
 
   constructor() {
@@ -39,6 +51,11 @@ export class NoSignalDB extends Dexie {
     });
     this.version(2).stores({
       formularios: '&id_formulario, estado_sincronizacion, fecha_hora',
+      sesionLocal: 'id',
+    });
+    this.version(3).stores({
+      formularios: '&id_formulario, estado_sincronizacion, fecha_hora',
+      historialFormularios: '&id_formulario, estado, fecha_hora',
       sesionLocal: 'id',
     });
   }

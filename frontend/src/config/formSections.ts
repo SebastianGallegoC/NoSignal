@@ -11,7 +11,6 @@ export const FORM_SECTIONS: readonly FormSectionDef[] = [
     id: 'actividad',
     title: 'Actividad y entidad aportante',
     fields: [
-      'id',
       'entidad_aportante',
       'tipo_organizacion_entidad_aportante',
       'nombre_actividad',

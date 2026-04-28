@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { ChangeEvent } from 'react';
 import { useForm } from 'react-hook-form';
+import { Link } from 'react-router-dom';
 
 import { FormFieldRow } from '@/components/form/FormFieldRow';
 import { Button } from '@/components/ui/button';
@@ -59,11 +60,26 @@ const describeValidationErrors = (codes: string[]): string => {
   return parts.join(' ');
 };
 
+const buildMapUrl = (latitud: number, longitud: number): string => {
+  const delta = 0.003;
+  const bbox = [
+    longitud - delta,
+    latitud - delta,
+    longitud + delta,
+    latitud + delta,
+  ].join(',');
+  return `https://www.openstreetmap.org/export/embed.html?bbox=${bbox}&layer=mapnik&marker=${latitud},${longitud}`;
+};
+
+const buildExternalMapUrl = (latitud: number, longitud: number): string => {
+  return `https://www.openstreetmap.org/?mlat=${latitud}&mlon=${longitud}#map=18/${latitud}/${longitud}`;
+};
+
 export const FormularioPage = () => {
   useOfflineSync();
   const authUsername = useAuthStore((s) => s.username);
 
-  const { gps, cargando, error, solicitarGPS } = useGPS();
+  const { gps, cargando, error, estado, progreso, solicitarGPS } = useGPS();
   const [idUsuario, setIdUsuario] = useState('');
   const [fotos, setFotos] = useState<Array<{ nombre_archivo: string; data: string }>>([]);
   const [cameraOpen, setCameraOpen] = useState(false);
@@ -320,6 +336,11 @@ export const FormularioPage = () => {
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
+            <Link to="/inicio" className="inline-flex">
+              <Button type="button" variant="outline" className="border-slate-200">
+                Regresar
+              </Button>
+            </Link>
             <Button
               type="button"
               onClick={() => void sincronizarAhora()}
@@ -334,12 +355,24 @@ export const FormularioPage = () => {
         <section className="grid gap-4 md:grid-cols-3">
           <div className="rounded-2xl border border-teal-100 bg-white/80 p-4 shadow-[0_18px_40px_-35px_rgba(15,118,110,0.6)]">
             <h2 className="text-xs font-semibold uppercase tracking-wide text-teal-700">GPS</h2>
-            <p className="mt-2 text-sm text-slate-600">
-              {gps
-                ? `OK · precisión ${gps.precision.toFixed(1)} m`
-                : error
-                  ? `Error: ${error}`
-                  : 'Sin ubicación registrada'}
+            <p className="mt-2 text-sm font-medium text-slate-700">
+              Estado:{' '}
+              {estado === 'buscando'
+                ? 'Tomando ubicación...'
+                : estado === 'ok'
+                  ? 'Ubicación capturada'
+                  : estado === 'error'
+                    ? 'Error de GPS'
+                    : 'Sin lectura'}
+            </p>
+            <p className="mt-1 text-sm text-slate-600">
+              {estado === 'buscando'
+                ? progreso ?? 'Buscando señal GPS...'
+                : gps
+                  ? `OK · precisión ${gps.precision.toFixed(1)} m`
+                  : error
+                    ? `Error: ${error}`
+                    : 'Sin ubicación registrada'}
             </p>
             <Button
               type="button"
@@ -350,6 +383,24 @@ export const FormularioPage = () => {
             >
               {cargando ? 'Buscando GPS…' : 'Tomar ubicación'}
             </Button>
+            {gps ? (
+              <div className="mt-4 overflow-hidden rounded-xl border border-teal-100 bg-slate-50">
+                <iframe
+                  title="Mapa de ubicación capturada"
+                  className="h-48 w-full"
+                  src={buildMapUrl(gps.latitud, gps.longitud)}
+                  loading="lazy"
+                />
+                <a
+                  className="block px-3 py-2 text-xs font-medium text-teal-800 underline"
+                  href={buildExternalMapUrl(gps.latitud, gps.longitud)}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  Abrir ubicación en mapa
+                </a>
+              </div>
+            ) : null}
           </div>
           <div className="rounded-2xl border border-amber-100 bg-white/80 p-4 shadow-[0_18px_40px_-35px_rgba(180,83,9,0.6)]">
             <h2 className="text-xs font-semibold uppercase tracking-wide text-amber-700">Pendientes</h2>

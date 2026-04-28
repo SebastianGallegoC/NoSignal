@@ -3,8 +3,9 @@ from typing import Any, Dict, List
 
 from pydantic import BaseModel, Field, field_validator, model_validator
 
+MAX_GPS_ACCURACY_METERS = 3
+
 REQUIRED_FORM_FIELDS = [
-    "id",
     "entidad_aportante",
     "tipo_organizacion_entidad_aportante",
     "nombre_actividad",
@@ -132,7 +133,7 @@ class GPSPayload(BaseModel):
     @field_validator("precision")
     @classmethod
     def validate_precision(cls, value: float) -> float:
-        if value > 3:
+        if value > MAX_GPS_ACCURACY_METERS:
             raise ValueError("gps_precision_exceeded")
         return value
 

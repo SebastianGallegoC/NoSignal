@@ -1,5 +1,4 @@
 export const REQUIRED_FIELDS = [
-  'id',
   'entidad_aportante',
   'tipo_organizacion_entidad_aportante',
   'nombre_actividad',

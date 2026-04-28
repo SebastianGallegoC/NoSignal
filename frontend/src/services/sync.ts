@@ -4,6 +4,7 @@ import { REQUIRED_FIELDS } from '../types/formFields';
 
 const RETENTION_DAYS = 3;
 const BACKOFF_STEPS_MS = [30_000, 60_000, 5 * 60_000, 15 * 60_000, 30 * 60_000];
+const MAX_GPS_ACCURACY_METERS = 3;
 
 const isEmptyValue = (value: unknown): boolean => {
   if (value === null || value === undefined) {
@@ -59,7 +60,7 @@ const isValidIsoDate = (value: unknown): boolean => {
 export const validateFormPayload = (form: OfflineForm): string[] => {
   const errors: string[] = [];
 
-  if (!form.gps || form.gps.precision > 3) {
+  if (!form.gps || form.gps.precision > MAX_GPS_ACCURACY_METERS) {
     errors.push('gps_precision');
   }
 
@@ -121,6 +122,12 @@ export const enqueueForm = async (form: OfflineForm): Promise<void> => {
     ...form,
     estado_sincronizacion: 'PENDIENTE',
     errores_sync: 0,
+  });
+  await db.historialFormularios.put({
+    id_formulario: form.id_formulario,
+    id_usuario: form.id_usuario,
+    fecha_hora: form.fecha_hora,
+    estado: 'PENDIENTE',
   });
 };
 
@@ -197,6 +204,11 @@ export const syncPendingForms = async (): Promise<void> => {
         throw new Error(`HTTP_${response.status}`);
       }
 
+      await db.historialFormularios.update(form.id_formulario, {
+        estado: 'ENVIADO',
+        fecha_envio: new Date().toISOString(),
+        ultimo_error: undefined,
+      });
       await db.formularios.delete(form.id_formulario);
     } catch (error) {
       const errores_sync = (form.errores_sync ?? 0) + 1;
@@ -205,6 +217,10 @@ export const syncPendingForms = async (): Promise<void> => {
         estado_sincronizacion: 'ERROR',
         errores_sync,
         fecha_intento: new Date().toISOString(),
+        ultimo_error: message,
+      });
+      await db.historialFormularios.update(form.id_formulario, {
+        estado: 'ERROR',
         ultimo_error: message,
       });
     }

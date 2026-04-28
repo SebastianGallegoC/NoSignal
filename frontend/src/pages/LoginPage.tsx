@@ -16,7 +16,7 @@ export const LoginPage = () => {
   const [loading, setLoading] = useState(false);
 
   if (isAccessTokenValid(token)) {
-    return <Navigate to="/formulario" replace />;
+    return <Navigate to="/inicio" replace />;
   }
 
   const onSubmit = async (event: React.FormEvent) => {
@@ -25,7 +25,7 @@ export const LoginPage = () => {
     setLoading(true);
     try {
       await login(username.trim(), password);
-      navigate('/formulario', { replace: true });
+      navigate('/inicio', { replace: true });
     } catch {
       setError('Credenciales inválidas o servidor no disponible.');
     } finally {
