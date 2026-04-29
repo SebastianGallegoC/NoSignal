@@ -1,6 +1,7 @@
 import type { UseFormRegister } from 'react-hook-form';
 
 import { fieldLabel, inputKindForField, triOptions } from '@/config/formFieldMeta';
+import { fieldSelectOptions } from '@/config/formSelectOptions';
 import type { FormFieldKey, FormValues } from '@/types/formFields';
 
 const inputClass =
@@ -42,7 +43,26 @@ export const FormFieldRow = ({ name, register, error }: FormFieldRowProps) => {
     );
   }
 
+  if (kind === 'select') {
+    const options = fieldSelectOptions[name] ?? [{ value: '', label: 'Seleccione' }];
+    return (
+      <label className="flex flex-col text-sm font-medium text-slate-800">
+        {label}
+        <select className={inputClass} {...register(name)}>
+          {options.map((o) => (
+            <option key={o.value || 'empty'} value={o.value}>
+              {o.label}
+            </option>
+          ))}
+        </select>
+        {error ? <span className="mt-1 text-xs text-red-600">{error}</span> : null}
+      </label>
+    );
+  }
+
   const type = kind === 'date' ? 'date' : kind === 'number' ? 'number' : 'text';
+
+  const isPositiveInt = name === 'estrato' || name === 'usuario_cens';
 
   return (
     <label className="flex flex-col text-sm font-medium text-slate-800">
@@ -50,7 +70,8 @@ export const FormFieldRow = ({ name, register, error }: FormFieldRowProps) => {
       <input
         className={inputClass}
         type={type}
-        step={type === 'number' ? 'any' : undefined}
+        min={isPositiveInt ? 1 : undefined}
+        step={type === 'number' ? (isPositiveInt ? 1 : 'any') : undefined}
         {...register(name)}
       />
       {error ? <span className="mt-1 text-xs text-red-600">{error}</span> : null}

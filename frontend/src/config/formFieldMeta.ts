@@ -1,4 +1,5 @@
 import type { FormFieldKey } from '@/types/formFields';
+import { fieldSelectOptions } from '@/config/formSelectOptions';
 
 const TRI_FIELDS = new Set<FormFieldKey>([
   'mujer_cabeza_hogar',
@@ -30,9 +31,11 @@ const NUMBER_FIELDS = new Set<FormFieldKey>([
   'satisfaccion_1_5',
   'superficie_total_intervenida_m2',
   'total_especies_semillas_sembradas',
+  'estrato',
+  'usuario_cens',
 ]);
 
-export type InputKind = 'date' | 'number' | 'select-tri' | 'textarea' | 'text';
+export type InputKind = 'date' | 'number' | 'select' | 'select-tri' | 'textarea' | 'text';
 
 export const inputKindForField = (field: FormFieldKey): InputKind => {
   if (field === 'observaciones') {
@@ -43,6 +46,9 @@ export const inputKindForField = (field: FormFieldKey): InputKind => {
   }
   if (TRI_FIELDS.has(field)) {
     return 'select-tri';
+  }
+  if (fieldSelectOptions[field]) {
+    return 'select';
   }
   if (NUMBER_FIELDS.has(field)) {
     return 'number';
@@ -70,6 +76,13 @@ export const triOptions = [
 ] as const;
 
 export const fieldLabel = (field: FormFieldKey): string =>
+  (
+    {
+      tipo_proyecto_financiacion: 'Tipo Proyecto/Financiación',
+      usuario_cens: 'N° Usuario Cens',
+      zona: 'Zona(Urbana-Rural)',
+    } as Partial<Record<FormFieldKey, string>>
+  )[field] ??
   field
     .split('_')
     .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
