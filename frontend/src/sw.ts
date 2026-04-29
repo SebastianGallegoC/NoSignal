@@ -1,14 +1,18 @@
 /// <reference lib="webworker" />
 
 import { BackgroundSyncPlugin } from 'workbox-background-sync';
-import { cleanupOutdatedCaches, precacheAndRoute } from 'workbox-precaching';
-import { registerRoute } from 'workbox-routing';
-import { NetworkOnly } from 'workbox-strategies';
+import { cleanupOutdatedCaches, createHandlerBoundToURL, precacheAndRoute } from 'workbox-precaching';
+import { NavigationRoute, registerRoute } from 'workbox-routing';
+import { CacheFirst, NetworkOnly, StaleWhileRevalidate } from 'workbox-strategies';
 
 declare let self: ServiceWorkerGlobalScope;
 
 precacheAndRoute(self.__WB_MANIFEST);
 cleanupOutdatedCaches();
+
+// App shell offline: permite abrir rutas del SPA sin red.
+const navigationHandler = createHandlerBoundToURL('/index.html');
+registerRoute(new NavigationRoute(navigationHandler));
 
 const syncQueue = new BackgroundSyncPlugin('nosignal-queue', {
   maxRetentionTime: 3 * 24 * 60,
@@ -20,4 +24,24 @@ registerRoute(
     plugins: [syncQueue],
   }),
   'POST',
+);
+
+// Recursos estáticos de mismo origen: cache rápido y actualización en background.
+registerRoute(
+  ({ request, url }) =>
+    url.origin === self.location.origin &&
+    ['style', 'script', 'worker'].includes(request.destination),
+  new StaleWhileRevalidate({
+    cacheName: 'nosignal-static-v1',
+  }),
+);
+
+// Imágenes/fonts: cache-first para mejor experiencia offline.
+registerRoute(
+  ({ request, url }) =>
+    url.origin === self.location.origin &&
+    ['image', 'font'].includes(request.destination),
+  new CacheFirst({
+    cacheName: 'nosignal-media-v1',
+  }),
 );

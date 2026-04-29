@@ -12,18 +12,34 @@ export default defineConfig({
       srcDir: 'src',
       filename: 'sw.ts',
       registerType: 'autoUpdate',
-      includeAssets: ['favicon.svg'],
+      includeAssets: ['icons.svg', 'pwa-192x192.svg', 'pwa-512x512.svg'],
       injectManifest: {
         maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
       },
       manifest: {
+        id: '/',
         name: 'NoSignal',
         short_name: 'NoSignal',
         description: 'Offline-first PWA for data collection.',
         theme_color: '#0f766e',
         background_color: '#f6f7f5',
+        scope: '/',
         display: 'standalone',
         start_url: '/',
+        icons: [
+          {
+            src: '/pwa-192x192.svg',
+            sizes: '192x192',
+            type: 'image/svg+xml',
+            purpose: 'any',
+          },
+          {
+            src: '/pwa-512x512.svg',
+            sizes: '512x512',
+            type: 'image/svg+xml',
+            purpose: 'any maskable',
+          },
+        ],
       },
       devOptions: {
         enabled: true,
