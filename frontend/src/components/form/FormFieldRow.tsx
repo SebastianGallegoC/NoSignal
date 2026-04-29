@@ -17,6 +17,7 @@ export const FormFieldRow = ({ name, register, error }: FormFieldRowProps) => {
   const kind = inputKindForField(name);
   const label = fieldLabel(name);
   const datalistId = `options-${name}`;
+  const searchableSelectClass = `${inputClass} pr-9`;
 
   if (kind === 'textarea') {
     return (
@@ -32,7 +33,18 @@ export const FormFieldRow = ({ name, register, error }: FormFieldRowProps) => {
     return (
       <label className="flex flex-col text-sm font-medium text-slate-800">
         {label}
-        <input className={inputClass} list={datalistId} {...register(name)} />
+        <div className="relative mt-1">
+          <input className={searchableSelectClass} list={datalistId} {...register(name)} />
+          <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-slate-500">
+            <svg viewBox="0 0 20 20" fill="currentColor" className="h-4 w-4" aria-hidden="true">
+              <path
+                fillRule="evenodd"
+                d="M5.23 7.21a.75.75 0 0 1 1.06.02L10 11.168l3.71-3.938a.75.75 0 1 1 1.08 1.04l-4.25 4.5a.75.75 0 0 1-1.08 0l-4.25-4.5a.75.75 0 0 1 .02-1.06Z"
+                clipRule="evenodd"
+              />
+            </svg>
+          </span>
+        </div>
         <datalist id={datalistId}>
           {triOptions.map((o) => (
             <option key={o.value || 'empty'} value={o.value}>
@@ -50,7 +62,18 @@ export const FormFieldRow = ({ name, register, error }: FormFieldRowProps) => {
     return (
       <label className="flex flex-col text-sm font-medium text-slate-800">
         {label}
-        <input className={inputClass} list={datalistId} {...register(name)} />
+        <div className="relative mt-1">
+          <input className={searchableSelectClass} list={datalistId} {...register(name)} />
+          <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-slate-500">
+            <svg viewBox="0 0 20 20" fill="currentColor" className="h-4 w-4" aria-hidden="true">
+              <path
+                fillRule="evenodd"
+                d="M5.23 7.21a.75.75 0 0 1 1.06.02L10 11.168l3.71-3.938a.75.75 0 1 1 1.08 1.04l-4.25 4.5a.75.75 0 0 1-1.08 0l-4.25-4.5a.75.75 0 0 1 .02-1.06Z"
+                clipRule="evenodd"
+              />
+            </svg>
+          </span>
+        </div>
         <datalist id={datalistId}>
           {options.map((o) => (
             <option key={o.value || 'empty'} value={o.value}>
