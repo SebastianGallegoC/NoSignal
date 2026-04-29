@@ -10,11 +10,9 @@
 
 services:
   traefik:
-    image: traefik:v2.10
+    image: traefik:v3.0
     container_name: nosignal-traefik
     restart: unless-stopped
-    environment:
-      - DOCKER_API_VERSION=1.41
     security_opt:
       - no-new-privileges:true
     read_only: true
