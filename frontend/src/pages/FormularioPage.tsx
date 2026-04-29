@@ -161,6 +161,29 @@ export const FormularioPage = () => {
     await processIncomingFiles(files, false);
   };
 
+  const waitForVideoReady = (video: HTMLVideoElement): Promise<void> => {
+    if (video.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA && video.videoWidth > 0) {
+      return Promise.resolve();
+    }
+    return new Promise((resolve, reject) => {
+      const timeout = window.setTimeout(() => {
+        cleanup();
+        reject(new Error('video_not_ready'));
+      }, 2500);
+      const onReady = () => {
+        cleanup();
+        resolve();
+      };
+      const cleanup = () => {
+        window.clearTimeout(timeout);
+        video.removeEventListener('loadedmetadata', onReady);
+        video.removeEventListener('canplay', onReady);
+      };
+      video.addEventListener('loadedmetadata', onReady);
+      video.addEventListener('canplay', onReady);
+    });
+  };
+
   const stopCamera = () => {
     const stream = cameraStreamRef.current;
     if (stream) {
@@ -182,16 +205,22 @@ export const FormularioPage = () => {
         video: { facingMode: { ideal: 'environment' } },
         audio: false,
       });
+      const video = cameraVideoRef.current;
+      if (!video) {
+        for (const track of stream.getTracks()) {
+          track.stop();
+        }
+        setBanner('No se pudo inicializar la vista de cámara.');
+        return;
+      }
+      video.srcObject = stream;
+      video.muted = true;
+      video.setAttribute('playsinline', 'true');
+      await video.play();
+      await waitForVideoReady(video);
       cameraStreamRef.current = stream;
       setCameraOpen(true);
       setBanner(null);
-      window.setTimeout(() => {
-        const video = cameraVideoRef.current;
-        if (video) {
-          video.srcObject = stream;
-          void video.play();
-        }
-      }, 0);
     } catch {
       setBanner('No se pudo abrir la cámara. Verifica permisos del navegador.');
     }
@@ -202,20 +231,53 @@ export const FormularioPage = () => {
     if (!video) {
       return;
     }
-    const width = video.videoWidth || 1280;
-    const height = video.videoHeight || 720;
-    const canvas = document.createElement('canvas');
-    canvas.width = width;
-    canvas.height = height;
-    const context = canvas.getContext('2d');
-    if (!context) {
-      setBanner('No se pudo capturar la foto en este navegador.');
+    try {
+      await waitForVideoReady(video);
+    } catch {
+      setBanner('La cámara aún no está lista. Espera un segundo e intenta de nuevo.');
       return;
     }
-    context.drawImage(video, 0, 0, width, height);
-    const blob = await new Promise<Blob | null>((resolve) => {
-      canvas.toBlob(resolve, 'image/jpeg', 0.92);
-    });
+
+    let blob: Blob | null = null;
+    const stream = cameraStreamRef.current;
+    const track = stream?.getVideoTracks?.()[0];
+    const ImageCaptureCtor = (window as Window & { ImageCapture?: new (t: MediaStreamTrack) => { grabFrame: () => Promise<ImageBitmap> } }).ImageCapture;
+    if (track && ImageCaptureCtor) {
+      try {
+        const imageCapture = new ImageCaptureCtor(track);
+        const bitmap = await imageCapture.grabFrame();
+        const canvas = document.createElement('canvas');
+        canvas.width = bitmap.width;
+        canvas.height = bitmap.height;
+        const context = canvas.getContext('2d');
+        if (context) {
+          context.drawImage(bitmap, 0, 0);
+          blob = await new Promise<Blob | null>((resolve) => {
+            canvas.toBlob(resolve, 'image/jpeg', 0.92);
+          });
+        }
+      } catch {
+        // Fallback a canvas con el frame del video.
+      }
+    }
+
+    if (!blob) {
+      const width = video.videoWidth || 1280;
+      const height = video.videoHeight || 720;
+      const canvas = document.createElement('canvas');
+      canvas.width = width;
+      canvas.height = height;
+      const context = canvas.getContext('2d');
+      if (!context) {
+        setBanner('No se pudo capturar la foto en este navegador.');
+        return;
+      }
+      context.drawImage(video, 0, 0, width, height);
+      blob = await new Promise<Blob | null>((resolve) => {
+        canvas.toBlob(resolve, 'image/jpeg', 0.92);
+      });
+    }
+
     if (!blob) {
       setBanner('No se pudo generar la imagen capturada.');
       return;
@@ -271,10 +333,6 @@ export const FormularioPage = () => {
 
   const onValid = async (values: FormValues) => {
     setBanner(null);
-    if (!idUsuario) {
-      setBanner('Seleccioná el usuario del registro.');
-      return;
-    }
     if (!gps) {
       setBanner('Tomá la ubicación GPS antes de enviar.');
       return;
@@ -287,7 +345,7 @@ export const FormularioPage = () => {
 
     const payload: OfflineForm = {
       id_formulario: formId,
-      id_usuario: idUsuario,
+      id_usuario: idUsuario || authUsername || 'sin_usuario',
       fecha_hora: new Date().toISOString(),
       gps: {
         latitud: gps.latitud,

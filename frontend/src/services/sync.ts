@@ -1,117 +1,15 @@
 import { db, type OfflineForm } from './db';
 import { postForm } from './api';
-import { REQUIRED_FIELDS } from '../types/formFields';
 
 const RETENTION_DAYS = 3;
 const BACKOFF_STEPS_MS = [30_000, 60_000, 5 * 60_000, 15 * 60_000, 30 * 60_000];
 const MAX_GPS_ACCURACY_METERS = 5;
-
-const isEmptyValue = (value: unknown): boolean => {
-  if (value === null || value === undefined) {
-    return true;
-  }
-  if (typeof value === 'string' && value.trim() === '') {
-    return true;
-  }
-  return false;
-};
-
-const parseNumeric = (value: unknown): number | null => {
-  if (typeof value === 'number' && Number.isFinite(value)) {
-    return value;
-  }
-  if (typeof value === 'string' && value.trim() !== '') {
-    const n = Number(value);
-    if (Number.isFinite(n)) {
-      return n;
-    }
-  }
-  return null;
-};
-
-const TRI_VALUES = new Set(['Si', 'No', 'NR']);
-const TRI_FIELDS = [
-  'mujer_cabeza_hogar',
-  'persona_discapacidad',
-  'exposicion_solar_adecuada',
-  'interes_autoconsumo',
-  'interes_comercializacion',
-  'asistencia_capacitaciones',
-  'permite_visitas',
-  'compromiso_cuidado_arbol',
-  'firma_acuerdo',
-  'autoriza_tratamiento_datos',
-  'autoriza_registros_fotograficos',
-  'cumple_criterios_huerta',
-  'cumple_criterios_arbol',
-  'distancia_infraestructura_adecuada',
-  'distancia_redes_electricas_adecuada',
-  'cercania_ronda_hidrica',
-] as const;
-
-const isValidIsoDate = (value: unknown): boolean => {
-  if (typeof value !== 'string' || value.trim() === '') {
-    return false;
-  }
-  const parsed = Date.parse(value);
-  return !Number.isNaN(parsed);
-};
 
 export const validateFormPayload = (form: OfflineForm): string[] => {
   const errors: string[] = [];
 
   if (!form.gps || form.gps.precision > MAX_GPS_ACCURACY_METERS) {
     errors.push('gps_precision');
-  }
-
-  if (!form.fotos || form.fotos.length < 3 || form.fotos.length > 15) {
-    errors.push('fotos_count');
-  }
-
-  if (!/^[0-9A-Za-z._-]{3,64}$/.test(form.id_usuario)) {
-    errors.push('id_usuario_format');
-  }
-
-  for (const field of REQUIRED_FIELDS) {
-    if (isEmptyValue(form.datos_formulario?.[field])) {
-      errors.push(`field_${field}`);
-    }
-  }
-
-  const age = parseNumeric(form.datos_formulario?.edad);
-  if (age === null || age < 0 || age > 120) {
-    errors.push('edad_range');
-  }
-
-  const phone = String(form.datos_formulario?.telefono ?? '').trim();
-  if (!/^[0-9+\-\s()]{7,20}$/.test(phone)) {
-    errors.push('telefono_format');
-  }
-
-  const score = parseNumeric(form.datos_formulario?.satisfaccion_1_5);
-  if (score === null || score < 1 || score > 5) {
-    errors.push('satisfaccion_range');
-  }
-
-  const visit1 = form.datos_formulario?.fecha_visita_1;
-  const visit2 = form.datos_formulario?.fecha_visita_2;
-  const visit3 = form.datos_formulario?.fecha_visita_3;
-  if (!isValidIsoDate(visit1) || !isValidIsoDate(visit2) || !isValidIsoDate(visit3)) {
-    errors.push('fechas_visita_invalid');
-  } else {
-    const d1 = Date.parse(String(visit1));
-    const d2 = Date.parse(String(visit2));
-    const d3 = Date.parse(String(visit3));
-    if (!(d1 <= d2 && d2 <= d3)) {
-      errors.push('fechas_visita_order');
-    }
-  }
-
-  for (const triField of TRI_FIELDS) {
-    const raw = String(form.datos_formulario?.[triField] ?? '').trim();
-    if (!TRI_VALUES.has(raw)) {
-      errors.push(`tri_${triField}`);
-    }
   }
 
   return errors;
