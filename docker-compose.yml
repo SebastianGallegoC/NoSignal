@@ -19,7 +19,7 @@ services:
     tmpfs:
       - /tmp
     ports:
-      - "80:80"
+      - "8080:80"
     command:
       - --providers.docker=true
       - --providers.docker.exposedbydefault=false
@@ -64,7 +64,7 @@ services:
       JWT_ALGORITHM: "HS256"
       JWT_EXPIRES_MINUTES: "480"
       NOSIGNAL_AUTH_USERS: '{"demo":"demo"}'
-      CORS_ORIGINS: ${CORS_ORIGINS:-http://185.202.223.66}
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://185.202.223.66:8080}
       DATABASE_URL: "postgresql+asyncpg://nosignal:nosignal@db:5432/nosignal"
       UPLOAD_ROOT: "uploads"
     depends_on:
