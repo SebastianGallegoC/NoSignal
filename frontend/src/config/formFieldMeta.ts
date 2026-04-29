@@ -81,7 +81,8 @@ export const fieldLabel = (field: FormFieldKey): string =>
       tipo_proyecto_financiacion: 'Tipo Proyecto/Financiación',
       usuario_cens: 'N° Usuario Cens',
       zona: 'Zona(Urbana-Rural)',
-      satisfaccion_1_5: 'Satisfaccion 1-5',
+      suelo_o_recipientes: 'Suelo o Recipientes',
+      satisfaccion_1_5: 'Nivel de Satisfacción 1-5',
     } as Partial<Record<FormFieldKey, string>>
   )[field] ??
   field

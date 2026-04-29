@@ -16,6 +16,7 @@ interface FormFieldRowProps {
 export const FormFieldRow = ({ name, register, error }: FormFieldRowProps) => {
   const kind = inputKindForField(name);
   const label = fieldLabel(name);
+  const datalistId = `options-${name}`;
 
   if (kind === 'textarea') {
     return (
@@ -31,13 +32,14 @@ export const FormFieldRow = ({ name, register, error }: FormFieldRowProps) => {
     return (
       <label className="flex flex-col text-sm font-medium text-slate-800">
         {label}
-        <select className={inputClass} {...register(name)}>
+        <input className={inputClass} list={datalistId} {...register(name)} />
+        <datalist id={datalistId}>
           {triOptions.map((o) => (
             <option key={o.value || 'empty'} value={o.value}>
               {o.label}
             </option>
           ))}
-        </select>
+        </datalist>
         {error ? <span className="mt-1 text-xs text-red-600">{error}</span> : null}
       </label>
     );
@@ -48,13 +50,14 @@ export const FormFieldRow = ({ name, register, error }: FormFieldRowProps) => {
     return (
       <label className="flex flex-col text-sm font-medium text-slate-800">
         {label}
-        <select className={inputClass} {...register(name)}>
+        <input className={inputClass} list={datalistId} {...register(name)} />
+        <datalist id={datalistId}>
           {options.map((o) => (
             <option key={o.value || 'empty'} value={o.value}>
               {o.label}
             </option>
           ))}
-        </select>
+        </datalist>
         {error ? <span className="mt-1 text-xs text-red-600">{error}</span> : null}
       </label>
     );

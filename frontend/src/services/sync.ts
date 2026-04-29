@@ -4,7 +4,7 @@ import { REQUIRED_FIELDS } from '../types/formFields';
 
 const RETENTION_DAYS = 3;
 const BACKOFF_STEPS_MS = [30_000, 60_000, 5 * 60_000, 15 * 60_000, 30 * 60_000];
-const MAX_GPS_ACCURACY_METERS = 3;
+const MAX_GPS_ACCURACY_METERS = 5;
 
 const isEmptyValue = (value: unknown): boolean => {
   if (value === null || value === undefined) {
