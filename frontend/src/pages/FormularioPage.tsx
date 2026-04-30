@@ -33,7 +33,7 @@ import { REQUIRED_FIELDS, type FormValues } from '@/types/formFields';
 const describeValidationErrors = (codes: string[]): string => {
   const parts = codes.map((code) => {
     if (code === 'gps_precision') {
-      return 'GPS con precisión ≤ 5 m (usá “Tomar ubicación”).';
+      return 'GPS con precisión ≤ 100 m (usá “Tomar ubicación”).';
     }
     if (code === 'fotos_count') {
       return 'Entre 3 y 15 fotos comprimidas.';

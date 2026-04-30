@@ -3,7 +3,7 @@ from typing import Any, Dict, List
 
 from pydantic import BaseModel, Field, field_validator
 
-MAX_GPS_ACCURACY_METERS = 5
+MAX_GPS_ACCURACY_METERS = 100
 class GPSPayload(BaseModel):
     latitud: float
     longitud: float

@@ -20,7 +20,7 @@ interface GPSHookState {
   solicitarGPS: () => void;
 }
 
-const MAX_ACCURACY_METERS = 5;
+const MAX_ACCURACY_METERS = 100;
 const GPS_TIMEOUT_MS = 60000;
 
 export const useGPS = (opts?: UseGPSOptions): GPSHookState => {
@@ -71,7 +71,7 @@ export const useGPS = (opts?: UseGPSOptions): GPSHookState => {
 
         if (!bestPosition || precision < bestPosition.precision) {
           bestPosition = currentPosition;
-          setProgreso(`Buscando precisión ≤ 5m. Mejor lectura: ${precision.toFixed(1)}m.`);
+          setProgreso(`Buscando precisión ≤ ${MAX_ACCURACY_METERS}m. Mejor lectura: ${precision.toFixed(1)}m.`);
         }
 
         if (precision <= MAX_ACCURACY_METERS) {
