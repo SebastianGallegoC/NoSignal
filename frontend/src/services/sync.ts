@@ -1,11 +1,22 @@
 import { db, type OfflineForm } from './db';
 import { postForm } from './api';
+import { REQUIRED_FIELDS } from '@/types/formFields';
 
 const RETENTION_DAYS = 3;
 const BACKOFF_STEPS_MS = [30_000, 60_000, 5 * 60_000, 15 * 60_000, 30 * 60_000];
 const MAX_GPS_ACCURACY_METERS = 100;
-const MIN_PHOTOS = 3;
+const MIN_PHOTOS = 0;
 const MAX_PHOTOS = 15;
+
+const isEmptyValue = (value: unknown): boolean => {
+  if (value === null || value === undefined) {
+    return true;
+  }
+  if (typeof value === 'string' && value.trim() === '') {
+    return true;
+  }
+  return false;
+};
 
 export const validateFormPayload = (form: OfflineForm): string[] => {
   const errors: string[] = [];
@@ -15,6 +26,12 @@ export const validateFormPayload = (form: OfflineForm): string[] => {
   }
   if (!Array.isArray(form.fotos) || form.fotos.length < MIN_PHOTOS || form.fotos.length > MAX_PHOTOS) {
     errors.push('fotos_count');
+  }
+
+  for (const field of REQUIRED_FIELDS) {
+    if (isEmptyValue(form.datos_formulario?.[field])) {
+      errors.push(`field_${field}`);
+    }
   }
 
   return errors;

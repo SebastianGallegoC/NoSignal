@@ -502,6 +502,12 @@ export const FormularioPage = () => {
       setSubmitFeedback("No se pudo enviar: falta ubicación GPS.");
       return;
     }
+    if (fotos.length > 15) {
+      const message = `Máximo 15 fotos. Actual: ${fotos.length}.`;
+      setBanner(message);
+      setSubmitFeedback(message);
+      return;
+    }
 
     const datos_formulario: Record<string, unknown> = {};
     for (const key of REQUIRED_FIELDS) {
@@ -526,8 +532,9 @@ export const FormularioPage = () => {
     const validationErrors = validateFormPayload(payload);
     if (validationErrors.length > 0) {
       const detail = describeValidationErrors(validationErrors);
-      const fallback = validationErrors.join(', ');
-      const message = detail || fallback || "No se pudo enviar: hay validaciones pendientes.";
+      const fallback = validationErrors.join(", ");
+      const message =
+        detail || fallback || "No se pudo enviar: hay validaciones pendientes.";
       setBanner(message);
       setSubmitFeedback(message);
       return;
@@ -785,11 +792,14 @@ export const FormularioPage = () => {
 
           <div className="rounded-2xl border border-slate-200 bg-white/90 p-4 shadow-sm">
             <h2 className="text-sm font-semibold text-slate-900">
-              Fotografías (3 a 15)
+              Fotografías (0 a 15)
             </h2>
             <p className="text-xs text-slate-500">
               Podés seleccionar archivos o capturar desde la app. Se comprimen a
               máx. 1280 px antes de guardar.
+            </p>
+            <p className="mt-1 text-xs text-slate-600">
+              Cargadas: {fotos.length}
             </p>
             <div className="mt-3 flex flex-wrap gap-2">
               <Button

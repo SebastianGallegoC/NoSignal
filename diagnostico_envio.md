@@ -15,6 +15,15 @@
 3. Se agrego fallback con codigos de validacion (`gps_precision`, `fotos_count`) cuando el detalle humano queda vacio.
    - Motivo: identificar exactamente la causa del bloqueo incluso si el mensaje formateado falla.
    - Cambio: [frontend/src/pages/FormularioPage.tsx](frontend/src/pages/FormularioPage.tsx)
+4. Se agrego validacion explicita del conteo de fotos con mensaje incluyendo el numero actual.
+   - Motivo: el bloqueo actual indica fotos insuficientes; necesitamos visibilidad inmediata del conteo cargado.
+   - Cambio: [frontend/src/pages/FormularioPage.tsx](frontend/src/pages/FormularioPage.tsx)
+5. Se alinea la validacion del frontend con el backend: GPS <= 3m y campos obligatorios completos antes de enviar.
+   - Motivo: el backend responde 422 cuando faltan campos o la precision GPS excede 3m; bloquear antes evita fallos de sync.
+   - Cambios: [frontend/src/services/sync.ts](frontend/src/services/sync.ts), [frontend/src/services/api.ts](frontend/src/services/api.ts), [frontend/src/hooks/useGPS.ts](frontend/src/hooks/useGPS.ts)
+6. Modo pruebas: se sube el umbral de GPS a 100m y se elimina el minimo de fotos.
+   - Motivo: permitir pruebas rapidas sin esperar precision ni cargar imagenes.
+   - Cambios: [frontend/src/hooks/useGPS.ts](frontend/src/hooks/useGPS.ts), [frontend/src/services/sync.ts](frontend/src/services/sync.ts), [frontend/src/pages/FormularioPage.tsx](frontend/src/pages/FormularioPage.tsx)
 
 ## Hipotesis en revision (si el problema persiste)
 

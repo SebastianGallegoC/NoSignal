@@ -3,7 +3,7 @@ import { ACCESS_TOKEN_KEY } from '@/lib/authStorage';
 import type { OfflineForm } from './db';
 
 const API_BASE = import.meta.env.VITE_API_URL ?? '';
-const LEGACY_API_MAX_GPS_ACCURACY_METERS = 5;
+const LEGACY_API_MAX_GPS_ACCURACY_METERS = 3;
 
 type ApiFormPayload = {
   id_formulario: string;
