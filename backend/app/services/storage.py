@@ -26,20 +26,36 @@ def normalize_stored_foto_paths(raw: object) -> list[str]:
 
 
 def validated_photo_path(stored: str) -> Path | None:
-    """Ruta absoluta del archivo si existe y queda bajo `upload_root`; si no, None."""
+    """Ruta absoluta del archivo si existe y queda bajo `upload_root`; si no, None.
+
+    Las rutas en BD vienen de `save_photos` como relativas al cwd (p. ej. `uploads/2026/…/foto_1.jpg`).
+    No usar `(upload_root_resuelto / ruta)` en ese caso: duplicaría `uploads` (`…/uploads/uploads/…`).
+    """
     try:
         root = Path(settings.upload_root).resolve()
     except OSError:
         return None
+    s = stored.strip()
+    if not s:
+        return None
     try:
-        p = Path(stored)
-        candidate = p.resolve() if p.is_absolute() else (root / p).resolve()
+        p = Path(s)
+        if p.is_absolute():
+            candidate = p.resolve()
+        else:
+            candidate = (Path.cwd() / p).resolve()
     except OSError:
         return None
     try:
         candidate.relative_to(root)
     except ValueError:
-        return None
+        if p.is_absolute():
+            return None
+        try:
+            candidate = (root / p).resolve()
+            candidate.relative_to(root)
+        except (ValueError, OSError):
+            return None
     if not candidate.is_file():
         return None
     return candidate
