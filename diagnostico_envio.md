@@ -24,6 +24,9 @@
 6. Modo pruebas: se sube el umbral de GPS a 100m y se elimina el minimo de fotos.
    - Motivo: permitir pruebas rapidas sin esperar precision ni cargar imagenes.
    - Cambios: [frontend/src/hooks/useGPS.ts](frontend/src/hooks/useGPS.ts), [frontend/src/services/sync.ts](frontend/src/services/sync.ts), [frontend/src/pages/FormularioPage.tsx](frontend/src/pages/FormularioPage.tsx)
+7. Se eliminan las validaciones de campos obligatorios; solo se valida la ubicacion (GPS).
+   - Motivo: permitir pruebas sin completar todos los campos del formulario.
+   - Cambios: [frontend/src/services/sync.ts](frontend/src/services/sync.ts)
 
 ## Hipotesis en revision (si el problema persiste)
 
