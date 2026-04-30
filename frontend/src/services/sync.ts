@@ -84,10 +84,16 @@ export const syncPendingForms = async (): Promise<void> => {
 
   for (const form of pending) {
     const intentos = form.errores_sync ?? 0;
-    const delay = BACKOFF_STEPS_MS[Math.min(intentos, BACKOFF_STEPS_MS.length - 1)];
-    const lastAttempt = form.fecha_intento ? Date.parse(form.fecha_intento) : Date.parse(form.fecha_hora);
-    if (!Number.isNaN(lastAttempt) && Date.now() - lastAttempt < delay) {
-      continue;
+    // Backoff solo tras fallos previos: con intentos === 0, fecha_hora es reciente y
+    // compararla con delay bloqueaba el primer envío ~30s (o hasta que pasara el backoff).
+    if (intentos > 0) {
+      const delay = BACKOFF_STEPS_MS[Math.min(intentos, BACKOFF_STEPS_MS.length - 1)];
+      const lastAttempt = form.fecha_intento
+        ? Date.parse(form.fecha_intento)
+        : Date.parse(form.fecha_hora);
+      if (!Number.isNaN(lastAttempt) && Date.now() - lastAttempt < delay) {
+        continue;
+      }
     }
 
     await db.formularios.update(form.id_formulario, {
