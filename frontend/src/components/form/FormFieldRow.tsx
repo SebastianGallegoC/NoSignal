@@ -9,7 +9,7 @@ import { SearchableSelect, type SelectOption } from './SearchableSelect';
 const inputClass =
   'mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600';
 
-const SELECT_FALLBACK: SelectOption[] = [{ value: '', label: 'Seleccione' }];
+const SELECT_FALLBACK: SelectOption[] = [{ value: '', label: '' }];
 
 const TRIO_OPTIONS_LIST: SelectOption[] = triOptions.map((o) => ({ value: o.value, label: o.label }));
 

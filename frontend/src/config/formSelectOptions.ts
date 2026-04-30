@@ -3,7 +3,7 @@ import type { FormFieldKey } from '@/types/formFields';
 type SelectOption = { value: string; label: string };
 
 const buildOptions = (values: string[]): SelectOption[] => [
-  { value: '', label: 'Seleccione' },
+  { value: '', label: '' },
   ...values.map((value) => ({ value, label: value })),
 ];
 

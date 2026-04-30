@@ -69,7 +69,7 @@ export const inputKindForField = (field: FormFieldKey): InputKind => {
 };
 
 export const triOptions = [
-  { value: '', label: 'Seleccione' },
+  { value: '', label: '' },
   { value: 'Si', label: 'Sí' },
   { value: 'No', label: 'No' },
   { value: 'NR', label: 'NR' },

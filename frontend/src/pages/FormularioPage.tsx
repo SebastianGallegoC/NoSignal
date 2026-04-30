@@ -320,7 +320,9 @@ export const FormularioPage = () => {
     let blob: Blob | null = null;
     const stream = cameraStreamRef.current;
     const track = stream?.getVideoTracks?.()[0];
-    const ImageCaptureCtor = (window as Window & { ImageCapture?: new (t: MediaStreamTrack) => { grabFrame: () => Promise<ImageBitmap> } }).ImageCapture;
+    const ImageCaptureCtor = (
+      window as unknown as { ImageCapture?: new (t: MediaStreamTrack) => { grabFrame: () => Promise<ImageBitmap> } }
+    ).ImageCapture;
     if (track && ImageCaptureCtor) {
       try {
         const imageCapture = new ImageCaptureCtor(track);
@@ -604,7 +606,7 @@ export const FormularioPage = () => {
                 value={idUsuario}
                 onChange={(e) => setIdUsuario(e.target.value)}
               >
-                <option value="">Seleccioná…</option>
+                <option value=""></option>
                 {USUARIOS_FORMULARIO.map((u) => (
                   <option key={u.value} value={u.value}>
                     {u.label}
