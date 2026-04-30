@@ -82,6 +82,19 @@ const buildExternalMapUrl = (latitud: number, longitud: number): string => {
   return `https://www.openstreetmap.org/?mlat=${latitud}&mlon=${longitud}#map=18/${latitud}/${longitud}`;
 };
 
+const toSafeUserId = (raw: string): string => {
+  const base = (raw || '')
+    .trim()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/\s+/g, '_')
+    .replace(/[^A-Za-z0-9._-]/g, '')
+    .replace(/_+/g, '_')
+    .replace(/^_+|_+$/g, '')
+    .slice(0, 64);
+  return base || 'sin_usuario';
+};
+
 export const FormularioPage = () => {
   useOfflineSync();
   const authUsername = useAuthStore((s) => s.username);
@@ -426,7 +439,7 @@ export const FormularioPage = () => {
 
     const payload: OfflineForm = {
       id_formulario: formId,
-      id_usuario: idUsuario || authUsername || 'sin_usuario',
+      id_usuario: toSafeUserId(idUsuario || authUsername || 'sin_usuario'),
       fecha_hora: new Date().toISOString(),
       gps: {
         latitud: gps.latitud,

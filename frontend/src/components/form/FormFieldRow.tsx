@@ -47,16 +47,28 @@ export const FormFieldRow = ({ name, register, control, error }: FormFieldRowPro
 
   const isPositiveInt = name === 'estrato' || name === 'usuario_cens';
   const isSatisfaccion = name === 'satisfaccion_1_5';
+  const isGpsDerivedField =
+    name === 'x_grados' ||
+    name === 'x_minutos' ||
+    name === 'x_segundos' ||
+    name === 'y_grados' ||
+    name === 'y_minutos' ||
+    name === 'y_segundos' ||
+    name === 'latitud' ||
+    name === 'longitud';
+  const gpsReadOnlyClass = isGpsDerivedField ? ' bg-slate-100 text-slate-600' : '';
 
   return (
     <label className="flex flex-col text-sm font-medium text-slate-800">
       {label}
       <input
-        className={inputClass}
+        className={`${inputClass}${gpsReadOnlyClass}`}
         type={type}
         min={isPositiveInt || isSatisfaccion ? 1 : undefined}
         max={isSatisfaccion ? 5 : undefined}
         step={type === 'number' ? ((isPositiveInt || isSatisfaccion) ? 1 : 'any') : undefined}
+        readOnly={isGpsDerivedField}
+        title={isGpsDerivedField ? 'Este campo se actualiza al tomar ubicación GPS.' : undefined}
         {...register(name)}
       />
       {error ? <span className="mt-1 text-xs text-red-600">{error}</span> : null}
