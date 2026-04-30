@@ -19,5 +19,9 @@ async def create_form(
     if idempotency_key and idempotency_key != payload.id_formulario:
         raise HTTPException(status_code=409, detail="idempotency_key_mismatch")
 
-    record = await persist_form(session, payload)
+    try:
+        record = await persist_form(session, payload)
+    except ValueError as exc:
+        # Convertimos errores de validación/parseo a 422 en lugar de 500.
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
     return {"status": "queued", "id_formulario": record.id_formulario}
