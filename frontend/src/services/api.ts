@@ -3,7 +3,7 @@ import { ACCESS_TOKEN_KEY } from '@/lib/authStorage';
 import type { OfflineForm } from './db';
 
 const API_BASE = import.meta.env.VITE_API_URL ?? '';
-const LEGACY_API_MAX_GPS_ACCURACY_METERS = 3;
+const LEGACY_API_MAX_GPS_ACCURACY_METERS = 100;
 
 type ApiFormPayload = {
   id_formulario: string;
@@ -93,7 +93,9 @@ export const loginApi = async (username: string, password: string): Promise<Logi
 
 export const postForm = async (payload: OfflineForm): Promise<Response> => {
   const body = payloadForApi(payload);
-  return fetch(`${API_BASE}/api/v1/forms`, {
+  // FastAPI suele redirigir /forms -> /forms/ (307). En algunos despliegues ese redirect
+  // no incluye cabeceras CORS y el navegador lo bloquea; por eso usamos la ruta final.
+  return fetch(`${API_BASE}/api/v1/forms/`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
