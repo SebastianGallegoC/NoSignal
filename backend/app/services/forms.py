@@ -9,12 +9,20 @@ from app.schemas.form_payload import FormPayload
 from app.services.storage import save_photos
 
 
+def parse_fecha_hora_iso(value: str) -> datetime:
+    """ISO 8601 desde el cliente (p. ej. toISOString() con 'Z'); compatible con Python < 3.11."""
+    s = value.strip()
+    if s.endswith("Z"):
+        s = s[:-1] + "+00:00"
+    return datetime.fromisoformat(s)
+
+
 async def persist_form(session: AsyncSession, payload: FormPayload) -> FormRecord:
     existing = await get_form_by_id(session, payload.id_formulario)
     if existing:
         return existing
 
-    fecha_hora = datetime.fromisoformat(payload.fecha_hora)
+    fecha_hora = parse_fecha_hora_iso(payload.fecha_hora)
     fotos = (
         save_photos(payload.id_usuario, payload.id_formulario, payload.fotos, fecha_hora)
         if payload.fotos

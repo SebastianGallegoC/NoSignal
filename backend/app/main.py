@@ -10,8 +10,6 @@ from starlette import status
 from .api.v1.router import api_router
 from .core.config import settings
 
-logger = logging.getLogger("nosignal.api")
-
 
 def create_app() -> FastAPI:
     app = FastAPI(title=settings.app_name)
@@ -30,7 +28,7 @@ def create_app() -> FastAPI:
         exc: RequestValidationError,
     ) -> JSONResponse:
         """422: deja el detalle en logs del servidor (Uvicorn no lo imprime por defecto)."""
-        logger.warning("422 validation: %s", jsonable_encoder(exc.errors()))
+        logging.warning("422 validation: %s", jsonable_encoder(exc.errors()))
         return JSONResponse(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             content={"detail": jsonable_encoder(exc.errors())},

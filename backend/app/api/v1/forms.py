@@ -1,3 +1,5 @@
+import logging
+
 from fastapi import APIRouter, Depends, Header, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -6,6 +8,7 @@ from app.core.database import get_session
 from app.schemas.form_payload import FormPayload
 from app.services.forms import persist_form
 
+logger = logging.getLogger(__name__)
 router = APIRouter()
 
 
@@ -22,6 +25,7 @@ async def create_form(
     try:
         record = await persist_form(session, payload)
     except ValueError as exc:
-        # Convertimos errores de validación/parseo a 422 en lugar de 500.
+        # Errores tras validar el JSON (fotos, fecha_hora, etc.); no pasan por RequestValidationError.
+        logger.warning("422 persist_form: %s", exc)
         raise HTTPException(status_code=422, detail=str(exc)) from exc
     return {"status": "queued", "id_formulario": record.id_formulario}
