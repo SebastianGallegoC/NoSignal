@@ -61,7 +61,7 @@ class FormPayload(BaseModel):
     @field_validator("fotos")
     @classmethod
     def validate_fotos_count(cls, value: List[PhotoPayload]) -> List[PhotoPayload]:
-        if len(value) < 3 or len(value) > 15:
+        if len(value) > 15:
             raise ValueError("photos_out_of_range")
         return value
 

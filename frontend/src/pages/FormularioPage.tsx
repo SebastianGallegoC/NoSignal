@@ -40,7 +40,7 @@ const describeValidationErrors = (codes: string[]): string => {
       return "GPS con precisión ≤ 100 m (usá “Tomar ubicación”).";
     }
     if (code === "fotos_count") {
-      return "Entre 3 y 15 fotos comprimidas.";
+      return "Máximo 15 fotos comprimidas.";
     }
     if (code.startsWith("field_")) {
       return `Campo obligatorio: ${code.replace("field_", "")}`;
