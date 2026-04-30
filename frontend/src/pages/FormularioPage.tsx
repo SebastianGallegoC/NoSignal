@@ -67,17 +67,6 @@ const describeValidationErrors = (codes: string[]): string => {
   return parts.join(' ');
 };
 
-const buildMapUrl = (latitud: number, longitud: number): string => {
-  const delta = 0.003;
-  const bbox = [
-    longitud - delta,
-    latitud - delta,
-    longitud + delta,
-    latitud + delta,
-  ].join(',');
-  return `https://www.openstreetmap.org/export/embed.html?bbox=${bbox}&layer=mapnik&marker=${latitud},${longitud}`;
-};
-
 const buildExternalMapUrl = (latitud: number, longitud: number): string => {
   return `https://www.openstreetmap.org/?mlat=${latitud}&mlon=${longitud}#map=18/${latitud}/${longitud}`;
 };
@@ -128,6 +117,7 @@ export const FormularioPage = () => {
   const [sincronizando, setSincronizando] = useState(false);
   const [enviando, setEnviando] = useState(false);
   const [banner, setBanner] = useState<string | null>(null);
+  const [submitFeedback, setSubmitFeedback] = useState<string | null>(null);
   const [openSections, setOpenSections] = useState<Set<string>>(() => new Set(['actividad']));
   const pickerInputRef = useRef<HTMLInputElement | null>(null);
   const cameraVideoRef = useRef<HTMLVideoElement | null>(null);
@@ -390,14 +380,18 @@ export const FormularioPage = () => {
   const sincronizarAhora = async () => {
     setSincronizando(true);
     setBanner(null);
+    setSubmitFeedback('Sincronizando formularios pendientes...');
     const result = await syncPendingForms();
     await refreshPendientes();
     if (result.failed > 0) {
       setBanner(`No se pudo sincronizar ${result.failed} formulario(s). Revisá "Errores sync".`);
+      setSubmitFeedback(`No se pudo sincronizar ${result.failed} formulario(s).`);
     } else if (result.sent > 0) {
       setBanner(`Sincronización completada: ${result.sent} formulario(s) enviado(s).`);
+      setSubmitFeedback(`Sincronización completada: ${result.sent} formulario(s).`);
     } else {
       setBanner('No hubo cambios para sincronizar en este momento.');
+      setSubmitFeedback('No hubo formularios por sincronizar.');
     }
     setSincronizando(false);
   };
@@ -436,8 +430,10 @@ export const FormularioPage = () => {
 
   const onValid = async (values: FormValues) => {
     setBanner(null);
+    setSubmitFeedback('Validando formulario...');
     if (!gps) {
       setBanner('Tomá la ubicación GPS antes de enviar.');
+      setSubmitFeedback('No se pudo enviar: falta ubicación GPS.');
       return;
     }
 
@@ -464,23 +460,29 @@ export const FormularioPage = () => {
     const validationErrors = validateFormPayload(payload);
     if (validationErrors.length > 0) {
       setBanner(describeValidationErrors(validationErrors));
+      setSubmitFeedback('No se pudo enviar: hay validaciones pendientes.');
       return;
     }
 
     setEnviando(true);
+    setSubmitFeedback('Guardando formulario...');
     try {
       await enqueueForm(payload);
       clearFormDraft(draftUserKey);
       if (!navigator.onLine) {
         setBanner('Datos guardados localmente. Se sincronizarán al recuperar conexión.');
+        setSubmitFeedback('Guardado localmente (modo offline).');
       } else {
         const result = await syncPendingForms();
         if (result.failed > 0) {
           setBanner('Guardado localmente, pero falló la sincronización. Revisá "Errores sync".');
+          setSubmitFeedback('Guardado local, pero falló sincronización.');
         } else if (result.sent > 0) {
           setBanner('Enviado y sincronizado correctamente.');
+          setSubmitFeedback('Enviado y sincronizado correctamente.');
         } else {
           setBanner('Guardado localmente. Quedó en cola para sincronización.');
+          setSubmitFeedback('Guardado localmente en cola.');
         }
       }
       reset(defaults);
@@ -489,6 +491,7 @@ export const FormularioPage = () => {
       await refreshPendientes();
     } catch {
       setBanner('No se pudo guardar el borrador local. Reintentá.');
+      setSubmitFeedback('Error al guardar localmente.');
     } finally {
       setEnviando(false);
     }
@@ -505,10 +508,12 @@ export const FormularioPage = () => {
     if (fields.length > 0) {
       const first = fields[0];
       setBanner(`Faltan campos por completar o corregir (${fields.length}). Revisá el formulario.`);
+      setSubmitFeedback(`No se pudo enviar: ${fields.length} campo(s) por corregir.`);
       setFocus(first);
       return;
     }
     setBanner('El formulario tiene errores. Revisá los campos e intentá nuevamente.');
+    setSubmitFeedback('El formulario tiene errores.');
   };
 
   return (
@@ -572,19 +577,12 @@ export const FormularioPage = () => {
             </Button>
             {gps ? (
               <div className="mt-4 overflow-hidden rounded-xl border border-teal-100 bg-slate-50">
-                <iframe
-                  title="Mapa de ubicación capturada"
-                  className="h-48 w-full"
-                  src={buildMapUrl(gps.latitud, gps.longitud)}
-                  loading="lazy"
-                />
-                <a
-                  className="block px-3 py-2 text-xs font-medium text-teal-800 underline"
-                  href={buildExternalMapUrl(gps.latitud, gps.longitud)}
-                  target="_blank"
-                  rel="noreferrer"
-                >
-                  Abrir ubicación en mapa
+                <div className="px-3 py-2 text-xs text-slate-700">
+                  Lat: {gps.latitud.toFixed(6)} · Lon: {gps.longitud.toFixed(6)}
+                </div>
+                <div className="px-3 pb-3 text-xs text-slate-700">Precisión: {gps.precision.toFixed(1)} m</div>
+                <a className="block px-3 pb-3 text-xs font-medium text-teal-800 underline" href={buildExternalMapUrl(gps.latitud, gps.longitud)} target="_blank" rel="noreferrer">
+                  Abrir ubicación en OpenStreetMap
                 </a>
               </div>
             ) : null}
@@ -759,6 +757,7 @@ export const FormularioPage = () => {
             <Button type="submit" disabled={enviando} className="bg-teal-700 text-white hover:bg-teal-800">
               {enviando ? 'Guardando…' : 'Guardar / enviar'}
             </Button>
+            {submitFeedback ? <p className="text-xs font-medium text-slate-700">{submitFeedback}</p> : null}
             <p className="text-xs text-slate-500">
               Validamos GPS, fotos y campos obligatorios antes de guardar en Dexie. Con red, intentamos sincronizar de
               inmediato.
