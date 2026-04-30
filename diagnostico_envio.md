@@ -27,6 +27,9 @@
 7. Se eliminan las validaciones de campos obligatorios; solo se valida la ubicacion (GPS).
    - Motivo: permitir pruebas sin completar todos los campos del formulario.
    - Cambios: [frontend/src/services/sync.ts](frontend/src/services/sync.ts)
+8. Se relaja el esquema backend para permitir datos_formulario/fotos vacios y id_usuario por defecto.
+   - Motivo: evitar 422 en modo pruebas cuando solo se exige GPS.
+   - Cambios: [backend/app/schemas/form_payload.py](backend/app/schemas/form_payload.py)
 
 ## Hipotesis en revision (si el problema persiste)
 

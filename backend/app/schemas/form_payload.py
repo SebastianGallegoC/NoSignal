@@ -38,19 +38,19 @@ class PhotoPayload(BaseModel):
 
 class FormPayload(BaseModel):
     id_formulario: str
-    id_usuario: str = Field(min_length=1, max_length=64)
+    id_usuario: str = Field(default="sin_usuario", max_length=64)
     fecha_hora: str
     gps: GPSPayload
-    datos_formulario: Dict[str, Any]
-    fotos: List[PhotoPayload]
+    datos_formulario: Dict[str, Any] = Field(default_factory=dict)
+    fotos: List[PhotoPayload] = Field(default_factory=list)
 
     @field_validator("id_usuario")
     @classmethod
     def validate_id_usuario(cls, value: str) -> str:
         """Nombres legibles (espacios, Unicode); se excluyen solo caracteres peligrosos para rutas."""
-        v = value.strip()
+        v = value.strip() if value is not None else ""
         if not v:
-            raise ValueError("invalid_id_usuario")
+            return "sin_usuario"
         forbidden = '\\/\0<>:"|?*'
         if any(c in forbidden for c in v):
             raise ValueError("invalid_id_usuario")
