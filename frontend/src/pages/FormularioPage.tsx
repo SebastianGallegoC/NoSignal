@@ -3,6 +3,7 @@ import type { ChangeEvent } from "react";
 import { useForm, type FieldErrors } from "react-hook-form";
 import { Link } from "react-router-dom";
 
+import { FormEnvioResultModal, type FormEnvioModalTone } from "@/components/form/FormEnvioResultModal";
 import { FormFieldRow } from "@/components/form/FormFieldRow";
 import { Button } from "@/components/ui/button";
 import { FORM_SECTIONS } from "@/config/formSections";
@@ -142,6 +143,11 @@ export const FormularioPage = () => {
   const [enviando, setEnviando] = useState(false);
   const [banner, setBanner] = useState<string | null>(null);
   const [submitFeedback, setSubmitFeedback] = useState<string | null>(null);
+  const [envioModal, setEnvioModal] = useState<{
+    tone: FormEnvioModalTone;
+    title: string;
+    message: string;
+  } | null>(null);
   const [openSections, setOpenSections] = useState<Set<string>>(
     () => new Set(["actividad"]),
   );
@@ -441,23 +447,29 @@ export const FormularioPage = () => {
     setSubmitFeedback("Sincronizando formularios pendientes...");
     const result = await syncPendingForms();
     await refreshPendientes();
+    setSubmitFeedback(null);
     if (result.failed > 0) {
-      setBanner(
-        `No se pudo sincronizar ${result.failed} formulario(s). Revisá "Errores sync".`,
-      );
-      setSubmitFeedback(
-        `No se pudo sincronizar ${result.failed} formulario(s).`,
-      );
+      setBanner(null);
+      setEnvioModal({
+        tone: "danger",
+        title: "Error al sincronizar",
+        message: `No se pudo sincronizar ${result.failed} formulario(s). Revisá la sección «Errores sync» y reintentá cuando tengas conexión estable.`,
+      });
     } else if (result.sent > 0) {
-      setBanner(
-        `Sincronización completada: ${result.sent} formulario(s) enviado(s).`,
-      );
-      setSubmitFeedback(
-        `Sincronización completada: ${result.sent} formulario(s).`,
-      );
+      setBanner(null);
+      setEnvioModal({
+        tone: "success",
+        title: "Sincronización completada",
+        message: `Se enviaron correctamente ${result.sent} formulario(s) al servidor.`,
+      });
     } else {
-      setBanner("No hubo cambios para sincronizar en este momento.");
-      setSubmitFeedback("No hubo formularios por sincronizar.");
+      setBanner(null);
+      setEnvioModal({
+        tone: "warning",
+        title: "Sin formularios para enviar",
+        message:
+          "No había registros pendientes de sincronizar en este momento, o aún aplican tiempos de espera entre reintentos.",
+      });
     }
     setSincronizando(false);
   };
@@ -545,24 +557,38 @@ export const FormularioPage = () => {
     try {
       await enqueueForm(payload);
       clearFormDraft(draftUserKey);
+      setBanner(null);
+      setSubmitFeedback(null);
       if (!navigator.onLine) {
-        setBanner(
-          "Datos guardados localmente. Se sincronizarán al recuperar conexión.",
-        );
-        setSubmitFeedback("Guardado localmente (modo offline).");
+        setEnvioModal({
+          tone: "warning",
+          title: "Guardado localmente (sin red)",
+          message:
+            "El formulario quedó guardado en este dispositivo y en cola. Se intentará enviar al servidor cuando recuperes Wi‑Fi o datos móviles.",
+        });
       } else {
         const result = await syncPendingForms();
         if (result.failed > 0) {
-          setBanner(
-            'Guardado localmente, pero falló la sincronización. Revisá "Errores sync".',
-          );
-          setSubmitFeedback("Guardado local, pero falló sincronización.");
+          setEnvioModal({
+            tone: "danger",
+            title: "Guardado local; falló el envío al servidor",
+            message:
+              'Hay conexión, pero la sincronización no se completó. Revisá «Errores sync» más abajo. Podés usar «Sincronizar ahora» cuando quieras reintentar.',
+          });
         } else if (result.sent > 0) {
-          setBanner("Enviado y sincronizado correctamente.");
-          setSubmitFeedback("Enviado y sincronizado correctamente.");
+          setEnvioModal({
+            tone: "success",
+            title: "Enviado correctamente",
+            message:
+              "El formulario se guardó y se sincronizó con el servidor. Ya podés cargar un nuevo registro si lo necesitás.",
+          });
         } else {
-          setBanner("Guardado localmente. Quedó en cola para sincronización.");
-          setSubmitFeedback("Guardado localmente en cola.");
+          setEnvioModal({
+            tone: "warning",
+            title: "En cola para sincronizar",
+            message:
+              "El formulario quedó guardado localmente en espera de envío (por ejemplo, otro intento en curso o reintento con espera). Se enviará automáticamente cuando corresponda.",
+          });
         }
       }
       reset(defaults);
@@ -570,8 +596,14 @@ export const FormularioPage = () => {
       setFormId(randomUuid());
       await refreshPendientes();
     } catch {
-      setBanner("No se pudo guardar el borrador local. Reintentá.");
-      setSubmitFeedback("Error al guardar localmente.");
+      setBanner(null);
+      setSubmitFeedback(null);
+      setEnvioModal({
+        tone: "danger",
+        title: "No se pudo guardar",
+        message:
+          "No se pudo guardar el formulario en este dispositivo. Reintentá; si el problema continúa, revisá espacio de almacenamiento y permisos del navegador.",
+      });
     } finally {
       setEnviando(false);
     }
@@ -606,6 +638,15 @@ export const FormularioPage = () => {
 
   return (
     <div className="min-h-screen bg-[radial-gradient(circle_at_top,_#e2f2ee_0,_#f6f7f5_45%,_#f6f7f5_100%)] px-4 py-8 text-slate-900 sm:px-6">
+      {envioModal ? (
+        <FormEnvioResultModal
+          open
+          tone={envioModal.tone}
+          title={envioModal.title}
+          message={envioModal.message}
+          onClose={() => setEnvioModal(null)}
+        />
+      ) : null}
       <div className="mx-auto flex w-full max-w-5xl flex-col gap-6">
         <header className="flex flex-col gap-3 border-b border-teal-100 pb-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
