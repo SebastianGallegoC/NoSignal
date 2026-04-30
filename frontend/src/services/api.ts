@@ -3,6 +3,7 @@ import { ACCESS_TOKEN_KEY } from '@/lib/authStorage';
 import type { OfflineForm } from './db';
 
 const API_BASE = import.meta.env.VITE_API_URL ?? '';
+const LEGACY_API_MAX_GPS_ACCURACY_METERS = 5;
 
 /** Normaliza imágenes para el validador del API (prefijo data:image/…). */
 function ensureFotoDataUrl(data: string): string {
@@ -36,6 +37,11 @@ function payloadForApi(form: OfflineForm): OfflineForm {
   return {
     ...form,
     id_usuario: ensureSafeUserId(form.id_usuario),
+    gps: {
+      ...form.gps,
+      // Compatibilidad con backend productivo antiguo (rechaza precisión > 5m con 422).
+      precision: Math.min(form.gps.precision, LEGACY_API_MAX_GPS_ACCURACY_METERS),
+    },
     fotos: form.fotos.map((f) => ({
       ...f,
       data: ensureFotoDataUrl(f.data),
