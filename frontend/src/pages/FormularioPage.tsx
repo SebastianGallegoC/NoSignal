@@ -3,13 +3,17 @@ import type { ChangeEvent } from "react";
 import { useForm, type FieldErrors } from "react-hook-form";
 import { Link } from "react-router-dom";
 
-import { FormEnvioResultModal, type FormEnvioModalTone } from "@/components/form/FormEnvioResultModal";
+import {
+  FormEnvioResultModal,
+  type FormEnvioModalTone,
+} from "@/components/form/FormEnvioResultModal";
 import { FormFieldRow } from "@/components/form/FormFieldRow";
 import { Button } from "@/components/ui/button";
 import { FORM_SECTIONS } from "@/config/formSections";
 import { USUARIOS_FORMULARIO } from "@/config/usuariosFormulario";
 import { useGPS } from "@/hooks/useGPS";
 import { useOfflineSync } from "@/hooks/useOfflineSync";
+import { formatDateTime } from "@/lib/formatDateTime";
 import type { OfflineForm } from "@/services/db";
 import { compressImageFile, fileToDataUrl } from "@/services/imageCompression";
 import {
@@ -573,7 +577,7 @@ export const FormularioPage = () => {
             tone: "danger",
             title: "Guardado local; falló el envío al servidor",
             message:
-              'Hay conexión, pero la sincronización no se completó. Revisá «Errores sync» más abajo. Podés usar «Sincronizar ahora» cuando quieras reintentar.',
+              "Hay conexión, pero la sincronización no se completó. Revisá «Errores sync» más abajo. Podés usar «Sincronizar ahora» cuando quieras reintentar.",
           });
         } else if (result.sent > 0) {
           setEnvioModal({
@@ -779,7 +783,7 @@ export const FormularioPage = () => {
                   <p className="text-slate-600">
                     Intentos: {item.errores_sync}
                     {item.fecha_intento
-                      ? ` · último: ${new Date(item.fecha_intento).toLocaleString()}`
+                      ? ` · último: ${formatDateTime(item.fecha_intento)}`
                       : ""}
                   </p>
                   <p className="text-rose-700">
