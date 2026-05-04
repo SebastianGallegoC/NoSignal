@@ -63,7 +63,7 @@ export const FormEnvioResultModal = ({
   const s = toneStyles[tone];
 
   return createPortal(
-    <div className="fixed inset-0 z-[200] flex items-start justify-center overflow-y-auto p-4 sm:items-center">
+    <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
       <button
         type="button"
         className="absolute inset-0 z-0 bg-slate-900/55 backdrop-blur-[1px]"
@@ -74,7 +74,7 @@ export const FormEnvioResultModal = ({
         role="dialog"
         aria-modal="true"
         aria-labelledby="form-envio-modal-title"
-        className={`relative z-10 mt-6 w-full max-w-md rounded-2xl border bg-white p-5 shadow-2xl ring-2 sm:mt-0 sm:p-6 ${s.border}`}
+        className={`relative z-10 w-full max-w-md max-h-[calc(100dvh-2rem)] overflow-y-auto rounded-2xl border bg-white p-5 shadow-2xl ring-2 sm:p-6 ${s.border}`}
       >
         <h2
           id="form-envio-modal-title"
