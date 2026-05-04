@@ -1,19 +1,27 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from "react";
 
-import { ACCESS_TOKEN_KEY } from '@/lib/authStorage';
+import { ACCESS_TOKEN_KEY } from "@/lib/authStorage";
 
-const API_BASE = import.meta.env.VITE_API_URL ?? '';
+const API_BASE = import.meta.env.VITE_API_URL ?? "";
 
 type Props = {
   formId: string;
   photoIndex: number;
   alt: string;
   className?: string;
+  onSrcChange?: (src: string | null) => void;
   /** Si true, el fetch arranca al acercarse al viewport (menos consultas en paralelo). */
   loadDeferred?: boolean;
 };
 
-export const FotoServidorAutenticada = ({ formId, photoIndex, alt, className, loadDeferred = false }: Props) => {
+export const FotoServidorAutenticada = ({
+  formId,
+  photoIndex,
+  alt,
+  className,
+  onSrcChange,
+  loadDeferred = false,
+}: Props) => {
   const [src, setSrc] = useState<string | null>(null);
   const [failed, setFailed] = useState(false);
   const blobUrlRef = useRef<string | null>(null);
@@ -36,7 +44,7 @@ export const FotoServidorAutenticada = ({ formId, photoIndex, alt, className, lo
           io.disconnect();
         }
       },
-      { rootMargin: '160px' },
+      { rootMargin: "160px" },
     );
     io.observe(el);
     return () => io.disconnect();
@@ -48,6 +56,7 @@ export const FotoServidorAutenticada = ({ formId, photoIndex, alt, className, lo
     }
     let cancelled = false;
     setSrc(null);
+    onSrcChange?.(null);
     setFailed(false);
     if (blobUrlRef.current) {
       URL.revokeObjectURL(blobUrlRef.current);
@@ -55,12 +64,15 @@ export const FotoServidorAutenticada = ({ formId, photoIndex, alt, className, lo
     }
 
     const run = async () => {
-      const token = typeof localStorage !== 'undefined' ? localStorage.getItem(ACCESS_TOKEN_KEY) : null;
+      const token =
+        typeof localStorage !== "undefined"
+          ? localStorage.getItem(ACCESS_TOKEN_KEY)
+          : null;
       const url = `${API_BASE}/api/v1/forms/${encodeURIComponent(formId)}/fotos/${photoIndex}`;
       try {
         const res = await fetch(url, {
           headers: token ? { Authorization: `Bearer ${token}` } : {},
-          cache: 'default',
+          cache: "default",
         });
         if (!res.ok) {
           if (!cancelled) {
@@ -76,9 +88,11 @@ export const FotoServidorAutenticada = ({ formId, photoIndex, alt, className, lo
         }
         blobUrlRef.current = created;
         setSrc(created);
+        onSrcChange?.(created);
       } catch {
         if (!cancelled) {
           setFailed(true);
+          onSrcChange?.(null);
         }
       }
     };
@@ -91,25 +105,30 @@ export const FotoServidorAutenticada = ({ formId, photoIndex, alt, className, lo
         URL.revokeObjectURL(blobUrlRef.current);
         blobUrlRef.current = null;
       }
+      onSrcChange?.(null);
     };
-  }, [visible, formId, photoIndex]);
+  }, [visible, formId, photoIndex, onSrcChange]);
 
-  const inner =
-    failed ? (
-      <div
-        className={`flex aspect-square flex-col items-center justify-center gap-1 bg-rose-50 p-2 text-center text-[11px] text-rose-800 ${className ?? ''}`}
-      >
-        No se pudo cargar la imagen
-      </div>
-    ) : !src ? (
-      <div
-        className={`flex aspect-square animate-pulse items-center justify-center bg-slate-200 text-[11px] text-slate-500 ${className ?? ''}`}
-      >
-        Cargando…
-      </div>
-    ) : (
-      <img src={src} alt={alt} className={`aspect-square w-full object-cover ${className ?? ''}`} loading="lazy" />
-    );
+  const inner = failed ? (
+    <div
+      className={`flex aspect-square flex-col items-center justify-center gap-1 bg-rose-50 p-2 text-center text-[11px] text-rose-800 ${className ?? ""}`}
+    >
+      No se pudo cargar la imagen
+    </div>
+  ) : !src ? (
+    <div
+      className={`flex aspect-square animate-pulse items-center justify-center bg-slate-200 text-[11px] text-slate-500 ${className ?? ""}`}
+    >
+      Cargando…
+    </div>
+  ) : (
+    <img
+      src={src}
+      alt={alt}
+      className={`aspect-square w-full object-cover ${className ?? ""}`}
+      loading="lazy"
+    />
+  );
 
   if (loadDeferred) {
     return (
