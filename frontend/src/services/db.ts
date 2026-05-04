@@ -37,6 +37,14 @@ export interface HistorialForm {
   fotos?: OfflineForm['fotos'];
 }
 
+export interface PrecargaForm {
+  id_formulario: string;
+  fecha_precarga: string;
+  datos_formulario: Record<string, unknown>;
+  gps?: { latitud: number; longitud: number; precision?: number | null } | null;
+  fotos?: OfflineForm['fotos'];
+}
+
 export interface SesionLocalRow {
   id: 'current';
   accessToken: string;
@@ -46,6 +54,7 @@ export interface SesionLocalRow {
 export class NoSignalDB extends Dexie {
   formularios!: Table<OfflineForm>;
   historialFormularios!: Table<HistorialForm>;
+  precargas!: Table<PrecargaForm>;
   sesionLocal!: Table<SesionLocalRow>;
 
   constructor() {
@@ -65,6 +74,12 @@ export class NoSignalDB extends Dexie {
     this.version(4).stores({
       formularios: '&id_formulario, estado_sincronizacion, fecha_hora',
       historialFormularios: '&id_formulario, estado, fecha_hora',
+      sesionLocal: 'id',
+    });
+    this.version(5).stores({
+      formularios: '&id_formulario, estado_sincronizacion, fecha_hora',
+      historialFormularios: '&id_formulario, estado, fecha_hora',
+      precargas: '&id_formulario, fecha_precarga',
       sesionLocal: 'id',
     });
   }

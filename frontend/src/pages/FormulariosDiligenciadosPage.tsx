@@ -1,14 +1,23 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 import {
   FormularioRespuestaReadOnly,
   type FormularioSnapshot,
 } from "@/components/form/FormularioRespuestaReadOnly";
+import { Button } from "@/components/ui/button";
 import { ACCESS_TOKEN_KEY } from "@/lib/authStorage";
 import { formatDateTime } from "@/lib/formatDateTime";
-import { listFormsFromApi, type FormReadItem } from "@/services/api";
-import { db, type HistorialForm } from "@/services/db";
+import { randomUuid } from "@/lib/randomUuid";
+import {
+  fetchFormPhotoDataUrl,
+  listFormsFromApi,
+  type FormReadItem,
+} from "@/services/api";
+import { saveFormDraft, type FormDraftV1 } from "@/services/formDraftStorage";
+import { db, type HistorialForm, type PrecargaForm } from "@/services/db";
+import { useAuthStore } from "@/store/useAuthStore";
+import { REQUIRED_FIELDS, type FormValues } from "@/types/formFields";
 
 const estadoClass: Record<HistorialForm["estado"], string> = {
   PENDIENTE: "text-amber-700",
@@ -125,16 +134,60 @@ function parseFiltroDiaFin(isoDay: string): number {
   return new Date(y, m - 1, d, 23, 59, 59, 999).getTime();
 }
 
+function precargaToSnapshot(precarga: PrecargaForm): FormularioSnapshot {
+  return {
+    datos_formulario: precarga.datos_formulario ?? {},
+    gps: precarga.gps ?? null,
+    fotos: precarga.fotos ?? [],
+  };
+}
+
+function buildFormValuesFromSnapshot(
+  snapshot: FormularioSnapshot,
+): FormValues {
+  const base = Object.fromEntries(
+    REQUIRED_FIELDS.map((k) => [k, ""]),
+  ) as FormValues;
+  const raw = snapshot.datos_formulario ?? {};
+  for (const key of REQUIRED_FIELDS) {
+    const value = (raw as Record<string, unknown>)[key];
+    if (value == null) {
+      continue;
+    }
+    if (typeof value === "string") {
+      base[key] = value;
+      continue;
+    }
+    if (typeof value === "number" || typeof value === "boolean") {
+      base[key] = String(value);
+    }
+  }
+  return base;
+}
+
 export const FormulariosDiligenciadosPage = () => {
+  const authUsername = useAuthStore((s) => s.username);
+  const navigate = useNavigate();
   const [rows, setRows] = useState<DisplayRow[]>([]);
   const [filtroDesde, setFiltroDesde] = useState("");
   const [filtroHasta, setFiltroHasta] = useState("");
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [detailSnapshot, setDetailSnapshot] =
     useState<FormularioSnapshot | null>(null);
+  const [detailPrecarga, setDetailPrecarga] =
+    useState<PrecargaForm | null>(null);
   const [detailLoading, setDetailLoading] = useState(false);
   const [remoteError, setRemoteError] = useState<string | null>(null);
   const [remoteLoaded, setRemoteLoaded] = useState(false);
+  const [precargas, setPrecargas] = useState<PrecargaForm[]>([]);
+  const [precargaLoadingId, setPrecargaLoadingId] = useState<string | null>(
+    null,
+  );
+  const [precargaError, setPrecargaError] = useState<string | null>(null);
+
+  const precargaMap = useMemo(() => {
+    return new Map(precargas.map((p) => [p.id_formulario, p]));
+  }, [precargas]);
 
   const rowsFiltrados = useMemo(() => {
     if (!filtroDesde.trim() && !filtroHasta.trim()) {
@@ -174,6 +227,7 @@ export const FormulariosDiligenciadosPage = () => {
         .orderBy("fecha_hora")
         .reverse()
         .toArray();
+      const precargaRows = await db.precargas.toArray();
       let server: FormReadItem[] = [];
       let err: string | null = null;
       const hasToken =
@@ -195,6 +249,7 @@ export const FormulariosDiligenciadosPage = () => {
       setRows(mergeForms(server, local));
       setRemoteError(err);
       setRemoteLoaded(hasToken);
+      setPrecargas(precargaRows);
     };
     void load();
     return () => {
@@ -209,6 +264,7 @@ export const FormulariosDiligenciadosPage = () => {
     if (!rowsFiltrados.some((r) => r.id_formulario === selectedId)) {
       setSelectedId(null);
       setDetailSnapshot(null);
+      setDetailPrecarga(null);
     }
   }, [rowsFiltrados, selectedId]);
 
@@ -217,18 +273,27 @@ export const FormulariosDiligenciadosPage = () => {
       if (selectedId === row.id_formulario) {
         setSelectedId(null);
         setDetailSnapshot(null);
+        setDetailPrecarga(null);
         return;
       }
       setSelectedId(row.id_formulario);
       setDetailLoading(true);
       setDetailSnapshot(null);
+      setDetailPrecarga(null);
+      setPrecargaError(null);
       const live = await db.formularios.get(row.id_formulario);
+      const precarga = await db.precargas.get(row.id_formulario);
+      if (precarga) {
+        setDetailPrecarga(precarga);
+      }
       if (live) {
         setDetailSnapshot({
           datos_formulario: live.datos_formulario ?? {},
           gps: live.gps,
           fotos: live.fotos ?? [],
         });
+      } else if (precarga && !navigator.onLine) {
+        setDetailSnapshot(precargaToSnapshot(precarga));
       } else if (row.server) {
         setDetailSnapshot({
           datos_formulario: (row.server.datos_formulario ?? {}) as Record<
@@ -245,6 +310,8 @@ export const FormulariosDiligenciadosPage = () => {
             row.server.fotos ?? [],
           ),
         });
+      } else if (precarga) {
+        setDetailSnapshot(precargaToSnapshot(precarga));
       } else if (row.historial) {
         const h = row.historial;
         setDetailSnapshot({
@@ -256,6 +323,159 @@ export const FormulariosDiligenciadosPage = () => {
       setDetailLoading(false);
     },
     [selectedId],
+  );
+
+  const precargarRow = useCallback(
+    async (row: DisplayRow) => {
+      if (precargaLoadingId === row.id_formulario) {
+        return;
+      }
+      setPrecargaError(null);
+      if (!navigator.onLine) {
+        setPrecargaError(
+          "Necesitás conexión para precargar este formulario.",
+        );
+        return;
+      }
+      const token =
+        typeof localStorage !== "undefined"
+          ? localStorage.getItem(ACCESS_TOKEN_KEY)
+          : null;
+      if (!token) {
+        setPrecargaError("Iniciá sesión para precargar formularios.");
+        return;
+      }
+      if (!row.server && !row.historial) {
+        setPrecargaError("No hay datos disponibles para precargar.");
+        return;
+      }
+
+      setPrecargaLoadingId(row.id_formulario);
+      try {
+        let snapshot: FormularioSnapshot | null = null;
+        let failedFotos = 0;
+        if (row.server) {
+          const baseFotos =
+            mapServerFotos(
+              row.server.id_formulario,
+              row.server.fotos ?? [],
+            ) ?? [];
+          const fotos: Array<{ nombre_archivo: string; data: string }> = [];
+          for (const foto of baseFotos) {
+            if (foto.serverFormId == null || foto.serverIndex == null) {
+              continue;
+            }
+            try {
+              const data = await fetchFormPhotoDataUrl(
+                foto.serverFormId,
+                foto.serverIndex,
+              );
+              fotos.push({ nombre_archivo: foto.nombre_archivo, data });
+            } catch {
+              failedFotos += 1;
+            }
+          }
+          snapshot = {
+            datos_formulario: (row.server.datos_formulario ?? {}) as Record<
+              string,
+              unknown
+            >,
+            gps: {
+              latitud: row.server.latitud,
+              longitud: row.server.longitud,
+              precision: row.server.precision ?? null,
+            },
+            fotos,
+          };
+        } else if (row.historial) {
+          snapshot = {
+            datos_formulario: row.historial.datos_formulario ?? {},
+            gps: row.historial.gps ?? null,
+            fotos: row.historial.fotos ?? [],
+          };
+        }
+
+        if (!snapshot) {
+          setPrecargaError("No se pudo preparar la precarga.");
+          return;
+        }
+
+        const fotosPrecarga = (snapshot.fotos ?? [])
+          .map((f) =>
+            f.data
+              ? { nombre_archivo: f.nombre_archivo, data: f.data }
+              : null,
+          )
+          .filter(
+            (f): f is { nombre_archivo: string; data: string } => f !== null,
+          );
+
+        const precarga: PrecargaForm = {
+          id_formulario: row.id_formulario,
+          fecha_precarga: new Date().toISOString(),
+          datos_formulario: snapshot.datos_formulario ?? {},
+          gps: snapshot.gps ?? null,
+          fotos: fotosPrecarga,
+        };
+
+        await db.precargas.put(precarga);
+        const precargaRows = await db.precargas.toArray();
+        setPrecargas(precargaRows);
+        if (selectedId === row.id_formulario) {
+          setDetailPrecarga(precarga);
+          setDetailSnapshot(precargaToSnapshot(precarga));
+        }
+        if (failedFotos > 0) {
+          setPrecargaError(
+            `Se precargaron los datos, pero fallaron ${failedFotos} foto(s).`,
+          );
+        }
+      } catch (e) {
+        setPrecargaError(
+          e instanceof Error
+            ? e.message
+            : "No se pudo precargar el formulario.",
+        );
+      } finally {
+        setPrecargaLoadingId(null);
+      }
+    },
+    [precargaLoadingId, selectedId],
+  );
+
+  const usarComoBase = useCallback(
+    (row: DisplayRow) => {
+      if (!detailSnapshot) {
+        return;
+      }
+      const formValues = buildFormValuesFromSnapshot(detailSnapshot);
+      const sourceFotos =
+        detailPrecarga?.fotos ?? detailSnapshot.fotos ?? [];
+      const fotos = sourceFotos
+        .map((f) => (f.data ? { nombre_archivo: f.nombre_archivo, data: f.data } : null))
+        .filter(
+          (f): f is { nombre_archivo: string; data: string } => f !== null,
+        );
+      const gps = detailSnapshot.gps
+        ? {
+            latitud: detailSnapshot.gps.latitud,
+            longitud: detailSnapshot.gps.longitud,
+            precision: detailSnapshot.gps.precision ?? 0,
+          }
+        : null;
+      const draft: FormDraftV1 = {
+        v: 1,
+        savedAt: new Date().toISOString(),
+        formId: randomUuid(),
+        idUsuario: row.server?.id_usuario ?? row.historial?.id_usuario ?? "",
+        formValues,
+        fotos,
+        gps,
+      };
+      saveFormDraft(authUsername ?? "", draft);
+      navigate("/formulario");
+    },
+    [authUsername, detailPrecarga, detailSnapshot, navigate],
   );
 
   return (
@@ -359,6 +579,8 @@ export const FormulariosDiligenciadosPage = () => {
               const isOpen = selectedId === row.id_formulario;
               const h = row.historial;
               const s = row.server;
+              const precarga = precargaMap.get(row.id_formulario) ?? null;
+              const precargado = !!precarga;
               // Preferir mostrar el nombre completo del beneficiario si está disponible
               const beneficiarioName =
                 (h?.datos_formulario as Record<string, unknown>)
@@ -403,6 +625,11 @@ export const FormulariosDiligenciadosPage = () => {
                             + copia local
                           </span>
                         ) : null}
+                        {precargado ? (
+                          <span className="rounded-md bg-indigo-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-indigo-900">
+                            Precargado
+                          </span>
+                        ) : null}
                       </div>
                       <p className="font-medium text-slate-900">
                         Beneficiario: {tituloUsuario}
@@ -445,9 +672,55 @@ export const FormulariosDiligenciadosPage = () => {
                           Cargando…
                         </p>
                       ) : detailSnapshot ? (
-                        <FormularioRespuestaReadOnly
-                          snapshot={detailSnapshot}
-                        />
+                        <div className="space-y-4">
+                          <FormularioRespuestaReadOnly
+                            snapshot={detailSnapshot}
+                          />
+                          <div className="flex flex-wrap items-center gap-2">
+                            {row.server ? (
+                              <Button
+                                type="button"
+                                variant="outline"
+                                onClick={() => void precargarRow(row)}
+                                disabled={
+                                  precargaLoadingId === row.id_formulario
+                                }
+                              >
+                                {precargaMap.has(row.id_formulario)
+                                  ? "Actualizar precarga"
+                                  : "Precargar para visita"}
+                              </Button>
+                            ) : null}
+                            <Button
+                              type="button"
+                              onClick={() => usarComoBase(row)}
+                            >
+                              Usar como base para nueva visita
+                            </Button>
+                            {precargaMap.has(row.id_formulario) ? (
+                              <span className="text-xs text-slate-500">
+                                Precargado el {" "}
+                                {formatDateTime(
+                                  Date.parse(
+                                    precargaMap.get(row.id_formulario)
+                                      ?.fecha_precarga ?? "",
+                                  ),
+                                )}
+                              </span>
+                            ) : null}
+                          </div>
+                          {precargaError &&
+                          selectedId === row.id_formulario ? (
+                            <p className="text-xs text-rose-600">
+                              {precargaError}
+                            </p>
+                          ) : null}
+                          {precargaLoadingId === row.id_formulario ? (
+                            <p className="text-xs text-slate-500">
+                              Precargando datos para uso offline…
+                            </p>
+                          ) : null}
+                        </div>
                       ) : null}
                     </div>
                   ) : null}

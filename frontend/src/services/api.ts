@@ -72,6 +72,14 @@ const authHeaders = (): Record<string, string> => {
   return { Authorization: `Bearer ${token}` };
 };
 
+const blobToDataUrl = (blob: Blob): Promise<string> =>
+  new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result || ''));
+    reader.onerror = () => reject(new Error('blob_read_failed'));
+    reader.readAsDataURL(blob);
+  });
+
 export interface LoginResponse {
   access_token: string;
   token_type: string;
@@ -128,4 +136,21 @@ export const postForm = async (payload: OfflineForm): Promise<Response> => {
     },
     body: JSON.stringify(body),
   });
+};
+
+export const fetchFormPhotoDataUrl = async (
+  formId: string,
+  photoIndex: number,
+): Promise<string> => {
+  const url = `${API_BASE}/api/v1/forms/${encodeURIComponent(formId)}/fotos/${photoIndex}`;
+  const res = await fetch(url, {
+    headers: { ...authHeaders() },
+    cache: 'default',
+  });
+  if (!res.ok) {
+    const t = await res.text();
+    throw new Error(t || `foto_${res.status}`);
+  }
+  const blob = await res.blob();
+  return blobToDataUrl(blob);
 };
