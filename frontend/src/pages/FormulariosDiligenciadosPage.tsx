@@ -359,7 +359,17 @@ export const FormulariosDiligenciadosPage = () => {
               const isOpen = selectedId === row.id_formulario;
               const h = row.historial;
               const s = row.server;
-              const tituloUsuario = h?.id_usuario ?? s?.id_usuario ?? "—";
+              // Preferir mostrar el nombre completo del beneficiario si está disponible
+              const beneficiarioName =
+                (h?.datos_formulario as Record<string, unknown>)
+                  ?.nombres_apellidos_beneficiario ??
+                (s?.datos_formulario as Record<string, unknown>)
+                  ?.nombres_apellidos_beneficiario;
+              const tituloUsuario =
+                typeof beneficiarioName === "string" &&
+                beneficiarioName.trim() !== ""
+                  ? beneficiarioName
+                  : "No diligenciado";
               const refTs = getFechaReferenciaEnvio(row);
               const tituloFechaLabel = formatDateTime(refTs);
               return (
@@ -395,7 +405,7 @@ export const FormulariosDiligenciadosPage = () => {
                         ) : null}
                       </div>
                       <p className="font-medium text-slate-900">
-                        Usuario: {tituloUsuario}
+                        Beneficiario: {tituloUsuario}
                       </p>
                       <p className="text-sm text-slate-600">
                         Fecha de envío / del formulario: {tituloFechaLabel}
