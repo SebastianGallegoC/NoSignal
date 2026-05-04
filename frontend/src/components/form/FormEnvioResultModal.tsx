@@ -1,8 +1,9 @@
-import { useEffect } from 'react';
+import { useEffect } from "react";
+import { createPortal } from "react-dom";
 
-import { Button } from '@/components/ui/button';
+import { Button } from "@/components/ui/button";
 
-export type FormEnvioModalTone = 'success' | 'warning' | 'danger';
+export type FormEnvioModalTone = "success" | "warning" | "danger";
 
 type Props = {
   open: boolean;
@@ -12,37 +13,46 @@ type Props = {
   onClose: () => void;
 };
 
-const toneStyles: Record<FormEnvioModalTone, { border: string; title: string }> = {
+const toneStyles: Record<
+  FormEnvioModalTone,
+  { border: string; title: string }
+> = {
   success: {
-    border: 'border-emerald-200 ring-emerald-100',
-    title: 'text-emerald-900',
+    border: "border-emerald-200 ring-emerald-100",
+    title: "text-emerald-900",
   },
   warning: {
-    border: 'border-amber-200 ring-amber-100',
-    title: 'text-amber-950',
+    border: "border-amber-200 ring-amber-100",
+    title: "text-amber-950",
   },
   danger: {
-    border: 'border-rose-200 ring-rose-100',
-    title: 'text-rose-950',
+    border: "border-rose-200 ring-rose-100",
+    title: "text-rose-950",
   },
 };
 
-export const FormEnvioResultModal = ({ open, tone, title, message, onClose }: Props) => {
+export const FormEnvioResultModal = ({
+  open,
+  tone,
+  title,
+  message,
+  onClose,
+}: Props) => {
   useEffect(() => {
     if (!open) {
       return;
     }
     const prev = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
+    document.body.style.overflow = "hidden";
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
+      if (e.key === "Escape") {
         onClose();
       }
     };
-    window.addEventListener('keydown', onKey);
+    window.addEventListener("keydown", onKey);
     return () => {
       document.body.style.overflow = prev;
-      window.removeEventListener('keydown', onKey);
+      window.removeEventListener("keydown", onKey);
     };
   }, [open, onClose]);
 
@@ -52,11 +62,11 @@ export const FormEnvioResultModal = ({ open, tone, title, message, onClose }: Pr
 
   const s = toneStyles[tone];
 
-  return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+  return createPortal(
+    <div className="fixed inset-0 z-[200] flex items-start justify-center overflow-y-auto p-4 sm:items-center">
       <button
         type="button"
-        className="absolute inset-0 bg-slate-900/55 backdrop-blur-[1px]"
+        className="absolute inset-0 z-0 bg-slate-900/55 backdrop-blur-[1px]"
         aria-label="Cerrar diálogo"
         onClick={onClose}
       />
@@ -64,12 +74,17 @@ export const FormEnvioResultModal = ({ open, tone, title, message, onClose }: Pr
         role="dialog"
         aria-modal="true"
         aria-labelledby="form-envio-modal-title"
-        className={`relative w-full max-w-md rounded-2xl border bg-white p-6 shadow-2xl ring-2 ${s.border}`}
+        className={`relative z-10 mt-6 w-full max-w-md rounded-2xl border bg-white p-5 shadow-2xl ring-2 sm:mt-0 sm:p-6 ${s.border}`}
       >
-        <h2 id="form-envio-modal-title" className={`text-lg font-semibold ${s.title}`}>
+        <h2
+          id="form-envio-modal-title"
+          className={`text-lg font-semibold ${s.title}`}
+        >
           {title}
         </h2>
-        <p className="mt-3 text-sm leading-relaxed text-slate-700">{message}</p>
+        <p className="mt-3 max-h-[50dvh] overflow-y-auto text-sm leading-relaxed text-slate-700 sm:max-h-none">
+          {message}
+        </p>
         <Button
           type="button"
           onClick={onClose}
@@ -78,6 +93,7 @@ export const FormEnvioResultModal = ({ open, tone, title, message, onClose }: Pr
           Entendido
         </Button>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 };
