@@ -18,9 +18,11 @@ import { saveFormDraft, type FormDraftV1 } from "@/services/formDraftStorage";
 import { db, type HistorialForm, type PrecargaForm } from "@/services/db";
 import {
   buildFormValuesFromSnapshot,
+  getBeneficiarioDisplayName,
   getFechaReferenciaEnvio,
   mapServerFotos,
   mergeForms,
+  normalizeTextoBusqueda,
   parseFiltroDiaFin,
   parseFiltroDiaInicio,
   precargaToSnapshot,
@@ -40,6 +42,7 @@ export const FormulariosDiligenciadosPage = () => {
   const [rows, setRows] = useState<DisplayRow[]>([]);
   const [filtroDesde, setFiltroDesde] = useState("");
   const [filtroHasta, setFiltroHasta] = useState("");
+  const [filtroBeneficiario, setFiltroBeneficiario] = useState("");
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [detailSnapshot, setDetailSnapshot] =
     useState<FormularioSnapshot | null>(null);
@@ -60,35 +63,47 @@ export const FormulariosDiligenciadosPage = () => {
   }, [precargas]);
 
   const rowsFiltrados = useMemo(() => {
-    if (!filtroDesde.trim() && !filtroHasta.trim()) {
-      return rows;
-    }
-    const tDesde = filtroDesde.trim()
-      ? parseFiltroDiaInicio(filtroDesde.trim())
-      : NaN;
-    const tHasta = filtroHasta.trim()
-      ? parseFiltroDiaFin(filtroHasta.trim())
-      : NaN;
-    if (filtroDesde.trim() && Number.isNaN(tDesde)) {
-      return rows;
-    }
-    if (filtroHasta.trim() && Number.isNaN(tHasta)) {
-      return rows;
-    }
-    return rows.filter((row) => {
-      const ts = getFechaReferenciaEnvio(row);
-      if (Number.isNaN(ts)) {
-        return false;
+    let out = rows;
+    const tieneFechas = filtroDesde.trim() !== "" || filtroHasta.trim() !== "";
+    if (tieneFechas) {
+      const tDesde = filtroDesde.trim()
+        ? parseFiltroDiaInicio(filtroDesde.trim())
+        : NaN;
+      const tHasta = filtroHasta.trim()
+        ? parseFiltroDiaFin(filtroHasta.trim())
+        : NaN;
+      if (filtroDesde.trim() && Number.isNaN(tDesde)) {
+        out = rows;
+      } else if (filtroHasta.trim() && Number.isNaN(tHasta)) {
+        out = rows;
+      } else {
+        out = rows.filter((row) => {
+          const ts = getFechaReferenciaEnvio(row);
+          if (Number.isNaN(ts)) {
+            return false;
+          }
+          if (!Number.isNaN(tDesde) && ts < tDesde) {
+            return false;
+          }
+          if (!Number.isNaN(tHasta) && ts > tHasta) {
+            return false;
+          }
+          return true;
+        });
       }
-      if (!Number.isNaN(tDesde) && ts < tDesde) {
-        return false;
-      }
-      if (!Number.isNaN(tHasta) && ts > tHasta) {
-        return false;
-      }
-      return true;
-    });
-  }, [rows, filtroDesde, filtroHasta]);
+    }
+    const q = normalizeTextoBusqueda(filtroBeneficiario);
+    if (q) {
+      out = out.filter((row) => {
+        const nombre = getBeneficiarioDisplayName(row);
+        if (!nombre) {
+          return false;
+        }
+        return normalizeTextoBusqueda(nombre).includes(q);
+      });
+    }
+    return out;
+  }, [rows, filtroDesde, filtroHasta, filtroBeneficiario]);
 
   useEffect(() => {
     let cancelled = false;
@@ -379,46 +394,72 @@ export const FormulariosDiligenciadosPage = () => {
 
         {rows.length > 0 ? (
           <div className="mb-4 rounded-2xl border border-slate-200 bg-white/95 p-4 shadow-sm">
-            <h2 className="text-sm font-semibold text-slate-900">
-              Filtrar por fecha
-            </h2>
-            <p className="mt-1 text-xs text-slate-600">
-              Prioridad: fecha en que la sincronización salió bien en este
-              equipo; si no hay copia local enviada, la fecha/hora que viajó en
-              el formulario hacia el servidor (payload), no la de creación del
-              registro en base de datos.
-            </p>
-            <div className="mt-3 flex flex-wrap items-end gap-3">
-              <label className="flex flex-col text-xs font-medium text-slate-700">
-                Desde
-                <input
-                  type="date"
-                  value={filtroDesde}
-                  onChange={(e) => setFiltroDesde(e.target.value)}
-                  className="mt-1 rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-sm text-slate-900"
-                />
-              </label>
-              <label className="flex flex-col text-xs font-medium text-slate-700">
-                Hasta
-                <input
-                  type="date"
-                  value={filtroHasta}
-                  onChange={(e) => setFiltroHasta(e.target.value)}
-                  className="mt-1 rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-sm text-slate-900"
-                />
-              </label>
-              <button
-                type="button"
-                onClick={() => {
-                  setFiltroDesde("");
-                  setFiltroHasta("");
-                }}
-                className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-medium text-slate-800 hover:bg-slate-100"
-              >
-                Limpiar fechas
-              </button>
+            <h2 className="text-sm font-semibold text-slate-900">Filtros</h2>
+
+            <div>
+              <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-600">
+                Nombre del beneficiario
+              </h3>
+              <p className="mt-1 text-xs text-slate-600">
+                Búsqueda por parte del nombre; no distingue mayúsculas ni
+                tildes.
+              </p>
+              <input
+                type="search"
+                value={filtroBeneficiario}
+                onChange={(e) => setFiltroBeneficiario(e.target.value)}
+                placeholder="Ej.: García, María…"
+                className="mt-2 w-full max-w-md rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400"
+                autoComplete="off"
+              />
             </div>
-            {(filtroDesde || filtroHasta) &&
+
+            <div className="mt-4 border-t border-slate-100 pt-4">
+              <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-600">
+                Fecha de envío / del formulario
+              </h3>
+              <p className="mt-1 text-xs text-slate-600">
+                Prioridad: fecha en que la sincronización salió bien en este
+                equipo; si no hay copia local enviada, la fecha/hora que viajó
+                en el formulario hacia el servidor (payload), no la de creación
+                del registro en base de datos.
+              </p>
+              <div className="mt-3 flex flex-wrap items-end gap-3">
+                <label className="flex flex-col text-xs font-medium text-slate-700">
+                  Desde
+                  <input
+                    type="date"
+                    value={filtroDesde}
+                    onChange={(e) => setFiltroDesde(e.target.value)}
+                    className="mt-1 rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-sm text-slate-900"
+                  />
+                </label>
+                <label className="flex flex-col text-xs font-medium text-slate-700">
+                  Hasta
+                  <input
+                    type="date"
+                    value={filtroHasta}
+                    onChange={(e) => setFiltroHasta(e.target.value)}
+                    className="mt-1 rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-sm text-slate-900"
+                  />
+                </label>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setFiltroDesde("");
+                    setFiltroHasta("");
+                    setFiltroBeneficiario("");
+                  }}
+                  className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-medium text-slate-800 hover:bg-slate-100"
+                >
+                  Limpiar filtros
+                </button>
+              </div>
+            </div>
+
+            {(filtroDesde ||
+              filtroHasta ||
+              normalizeTextoBusqueda(filtroBeneficiario)) &&
             rowsFiltrados.length !== rows.length ? (
               <p className="mt-3 text-xs text-slate-600">
                 Mostrando <strong>{rowsFiltrados.length}</strong> de{" "}
@@ -435,28 +476,19 @@ export const FormulariosDiligenciadosPage = () => {
           </div>
         ) : rowsFiltrados.length === 0 ? (
           <div className="rounded-2xl border border-slate-200 bg-white/90 p-6 text-sm text-slate-600 shadow-sm">
-            Ningún registro entra en el rango de fechas elegido. Probá ampliar
-            el intervalo o limpiar el filtro.
+            Ningún registro coincide con los filtros (nombre del beneficiario o
+            rango de fechas). Probá otro texto, ampliar fechas o usar «Limpiar
+            filtros».
           </div>
         ) : (
           <div className="space-y-3">
             {rowsFiltrados.map((row) => {
               const isOpen = selectedId === row.id_formulario;
               const h = row.historial;
-              const s = row.server;
               const precarga = precargaMap.get(row.id_formulario) ?? null;
               const precargado = !!precarga;
-              // Preferir mostrar el nombre completo del beneficiario si está disponible
-              const beneficiarioName =
-                (h?.datos_formulario as Record<string, unknown>)
-                  ?.nombres_apellidos_beneficiario ??
-                (s?.datos_formulario as Record<string, unknown>)
-                  ?.nombres_apellidos_beneficiario;
-              const tituloUsuario =
-                typeof beneficiarioName === "string" &&
-                beneficiarioName.trim() !== ""
-                  ? beneficiarioName
-                  : "No diligenciado";
+              const nombreBenef = getBeneficiarioDisplayName(row);
+              const tituloUsuario = nombreBenef || "No diligenciado";
               const refTs = getFechaReferenciaEnvio(row);
               const tituloFechaLabel = formatDateTime(refTs);
               return (

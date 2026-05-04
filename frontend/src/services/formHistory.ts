@@ -85,6 +85,30 @@ export function getFechaReferenciaEnvio(row: DisplayRow): number {
   return NaN;
 }
 
+/** Nombre del beneficiario desde historial local o fila del servidor (mismo campo que el formulario). */
+export function getBeneficiarioDisplayName(row: DisplayRow): string {
+  const h = row.historial;
+  const s = row.server;
+  const raw =
+    (h?.datos_formulario as Record<string, unknown> | undefined)
+      ?.nombres_apellidos_beneficiario ??
+    (s?.datos_formulario as Record<string, unknown> | undefined)
+      ?.nombres_apellidos_beneficiario;
+  if (typeof raw === "string" && raw.trim() !== "") {
+    return raw.trim();
+  }
+  return "";
+}
+
+/** Normaliza texto para búsqueda insensible a mayúsculas y tildes. */
+export function normalizeTextoBusqueda(s: string): string {
+  return s
+    .trim()
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/\p{M}/gu, "");
+}
+
 export function parseFiltroDiaInicio(isoDay: string): number {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(isoDay)) {
     return NaN;
