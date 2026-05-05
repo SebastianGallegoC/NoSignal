@@ -252,6 +252,57 @@ export function matrizCaracterizacionFilename(form: OfflineForm): string {
 export async function buildMatrizCaracterizacionWorkbook(
   form: OfflineForm,
 ): Promise<ExcelJS.Workbook> {
+  // Intentar cargar plantilla desde URL configurada o ruta pública
+  const templateUrl = import.meta.env.VITE_MATRIZ_TEMPLATE_URL ??
+    "/PLANTILLA.xlsx";
+  const resolvedTemplateUrl =
+    templateUrl.startsWith("/") && typeof window !== "undefined"
+      ? new URL(templateUrl, window.location.origin).toString()
+      : templateUrl;
+
+  try {
+    const res = await fetch(resolvedTemplateUrl);
+    if (res.ok) {
+      const buf = await res.arrayBuffer();
+      const wb = new ExcelJS.Workbook();
+      await wb.xlsx.load(buf);
+      const ws = wb.getWorksheet(MATRIZ_SHEET_NAME) ?? wb.worksheets[0];
+
+      // Asegurarnos de que la hoja exista
+      if (!ws) {
+        // Fallback al builder original si no se encuentra la hoja
+        console.warn(
+          `matriz: plantilla cargada pero no contiene la hoja ${MATRIZ_SHEET_NAME}`,
+        );
+        return buildMatrizCaracterizacionWorkbookFromScratch(form);
+      }
+
+      const cells = buildMatrizCaracterizacionRow(form);
+
+      // Escribir valores en la fila 8, columnas 1..76 manteniendo estilos
+      for (let i = 0; i < cells.length; i++) {
+        const col = i + 1;
+        const cell = ws.getCell(8, col);
+        cell.value = cells[i] as string;
+        // preservar estilo existente; si no existe, aplicar wrapText
+        if (!cell.alignment) {
+          cell.alignment = { wrapText: true, vertical: "top" };
+        }
+      }
+
+      return wb;
+    }
+  } catch (e) {
+    // Si falla la carga de plantilla, continuamos con fallback
+    console.warn("matriz: no se pudo cargar plantilla, usando builder interno", e);
+  }
+
+  return buildMatrizCaracterizacionWorkbookFromScratch(form);
+}
+
+async function buildMatrizCaracterizacionWorkbookFromScratch(
+  form: OfflineForm,
+): Promise<ExcelJS.Workbook> {
   const wb = new ExcelJS.Workbook();
   const ws = wb.addWorksheet(MATRIZ_SHEET_NAME);
 

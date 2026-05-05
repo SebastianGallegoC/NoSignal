@@ -144,7 +144,37 @@ describe("matrizCaracterizacionFilename", () => {
 });
 
 describe("buildMatrizCaracterizacionWorkbook", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.restoreAllMocks();
+  });
+
+  it("usa PLANTILLA.xlsx por defecto para construir el libro", async () => {
+    const template = new ExcelJS.Workbook();
+    const ws = template.addWorksheet("F-PSA-08");
+    ws.getCell(7, 1).value = "ID";
+    const templateBuffer = await template.xlsx.writeBuffer();
+
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      arrayBuffer: async () => templateBuffer,
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    const f = minimalForm();
+    f.datos_formulario = { entidad_aportante: "Desde plantilla" };
+    const wb = await buildMatrizCaracterizacionWorkbook(f);
+
+    expect(String(fetchMock.mock.calls[0][0])).toContain("/PLANTILLA.xlsx");
+    const wsOut = wb.getWorksheet("F-PSA-08");
+    expect(wsOut?.getCell(8, 2).value).toBe("Desde plantilla");
+  });
+
   it("escribe título, cabeceras fila 7 y datos fila 8; roundtrip conserva valores", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({ ok: false, arrayBuffer: async () => new ArrayBuffer(0) }),
+    );
     const f = minimalForm();
     f.datos_formulario = {
       entidad_aportante: "CENS",
@@ -181,12 +211,23 @@ describe("downloadMatrizCaracterizacionXlsx", () => {
     const f = minimalForm();
     f.datos_formulario = { entidad_aportante: "X" };
 
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({ ok: false, arrayBuffer: async () => new ArrayBuffer(0) }),
+    );
     const createSpy = vi.fn(() => "blob:test-matriz");
     const revokeSpy = vi.fn();
-    vi.stubGlobal("URL", {
-      ...URL,
-      createObjectURL: createSpy,
-      revokeObjectURL: revokeSpy,
+    const origCreate = (URL as unknown as { createObjectURL?: unknown }).createObjectURL;
+    const origRevoke = (URL as unknown as { revokeObjectURL?: unknown }).revokeObjectURL;
+    Object.defineProperty(URL, "createObjectURL", {
+      configurable: true,
+      writable: true,
+      value: createSpy,
+    });
+    Object.defineProperty(URL, "revokeObjectURL", {
+      configurable: true,
+      writable: true,
+      value: revokeSpy,
     });
 
     const clickSpy = vi.fn();
@@ -222,5 +263,15 @@ describe("downloadMatrizCaracterizacionXlsx", () => {
 
     createElSpy.mockRestore();
     appendSpy.mockRestore();
+    Object.defineProperty(URL, "createObjectURL", {
+      configurable: true,
+      writable: true,
+      value: origCreate,
+    });
+    Object.defineProperty(URL, "revokeObjectURL", {
+      configurable: true,
+      writable: true,
+      value: origRevoke,
+    });
   });
 });
