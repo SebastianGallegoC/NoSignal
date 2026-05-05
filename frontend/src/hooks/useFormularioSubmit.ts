@@ -177,6 +177,7 @@ export const useFormularioSubmit = ({
           message:
             "El formulario quedó guardado en este dispositivo y en cola. Se intentará enviar al servidor cuando recuperes Wi‑Fi o datos móviles.",
           submittedForm: payload,
+          isEdit: !!_originalFechaHora,
         });
       } else {
         setSubmitFeedback("Enviando al servidor (puede tardar si hay muchas fotos)…");
@@ -191,6 +192,7 @@ export const useFormularioSubmit = ({
                 ? `Hay conexión, pero la sincronización no se completó. Detalle: ${detail}`
                 : "Hay conexión, pero la sincronización no se completó. Revisá «Errores sync» más abajo. Podés usar «Sincronizar ahora» cuando quieras reintentar.",
             submittedForm: payload,
+            isEdit: !!_originalFechaHora,
           });
         } else if (result.sent > 0) {
           setEnvioModal({
@@ -199,6 +201,7 @@ export const useFormularioSubmit = ({
             message:
               "El formulario se guardó y se sincronizó con el servidor.",
             submittedForm: payload,
+            isEdit: !!_originalFechaHora,
           });
         } else {
           setEnvioModal({
@@ -207,6 +210,7 @@ export const useFormularioSubmit = ({
             message:
               "El formulario quedó guardado localmente en espera de envío (por ejemplo, otro intento en curso o reintento con espera). Se enviará automáticamente cuando corresponda.",
             submittedForm: payload,
+            isEdit: !!_originalFechaHora,
           });
         }
       }

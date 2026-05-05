@@ -43,6 +43,7 @@ export const enqueueForm = async (form: OfflineForm): Promise<void> => {
     fecha_hora: form.fecha_hora,
     estado: 'PENDIENTE',
     fecha_envio: existingHistorial?.fecha_envio,
+    fecha_actualizacion: form.fecha_hora,
     datos_formulario: form.datos_formulario,
     gps: form.gps,
     fotos: form.fotos,
@@ -111,6 +112,7 @@ export const syncPendingForms = async (): Promise<SyncRunResult> => {
     .sortBy('fecha_hora');
 
   for (const form of pending) {
+    const existingHistorial = await db.historialFormularios.get(form.id_formulario);
     const intentos = form.errores_sync ?? 0;
     // Backoff solo tras fallos previos: con intentos === 0, fecha_hora es reciente y
     // compararla con delay bloqueaba el primer envío ~30s (o hasta que pasara el backoff).
@@ -171,7 +173,8 @@ export const syncPendingForms = async (): Promise<SyncRunResult> => {
 
       await db.historialFormularios.update(form.id_formulario, {
         estado: 'ENVIADO',
-        fecha_envio: new Date().toISOString(),
+        fecha_envio: existingHistorial?.fecha_envio ?? form.fecha_hora,
+        fecha_actualizacion: form.fecha_hora,
         ultimo_error: undefined,
         datos_formulario: form.datos_formulario,
         gps: form.gps,

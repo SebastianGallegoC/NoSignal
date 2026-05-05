@@ -127,6 +127,7 @@ export interface FormReadItem {
   id_formulario: string;
   id_usuario: string;
   fecha_hora: string;
+  fecha_actualizacion: string;
   latitud: number;
   longitud: number;
   precision: number | null;

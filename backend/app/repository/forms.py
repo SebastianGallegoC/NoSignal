@@ -52,6 +52,7 @@ async def list_forms_for_read(session: AsyncSession, limit: int) -> list[FormRea
             FormRecord.id_formulario,
             FormRecord.id_usuario,
             FormRecord.fecha_hora,
+            FormRecord.fecha_actualizacion,
             FormRecord.datos_formulario,
             FormRecord.fotos,
             cast(ST_AsGeoJSON(FormRecord.gps), String).label("geojson"),
@@ -70,7 +71,11 @@ async def list_forms_for_read(session: AsyncSession, limit: int) -> list[FormRea
             continue
         lon, lat = float(coords[0]), float(coords[1])
         fh = row["fecha_hora"]
+        fa = row["fecha_actualizacion"] or fh
         fecha_iso = fh.isoformat() if hasattr(fh, "isoformat") else str(fh)
+        fecha_actualizacion_iso = (
+            fa.isoformat() if hasattr(fa, "isoformat") else str(fa)
+        )
         datos = row["datos_formulario"] if isinstance(row["datos_formulario"], dict) else {}
         fotos_list = fotos_json_for_api_list(row["fotos"])
         items.append(
@@ -78,6 +83,7 @@ async def list_forms_for_read(session: AsyncSession, limit: int) -> list[FormRea
                 id_formulario=row["id_formulario"],
                 id_usuario=row["id_usuario"],
                 fecha_hora=fecha_iso,
+                fecha_actualizacion=fecha_actualizacion_iso,
                 latitud=lat,
                 longitud=lon,
                 precision=None,

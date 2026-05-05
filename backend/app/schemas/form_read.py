@@ -9,6 +9,7 @@ class FormReadItem(BaseModel):
     id_formulario: str
     id_usuario: str
     fecha_hora: str
+    fecha_actualizacion: str
     latitud: float
     longitud: float
     precision: float | None = Field(default=None, description="No almacenada en BD; null.")

@@ -33,6 +33,7 @@ export interface HistorialForm {
   fecha_hora: string;
   estado: EstadoHistorial;
   fecha_envio?: string;
+  fecha_actualizacion?: string;
   ultimo_error?: string;
   /** Copia local de respuestas (necesaria tras ENVIADO: se borra la fila en `formularios`). */
   datos_formulario?: Record<string, unknown>;

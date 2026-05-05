@@ -1011,18 +1011,13 @@ export const FormulariosDiligenciadosPage = () => {
               const tituloUsuario = nombreBenef || "No diligenciado";
               const refTs = getFechaReferenciaEnvio(row);
               const tituloFechaLabel = formatDateTimeNoSeconds(refTs);
-              const ultimaActualizacionTs = row.historial?.fecha_hora
-                ? Date.parse(row.historial.fecha_hora)
-                : row.precargaSolo?.fecha_precarga
-                  ? Date.parse(row.precargaSolo.fecha_precarga)
-                  : row.server?.fecha_hora
-                    ? Date.parse(row.server.fecha_hora)
-                    : NaN;
-              const ultimaActualizacionLabel = Number.isNaN(
-                ultimaActualizacionTs,
-              )
-                ? "—"
-                : formatDateTimeNoSeconds(ultimaActualizacionTs);
+              const ultimaActualizacionLabel =
+                row.server?.fecha_actualizacion ??
+                row.historial?.fecha_actualizacion ??
+                row.historial?.fecha_hora ??
+                row.server?.fecha_hora ??
+                row.precargaSolo?.fecha_precarga ??
+                "—";
               const effectiveDetailSource: DetailSourceKind =
                 isOpen && detailSource != null
                   ? detailSource

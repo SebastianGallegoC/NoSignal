@@ -16,6 +16,7 @@ async def test_persist_form_updates_datos_when_id_exists(monkeypatch):
         id_formulario="f-upd",
         id_usuario="u-old",
         fecha_hora=datetime(2026, 1, 1, tzinfo=timezone.utc),
+        fecha_actualizacion=datetime(2026, 1, 1, tzinfo=timezone.utc),
         gps=None,
         datos_formulario={"nombres_apellidos_beneficiario": "Viejo"},
         fotos=[],
@@ -44,5 +45,7 @@ async def test_persist_form_updates_datos_when_id_exists(monkeypatch):
     assert result is existing
     assert existing.datos_formulario["nombres_apellidos_beneficiario"] == "Nuevo"
     assert existing.id_usuario == "u-new"
+    assert existing.fecha_hora == datetime(2026, 1, 1, tzinfo=timezone.utc)
+    assert existing.fecha_actualizacion == datetime(2026, 5, 4, 12, tzinfo=timezone.utc)
     session.commit.assert_awaited_once()
     session.refresh.assert_awaited_once()

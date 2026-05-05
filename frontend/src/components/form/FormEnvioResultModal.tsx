@@ -13,6 +13,8 @@ export type FormEnvioResultState = {
   message: string;
   /** Formulario guardado en cola; permite descargar la matriz F-PSA-08. */
   submittedForm?: OfflineForm;
+  /** Indica si el modal corresponde al resultado de editar un formulario */
+  isEdit?: boolean;
 };
 
 type Props = {

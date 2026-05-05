@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { ChangeEvent } from "react";
 import { useForm } from "react-hook-form";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 import {
   FormEnvioResultModal,
@@ -38,10 +38,7 @@ import {
 import type { FotoForm } from "@/services/db";
 import { randomUuid } from "@/lib/randomUuid";
 import { useAuthStore } from "@/store/useAuthStore";
-import {
-  REQUIRED_FIELDS,
-  type FormValues,
-} from "@/types/formFields";
+import { REQUIRED_FIELDS, type FormValues } from "@/types/formFields";
 
 const buildExternalMapUrl = (latitud: number, longitud: number): string => {
   return `https://www.openstreetmap.org/?mlat=${latitud}&mlon=${longitud}#map=18/${latitud}/${longitud}`;
@@ -100,10 +97,12 @@ export const FormularioPage = () => {
   const [idUsuario, setIdUsuario] = useState(
     () => loadedDraft?.idUsuario ?? "",
   );
-  const [fotos, setFotos] = useState<
-    FotoForm[]
-  >(() => loadedDraft?.fotos ?? []);
-  const [visitaFotoSeleccionada, setVisitaFotoSeleccionada] = useState<1 | 2 | 3 | null>(null);
+  const [fotos, setFotos] = useState<FotoForm[]>(
+    () => loadedDraft?.fotos ?? [],
+  );
+  const [visitaFotoSeleccionada, setVisitaFotoSeleccionada] = useState<
+    1 | 2 | 3 | null
+  >(null);
   const [previewFoto, setPreviewFoto] = useState<ImagePreview | null>(null);
   const [formId, setFormId] = useState(
     () => loadedDraft?.formId ?? randomUuid(),
@@ -121,6 +120,7 @@ export const FormularioPage = () => {
   const [envioModal, setEnvioModal] = useState<FormEnvioResultState | null>(
     null,
   );
+  const navigate = useNavigate();
   const [openSections, setOpenSections] = useState<Set<string>>(
     () => new Set(["actividad"]),
   );
@@ -403,7 +403,13 @@ export const FormularioPage = () => {
           title={envioModal.title}
           message={envioModal.message}
           submittedForm={envioModal.submittedForm}
-          onClose={() => setEnvioModal(null)}
+          onClose={() => {
+            const shouldGo = envioModal?.isEdit;
+            setEnvioModal(null);
+            if (shouldGo) {
+              navigate("/formularios");
+            }
+          }}
         />
       ) : null}
       <div className="mx-auto flex w-full max-w-5xl flex-col gap-6">

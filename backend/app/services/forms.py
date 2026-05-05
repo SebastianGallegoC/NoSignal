@@ -35,7 +35,7 @@ async def persist_form(session: AsyncSession, payload: FormPayload) -> FormRecor
             )
             existing.fotos = new_paths
         existing.id_usuario = payload.id_usuario
-        existing.fecha_hora = fecha_hora
+        existing.fecha_actualizacion = fecha_hora
         existing.gps = gps_point
         existing.datos_formulario = dict(payload.datos_formulario)
         await session.commit()
@@ -52,6 +52,7 @@ async def persist_form(session: AsyncSession, payload: FormPayload) -> FormRecor
         id_formulario=payload.id_formulario,
         id_usuario=payload.id_usuario,
         fecha_hora=fecha_hora,
+        fecha_actualizacion=fecha_hora,
         gps=gps_point,
         datos_formulario=payload.datos_formulario,
         fotos=fotos,
