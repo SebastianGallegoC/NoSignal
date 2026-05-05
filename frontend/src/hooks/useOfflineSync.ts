@@ -2,6 +2,8 @@ import { useEffect } from 'react';
 
 import { purgeExpiredForms, syncPendingForms } from '../services/sync';
 
+const ONLINE_SYNC_DEBOUNCE_MS = 1200;
+
 export const useOfflineSync = (): void => {
   useEffect(() => {
     const runSync = async () => {
@@ -9,15 +11,25 @@ export const useOfflineSync = (): void => {
       await syncPendingForms();
     };
 
-    runSync();
+    void runSync();
 
+    let onlineTimer: ReturnType<typeof setTimeout> | null = null;
     const handleOnline = () => {
-      runSync();
+      if (onlineTimer != null) {
+        window.clearTimeout(onlineTimer);
+      }
+      onlineTimer = window.setTimeout(() => {
+        onlineTimer = null;
+        void runSync();
+      }, ONLINE_SYNC_DEBOUNCE_MS);
     };
 
     window.addEventListener('online', handleOnline);
     return () => {
       window.removeEventListener('online', handleOnline);
+      if (onlineTimer != null) {
+        window.clearTimeout(onlineTimer);
+      }
     };
   }, []);
 };

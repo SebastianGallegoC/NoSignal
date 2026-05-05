@@ -158,11 +158,12 @@ export function mapServerFotos(
 export function getFechaReferenciaEnvio(row: DisplayRow): number {
   const h = row.historial;
   const s = row.server;
-  if (h?.fecha_envio) {
-    return parseISODate(h.fecha_envio);
-  }
+  // Servidor: fecha_hora = primer registro en BD (no cambia en ediciones).
   if (s?.fecha_hora) {
     return parseISODate(s.fecha_hora);
+  }
+  if (h?.fecha_envio) {
+    return parseISODate(h.fecha_envio);
   }
   if (h?.fecha_hora) {
     return parseISODate(h.fecha_hora);

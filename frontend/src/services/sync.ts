@@ -1,3 +1,4 @@
+import { earliestIso } from '@/lib/formatDateTime';
 import { db, type OfflineForm } from './db';
 import { postForm } from './api';
 
@@ -38,12 +39,14 @@ export const enqueueForm = async (form: OfflineForm): Promise<void> => {
     errores_sync: 0,
   });
   const fechaAct = form.fecha_actualizacion?.trim() || form.fecha_hora;
+  const fechaEnvioCanonica =
+    earliestIso(existingHistorial?.fecha_envio, form.fecha_hora) ?? form.fecha_hora;
   await db.historialFormularios.put({
     id_formulario: form.id_formulario,
     id_usuario: form.id_usuario,
     fecha_hora: form.fecha_hora,
     estado: 'PENDIENTE',
-    fecha_envio: existingHistorial?.fecha_envio ?? form.fecha_hora,
+    fecha_envio: fechaEnvioCanonica,
     fecha_actualizacion: fechaAct,
     datos_formulario: form.datos_formulario,
     gps: form.gps,
@@ -52,7 +55,10 @@ export const enqueueForm = async (form: OfflineForm): Promise<void> => {
 };
 
 export const countPendingForms = async (): Promise<number> => {
-  return db.formularios.where('estado_sincronizacion').equals('PENDIENTE').count();
+  return db.formularios
+    .where('estado_sincronizacion')
+    .anyOf(['PENDIENTE', 'SINCRONIZANDO'])
+    .count();
 };
 
 export const countErrorForms = async (): Promise<number> => {
@@ -109,7 +115,7 @@ export const syncPendingForms = async (): Promise<SyncRunResult> => {
 
   const pending = await db.formularios
     .where('estado_sincronizacion')
-    .anyOf(['PENDIENTE', 'ERROR'])
+    .anyOf(['PENDIENTE', 'ERROR', 'SINCRONIZANDO'])
     .sortBy('fecha_hora');
 
   for (const form of pending) {
@@ -173,9 +179,11 @@ export const syncPendingForms = async (): Promise<SyncRunResult> => {
       }
 
       const fechaActOk = form.fecha_actualizacion?.trim() || form.fecha_hora;
+      const fechaEnvioOk =
+        earliestIso(existingHistorial?.fecha_envio, form.fecha_hora) ?? form.fecha_hora;
       await db.historialFormularios.update(form.id_formulario, {
         estado: 'ENVIADO',
-        fecha_envio: existingHistorial?.fecha_envio ?? form.fecha_hora,
+        fecha_envio: fechaEnvioOk,
         fecha_actualizacion: fechaActOk,
         ultimo_error: undefined,
         datos_formulario: form.datos_formulario,

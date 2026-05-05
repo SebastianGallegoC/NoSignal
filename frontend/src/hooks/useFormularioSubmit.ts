@@ -208,11 +208,17 @@ export const useFormularioSubmit = ({
             isEdit: !!_originalFechaHora,
           });
         } else {
+          const skipHint =
+            result.skipped > 0
+              ? ` Hay ${result.skipped} envío(s) con espera de reintento (la app espera unos segundos tras un fallo de red); podés usar «Sincronizar ahora» en un momento.`
+              : "";
           setEnvioModal({
             tone: "warning",
             title: "En cola para sincronizar",
             message:
-              "El formulario quedó guardado localmente en espera de envío (por ejemplo, otro intento en curso o reintento con espera). Se enviará automáticamente cuando corresponda.",
+              "El formulario quedó guardado localmente en espera de envío (por ejemplo, otro intento en curso o la cola está procesando otro formulario)." +
+              skipHint +
+              " Se enviará automáticamente al recuperar conexión estable.",
             submittedForm: payload,
             isEdit: !!_originalFechaHora,
           });

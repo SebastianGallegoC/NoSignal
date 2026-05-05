@@ -54,6 +54,33 @@ export function parseISODate(dateString: string | null | undefined): number {
   return new Date(trimmed).getTime();
 }
 
+/** El instante ISO más temprano (p. ej. conservar fecha de primer envío vs reenvíos). */
+export function earliestIso(
+  a: string | null | undefined,
+  b: string | null | undefined,
+): string | undefined {
+  const sa = typeof a === 'string' && a.trim() !== '' ? a.trim() : '';
+  const sb = typeof b === 'string' && b.trim() !== '' ? b.trim() : '';
+  if (!sa && !sb) {
+    return undefined;
+  }
+  if (!sa) {
+    return sb;
+  }
+  if (!sb) {
+    return sa;
+  }
+  const ta = parseISODate(sa);
+  const tb = parseISODate(sb);
+  if (Number.isNaN(ta)) {
+    return sb;
+  }
+  if (Number.isNaN(tb)) {
+    return sa;
+  }
+  return ta <= tb ? sa : sb;
+}
+
 /** Formatea un instante ISO (p. ej. desde PostgreSQL/FastAPI) para mostrar en UI. */
 export function formatISODateTimeForDisplay(iso: string | null | undefined): string {
   if (iso == null || String(iso).trim() === '') {
