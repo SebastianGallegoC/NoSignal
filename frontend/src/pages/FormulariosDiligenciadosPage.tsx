@@ -15,7 +15,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { ACCESS_TOKEN_KEY } from "@/lib/authStorage";
 import { formatDateTime } from "@/lib/formatDateTime";
-import { randomUuid } from "@/lib/randomUuid";
 import {
   deleteFormFromApi,
   fetchFormPhotoDataUrl,
@@ -407,7 +406,8 @@ export const FormulariosDiligenciadosPage = () => {
       const draft: FormDraftV1 = {
         v: 1,
         savedAt: new Date().toISOString(),
-        formId: randomUuid(),
+        // Reutilizar el mismo id para editar el formulario existente (no clonar).
+        formId: row.id_formulario,
         idUsuario: (() => {
           const u = row.server?.id_usuario ?? row.historial?.id_usuario;
           if (u) {
@@ -820,7 +820,7 @@ export const FormulariosDiligenciadosPage = () => {
                               type="button"
                               onClick={() => usarComoBase(row)}
                             >
-                              Usar como base para nueva visita
+                              Editar este formulario
                             </Button>
                             <Button
                               type="button"
