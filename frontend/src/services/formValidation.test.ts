@@ -33,4 +33,22 @@ describe("formValidation — envío mínimo", () => {
     const issues = validateOfflineFormPayload(form);
     expect(issues).toHaveLength(0);
   });
+
+  it("validateOfflineFormPayload exige visita 1/2/3 en cada foto", () => {
+    const datos: Record<string, unknown> = {};
+    for (const k of REQUIRED_FIELDS) {
+      datos[k] = "";
+    }
+    const form: OfflineForm = {
+      id_formulario: "x",
+      id_usuario: "u",
+      fecha_hora: new Date().toISOString(),
+      gps: { latitud: 4.6, longitud: -74.08, precision: 10 },
+      datos_formulario: datos,
+      fotos: [{ nombre_archivo: "a.jpg", data: "data:image/jpeg;base64,AA==" }],
+      estado_sincronizacion: "PENDIENTE",
+    };
+    const issues = validateOfflineFormPayload(form);
+    expect(issues.map((i) => i.code)).toContain("fotos_visita_required");
+  });
 });

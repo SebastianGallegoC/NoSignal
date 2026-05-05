@@ -42,4 +42,11 @@ describe("validateFormPayload", () => {
     const errors = validateFormPayload(form);
     expect(errors).toContain("fotos_count");
   });
+
+  it("marca error cuando una foto no tiene visita asociada", () => {
+    const form = baseForm();
+    form.fotos = [{ nombre_archivo: "f1.jpg", data: "data:image/jpeg;base64,abc" }];
+    const errors = validateFormPayload(form);
+    expect(errors).toContain("fotos_visita_required");
+  });
 });

@@ -111,6 +111,16 @@ export const validateOfflineFormPayload = (form: OfflineForm): ValidationIssue[]
     });
   }
 
+  if (
+    Array.isArray(form.fotos) &&
+    form.fotos.some((f) => f.visita !== 1 && f.visita !== 2 && f.visita !== 3)
+  ) {
+    issues.push({
+      code: "fotos_visita_required",
+      message: "Cada foto debe estar asociada a visita 1, 2 o 3.",
+    });
+  }
+
   return issues;
 };
 
