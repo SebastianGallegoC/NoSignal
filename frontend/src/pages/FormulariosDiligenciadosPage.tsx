@@ -9,6 +9,11 @@ import { Link, useNavigate } from "react-router-dom";
 
 import { ConfirmDeleteFormModal } from "@/components/ConfirmDeleteFormModal";
 import {
+  agentSessionLog,
+  beneficiaryFieldProbe,
+  idSuffix,
+} from "@/debug/agentSessionLog";
+import {
   FormularioRespuestaReadOnly,
   type FormularioSnapshot,
 } from "@/components/form/FormularioRespuestaReadOnly";
@@ -283,6 +288,21 @@ export const FormulariosDiligenciadosPage = () => {
         setDetailPrecarga(precarga);
       }
       if (row.server) {
+        // #region agent log
+        agentSessionLog({
+          hypothesisId: "H3",
+          location: "FormulariosDiligenciadosPage.tsx:selectRow",
+          message: "detail_snapshot_server",
+          data: {
+            idSuf: idSuffix(row.id_formulario),
+            ben: beneficiaryFieldProbe(
+              row.server.datos_formulario as Record<string, unknown>,
+            ),
+            datosJsonLen: JSON.stringify(row.server.datos_formulario ?? {})
+              .length,
+          },
+        });
+        // #endregion
         setDetailSnapshot({
           datos_formulario: (row.server.datos_formulario ?? {}) as Record<
             string,

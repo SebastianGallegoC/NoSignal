@@ -1,4 +1,9 @@
 import { ACCESS_TOKEN_KEY } from '@/lib/authStorage';
+import {
+  agentSessionLog,
+  beneficiaryFieldProbe,
+  idSuffix,
+} from '@/debug/agentSessionLog';
 
 import type { OfflineForm } from './db';
 
@@ -153,14 +158,47 @@ export const listFormsFromApi = async (limit = 200): Promise<FormReadItem[]> => 
     throw new Error(t || `forms_list_${response.status}`);
   }
   const body = (await response.json()) as { items?: FormReadItem[] };
-  return Array.isArray(body.items) ? body.items : [];
+  const items = Array.isArray(body.items) ? body.items : [];
+  // #region agent log
+  agentSessionLog({
+    hypothesisId: "H2",
+    location: "api.ts:listFormsFromApi",
+    message: "forms_list_response",
+    data: {
+      limit,
+      count: items.length,
+      cacheControl: response.headers.get("cache-control"),
+      age: response.headers.get("age"),
+      date: response.headers.get("date"),
+      probes: items.slice(0, 80).map((it) => ({
+        idSuf: idSuffix(it.id_formulario),
+        ben: beneficiaryFieldProbe(it.datos_formulario),
+        datosJsonLen: JSON.stringify(it.datos_formulario ?? {}).length,
+      })),
+    },
+  });
+  // #endregion
+  return items;
 };
 
 export const postForm = async (payload: OfflineForm): Promise<Response> => {
   const body = payloadForApi(payload);
+  // #region agent log
+  agentSessionLog({
+    hypothesisId: "H1",
+    location: "api.ts:postForm",
+    message: "forms_post_payload",
+    data: {
+      idSuf: idSuffix(body.id_formulario),
+      ben: beneficiaryFieldProbe(body.datos_formulario),
+      datosJsonLen: JSON.stringify(body.datos_formulario ?? {}).length,
+      datosKeysSample: Object.keys(body.datos_formulario ?? {}).slice(0, 40),
+    },
+  });
+  // #endregion
   // FastAPI suele redirigir /forms -> /forms/ (307). En algunos despliegues ese redirect
   // no incluye cabeceras CORS y el navegador lo bloquea; por eso usamos la ruta final.
-  return fetch(`${API_BASE}/api/v1/forms/`, {
+  const res = await fetch(`${API_BASE}/api/v1/forms/`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -169,6 +207,19 @@ export const postForm = async (payload: OfflineForm): Promise<Response> => {
     },
     body: JSON.stringify(body),
   });
+  // #region agent log
+  agentSessionLog({
+    hypothesisId: "H1",
+    location: "api.ts:postForm",
+    message: "forms_post_response",
+    data: {
+      idSuf: idSuffix(body.id_formulario),
+      ok: res.ok,
+      status: res.status,
+    },
+  });
+  // #endregion
+  return res;
 };
 
 export const fetchFormPhotoDataUrl = async (

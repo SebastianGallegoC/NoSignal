@@ -6,7 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.form_record import FormRecord
 from app.repository.forms import create_form, get_form_by_id
 from app.schemas.form_payload import FormPayload
-from app.services.storage import save_photos
+from app.services.storage import normalize_stored_foto_paths, safe_delete_stored_photos, save_photos
 
 
 def parse_fecha_hora_iso(value: str) -> datetime:
@@ -18,18 +18,35 @@ def parse_fecha_hora_iso(value: str) -> datetime:
 
 
 async def persist_form(session: AsyncSession, payload: FormPayload) -> FormRecord:
+    fecha_hora = parse_fecha_hora_iso(payload.fecha_hora)
+    gps_point = WKTElement(f"POINT({payload.gps.longitud} {payload.gps.latitud})", srid=4326)
+
     existing = await get_form_by_id(session, payload.id_formulario)
     if existing:
+        # Reenvío con el mismo id (p. ej. edición desde otro dispositivo): actualizar datos en BD.
+        old_paths = normalize_stored_foto_paths(existing.fotos)
+        if payload.fotos:
+            safe_delete_stored_photos(old_paths)
+            new_paths = save_photos(
+                payload.id_usuario,
+                payload.id_formulario,
+                payload.fotos,
+                fecha_hora,
+            )
+            existing.fotos = new_paths
+        existing.id_usuario = payload.id_usuario
+        existing.fecha_hora = fecha_hora
+        existing.gps = gps_point
+        existing.datos_formulario = dict(payload.datos_formulario)
+        await session.commit()
+        await session.refresh(existing)
         return existing
 
-    fecha_hora = parse_fecha_hora_iso(payload.fecha_hora)
     fotos = (
         save_photos(payload.id_usuario, payload.id_formulario, payload.fotos, fecha_hora)
         if payload.fotos
         else []
     )
-
-    gps_point = WKTElement(f"POINT({payload.gps.longitud} {payload.gps.latitud})", srid=4326)
 
     record = FormRecord(
         id_formulario=payload.id_formulario,
