@@ -303,6 +303,48 @@ export const FormulariosDiligenciadosPage = () => {
           },
         });
         // #endregion
+
+        const serverFotos =
+          mapServerFotos(row.server.id_formulario, row.server.fotos ?? []) ??
+          [];
+        const localFotos =
+          row.historial?.fotos ??
+          precarga?.fotos ??
+          live?.fotos ??
+          [];
+
+        const localVisitas = {
+          v1: localFotos.filter((f) => f.visita === 1).length,
+          v2: localFotos.filter((f) => f.visita === 2).length,
+          v3: localFotos.filter((f) => f.visita === 3).length,
+          null: localFotos.filter((f) => f.visita == null).length,
+          typeCounts: {
+            number: localFotos.filter((f) => typeof f.visita === "number").length,
+            undefined: localFotos.filter((f) => f.visita === undefined).length,
+          },
+          total: localFotos.length,
+        };
+        const serverVisitas = {
+          v1: serverFotos.filter((f) => f.visita === 1).length,
+          v2: serverFotos.filter((f) => f.visita === 2).length,
+          v3: serverFotos.filter((f) => f.visita === 3).length,
+          null: serverFotos.filter((f) => f.visita == null).length,
+          total: serverFotos.length,
+        };
+
+        // #region agent log
+        agentSessionLog({
+          hypothesisId: "H6",
+          location: "FormulariosDiligenciadosPage.tsx:selectRow",
+          message: "server_vs_local_fotos_visita",
+          data: {
+            idSuf: idSuffix(row.id_formulario),
+            serverVisitas,
+            localVisitas,
+          },
+        });
+        // #endregion
+
         setDetailSnapshot({
           datos_formulario: (row.server.datos_formulario ?? {}) as Record<
             string,
@@ -313,10 +355,7 @@ export const FormulariosDiligenciadosPage = () => {
             longitud: row.server.longitud,
             precision: row.server.precision ?? null,
           },
-          fotos: mapServerFotos(
-            row.server.id_formulario,
-            row.server.fotos ?? [],
-          ),
+          fotos: serverFotos,
         });
         setDetailSource("server");
       } else if (precarga) {
