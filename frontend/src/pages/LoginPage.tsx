@@ -55,10 +55,6 @@ export const LoginPage = () => {
       <div className="w-full max-w-md rounded-3xl border border-teal-100 bg-white/90 p-8 shadow-[0_18px_40px_-35px_rgba(15,118,110,0.6)]">
         <p className="text-xs font-semibold uppercase tracking-[0.35em] text-teal-700">NoSignal</p>
         <h1 className="mt-2 text-2xl font-semibold">Iniciar sesión</h1>
-        <p className="mt-2 text-sm text-slate-600">
-          Necesitás conexión para obtener el token. El formulario offline valida la expiración del JWT en el
-          dispositivo.
-        </p>
         <form className="mt-6 flex flex-col gap-4" onSubmit={onSubmit}>
           <label className="flex flex-col gap-1 text-sm font-medium text-slate-800">
             Usuario

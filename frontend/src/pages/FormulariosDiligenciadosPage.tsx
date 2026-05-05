@@ -973,6 +973,16 @@ export const FormulariosDiligenciadosPage = () => {
               const tituloUsuario = nombreBenef || "No diligenciado";
               const refTs = getFechaReferenciaEnvio(row);
               const tituloFechaLabel = formatDateTime(refTs);
+              const ultimaActualizacionTs = Date.parse(
+                h?.fecha_envio ??
+                  row.server?.fecha_hora ??
+                  h?.fecha_hora ??
+                  precarga?.fecha_precarga ??
+                  "",
+              );
+              const ultimaActualizacionLabel = Number.isNaN(ultimaActualizacionTs)
+                ? "—"
+                : formatDateTime(ultimaActualizacionTs);
               const effectiveDetailSource: DetailSourceKind =
                 isOpen && detailSource != null
                   ? detailSource
@@ -1026,6 +1036,9 @@ export const FormulariosDiligenciadosPage = () => {
                       </p>
                       <p className="text-sm text-slate-600">
                         Fecha de envío / del formulario: {tituloFechaLabel}
+                      </p>
+                      <p className="text-sm text-slate-600">
+                        Última actualización: {ultimaActualizacionLabel}
                       </p>
                       {h ? (
                         <p
