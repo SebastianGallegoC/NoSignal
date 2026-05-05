@@ -1,6 +1,13 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+  type ReactNode,
+} from "react";
 import { Link, useNavigate } from "react-router-dom";
 
+import { ConfirmDeleteFormModal } from "@/components/ConfirmDeleteFormModal";
 import {
   FormularioRespuestaReadOnly,
   type FormularioSnapshot,
@@ -64,6 +71,12 @@ export const FormulariosDiligenciadosPage = () => {
   const [precargaError, setPrecargaError] = useState<string | null>(null);
   const [eliminandoId, setEliminandoId] = useState<string | null>(null);
   const [eliminarError, setEliminarError] = useState<string | null>(null);
+  const [online, setOnline] = useState(
+    () => typeof navigator !== "undefined" && navigator.onLine,
+  );
+  const [pendingDeleteRow, setPendingDeleteRow] = useState<DisplayRow | null>(
+    null,
+  );
 
   const precargaMap = useMemo(() => {
     return new Map(precargas.map((p) => [p.id_formulario, p]));
@@ -146,9 +159,17 @@ export const FormulariosDiligenciadosPage = () => {
   }, [loadList]);
 
   useEffect(() => {
-    const onOnline = () => void loadList();
+    const onOnline = () => {
+      setOnline(true);
+      void loadList();
+    };
+    const onOffline = () => setOnline(false);
     window.addEventListener("online", onOnline);
-    return () => window.removeEventListener("online", onOnline);
+    window.addEventListener("offline", onOffline);
+    return () => {
+      window.removeEventListener("online", onOnline);
+      window.removeEventListener("offline", onOffline);
+    };
   }, [loadList]);
 
   useEffect(() => {
@@ -376,52 +397,109 @@ export const FormulariosDiligenciadosPage = () => {
     [authUsername, detailPrecarga, detailSnapshot, navigate],
   );
 
-  const eliminarDeEsteEquipo = useCallback(
-    async (row: DisplayRow) => {
-      setEliminarError(null);
-      const token =
-        typeof localStorage !== "undefined"
-          ? localStorage.getItem(ACCESS_TOKEN_KEY)
-          : null;
-      const puedeBorrarEnServidor =
-        row.onServer && navigator.onLine && !!token;
-      const msg = puedeBorrarEnServidor
-        ? "¿Eliminar este formulario?\n\nCon conexión y sesión activa también se borrará en el servidor (base de datos y fotos). Además se quita la copia local (historial, precarga y cola) en este equipo."
-        : "¿Eliminar de este dispositivo?\n\nSe quitan la copia local (historial, precarga y formularios en cola). Sin conexión o sin sesión, el registro puede seguir en el servidor; en ese caso solo dejará de mostrarse aquí.";
-      if (!window.confirm(msg)) {
-        return;
-      }
-      setEliminandoId(row.id_formulario);
-      try {
-        if (puedeBorrarEnServidor) {
-          try {
-            await deleteFormFromApi(row.id_formulario);
-          } catch (e) {
-            setEliminarError(
-              e instanceof Error
-                ? e.message
-                : "No se pudo borrar en el servidor.",
-            );
-            return;
-          }
+  const solicitarEliminar = useCallback((row: DisplayRow) => {
+    setEliminarError(null);
+    if (!navigator.onLine) {
+      setEliminarError(
+        "Solo podés eliminar formularios con conexión a internet.",
+      );
+      return;
+    }
+    setPendingDeleteRow(row);
+  }, []);
+
+  const ejecutarEliminacionConfirmada = useCallback(async () => {
+    const row = pendingDeleteRow;
+    if (!row) {
+      return;
+    }
+    setEliminarError(null);
+    if (!navigator.onLine) {
+      setEliminarError(
+        "Perdiste la conexión. Volvé a conectarte para eliminar.",
+      );
+      return;
+    }
+    const token =
+      typeof localStorage !== "undefined"
+        ? localStorage.getItem(ACCESS_TOKEN_KEY)
+        : null;
+    const puedeBorrarEnServidor = row.onServer && !!token;
+    setEliminandoId(row.id_formulario);
+    try {
+      if (puedeBorrarEnServidor) {
+        try {
+          await deleteFormFromApi(row.id_formulario);
+        } catch (e) {
+          setEliminarError(
+            e instanceof Error
+              ? e.message
+              : "No se pudo borrar en el servidor.",
+          );
+          return;
         }
-        await eliminarFormularioDeDispositivo(row.id_formulario);
-        if (selectedId === row.id_formulario) {
-          setSelectedId(null);
-          setDetailSnapshot(null);
-          setDetailPrecarga(null);
-        }
-        await loadList();
-      } catch (e) {
-        setEliminarError(
-          e instanceof Error ? e.message : "No se pudo eliminar el registro.",
-        );
-      } finally {
-        setEliminandoId(null);
       }
-    },
-    [loadList, selectedId],
-  );
+      await eliminarFormularioDeDispositivo(row.id_formulario);
+      if (selectedId === row.id_formulario) {
+        setSelectedId(null);
+        setDetailSnapshot(null);
+        setDetailPrecarga(null);
+      }
+      await loadList();
+      setPendingDeleteRow(null);
+    } catch (e) {
+      setEliminarError(
+        e instanceof Error ? e.message : "No se pudo eliminar el registro.",
+      );
+    } finally {
+      setEliminandoId(null);
+    }
+  }, [loadList, pendingDeleteRow, selectedId]);
+
+  const cancelarEliminacionPendiente = useCallback(() => {
+    if (eliminandoId) {
+      return;
+    }
+    setPendingDeleteRow(null);
+  }, [eliminandoId]);
+
+  const deleteModalDescription: ReactNode = useMemo(() => {
+    if (!pendingDeleteRow) {
+      return null;
+    }
+    const token =
+      typeof localStorage !== "undefined"
+        ? localStorage.getItem(ACCESS_TOKEN_KEY)
+        : null;
+    const borraEnServidor = pendingDeleteRow.onServer && !!token;
+    if (borraEnServidor) {
+      return (
+        <>
+          <p>
+            Este formulario está guardado en el servidor. Con tu sesión activa
+            también se borrará allí la base de datos y las fotos asociadas.
+          </p>
+          <p className="mt-2">
+            Además se quita la copia local (historial, precarga y cola) en este
+            equipo. Esta acción no se puede deshacer.
+          </p>
+        </>
+      );
+    }
+    return (
+      <>
+        <p>
+          Solo se quitará la copia en este equipo (historial, precarga y
+          formularios en cola).
+        </p>
+        <p className="mt-2">
+          {pendingDeleteRow.onServer
+            ? "Para borrar también en el servidor iniciá sesión y repetí la eliminación."
+            : "Esta acción no se puede deshacer."}
+        </p>
+      </>
+    );
+  }, [pendingDeleteRow]);
 
   return (
     <div className="min-h-screen bg-[radial-gradient(circle_at_top,_#e2f2ee_0,_#f6f7f5_45%,_#f6f7f5_100%)] px-4 py-10 text-slate-900">
@@ -460,6 +538,13 @@ export const FormulariosDiligenciadosPage = () => {
           <div className="mb-4 rounded-xl border border-slate-200 bg-white/80 px-4 py-3 text-sm text-slate-700">
             Iniciá sesión para ver también los formularios sincronizados desde
             otros dispositivos.
+          </div>
+        ) : null}
+
+        {!online ? (
+          <div className="mb-4 rounded-xl border border-slate-200 bg-slate-50/95 px-4 py-3 text-sm text-slate-800">
+            Sin conexión a internet: no podés eliminar formularios. Volvé a
+            estar en línea para usar esa opción.
           </div>
         ) : null}
 
@@ -635,10 +720,17 @@ export const FormulariosDiligenciadosPage = () => {
                     <Button
                       type="button"
                       variant="outline"
-                      disabled={eliminandoId === row.id_formulario}
+                      disabled={
+                        !online || eliminandoId === row.id_formulario
+                      }
+                      title={
+                        !online
+                          ? "Requiere conexión a internet"
+                          : undefined
+                      }
                       onClick={(e) => {
                         e.stopPropagation();
-                        void eliminarDeEsteEquipo(row);
+                        solicitarEliminar(row);
                       }}
                       className="shrink-0 self-center border-rose-200 text-rose-800 hover:bg-rose-50"
                     >
@@ -683,8 +775,15 @@ export const FormulariosDiligenciadosPage = () => {
                             <Button
                               type="button"
                               variant="outline"
-                              disabled={eliminandoId === row.id_formulario}
-                              onClick={() => void eliminarDeEsteEquipo(row)}
+                              disabled={
+                                !online || eliminandoId === row.id_formulario
+                              }
+                              title={
+                                !online
+                                  ? "Requiere conexión a internet"
+                                  : undefined
+                              }
+                              onClick={() => solicitarEliminar(row)}
                               className="border-rose-200 text-rose-800 hover:bg-rose-50"
                             >
                               Eliminar de este equipo
@@ -721,6 +820,18 @@ export const FormulariosDiligenciadosPage = () => {
           </div>
         )}
       </div>
+
+      <ConfirmDeleteFormModal
+        open={!!pendingDeleteRow}
+        title="¿Eliminar este formulario?"
+        description={deleteModalDescription}
+        onCancel={cancelarEliminacionPendiente}
+        onConfirm={() => void ejecutarEliminacionConfirmada()}
+        confirming={
+          !!pendingDeleteRow &&
+          eliminandoId === pendingDeleteRow.id_formulario
+        }
+      />
     </div>
   );
 };
