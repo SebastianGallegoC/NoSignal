@@ -27,3 +27,29 @@ export function formatDateTimeNoSeconds(value: string | number | Date | null | u
   const date = value instanceof Date ? value : new Date(value);
   return Number.isNaN(date.getTime()) ? '—' : DATE_TIME_FORMATTER_NO_SECONDS.format(date);
 }
+
+/**
+ * Parse ISO 8601 date strings robustly, handling timezone info correctly.
+ * Returns timestamp in milliseconds, or NaN if parsing fails.
+ * Handles strings with or without timezone (assumes UTC if not specified).
+ */
+export function parseISODate(dateString: string | null | undefined): number {
+  if (!dateString || dateString === '') {
+    return NaN;
+  }
+
+  const trimmed = dateString.trim();
+  
+  // If string ends with 'Z', it's already UTC - safe to parse
+  if (trimmed.endsWith('Z')) {
+    return new Date(trimmed).getTime();
+  }
+  
+  // If no timezone indicator, assume UTC for consistency across devices
+  if (!trimmed.match(/[+-]\d{2}:\d{2}$|[+-]\d{4}$/)) {
+    return new Date(`${trimmed}Z`).getTime();
+  }
+  
+  // Has timezone offset - parse as-is
+  return new Date(trimmed).getTime();
+}

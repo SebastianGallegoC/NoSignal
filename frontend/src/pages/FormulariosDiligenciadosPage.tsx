@@ -19,7 +19,7 @@ import {
 } from "@/components/form/FormularioRespuestaReadOnly";
 import { Button } from "@/components/ui/button";
 import { ACCESS_TOKEN_KEY } from "@/lib/authStorage";
-import { formatDateTimeNoSeconds } from "@/lib/formatDateTime";
+import { formatDateTimeNoSeconds, parseISODate } from "@/lib/formatDateTime";
 import {
   deleteFormFromApi,
   fetchFormPhotoDataUrl,
@@ -1011,7 +1011,7 @@ export const FormulariosDiligenciadosPage = () => {
               const tituloUsuario = nombreBenef || "No diligenciado";
               const refTs = getFechaReferenciaEnvio(row);
               const tituloFechaLabel = formatDateTimeNoSeconds(refTs);
-              const ultimaActualizacionTs = Date.parse(
+              const ultimaActualizacionTs = parseISODate(
                 h?.fecha_envio ??
                   row.server?.fecha_hora ??
                   h?.fecha_hora ??
@@ -1203,7 +1203,7 @@ export const FormulariosDiligenciadosPage = () => {
                               <span className="text-xs text-slate-500">
                                 Precargado el{" "}
                                 {formatDateTimeNoSeconds(
-                                  Date.parse(
+                                  parseISODate(
                                     precargaMap.get(row.id_formulario)
                                       ?.fecha_precarga ?? "",
                                   ),
