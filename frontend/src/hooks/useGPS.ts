@@ -23,6 +23,43 @@ interface GPSHookState {
 const MAX_ACCURACY_METERS = 100;
 const GPS_TIMEOUT_MS = 60000;
 
+type PermissionStateLike = 'granted' | 'denied' | 'prompt' | 'unknown';
+
+const getBrowserPermissionHelp = (): string => {
+  const ua = navigator.userAgent.toLowerCase();
+  if (ua.includes('edg/')) {
+    return 'En Edge: clic en el candado de la URL -> Permisos para este sitio -> Ubicación: Permitir; luego recarga la página.';
+  }
+  if (ua.includes('chrome/')) {
+    return 'En Chrome: clic en el candado de la URL -> Configuración del sitio -> Ubicación: Permitir; luego recarga la página.';
+  }
+  if (ua.includes('firefox/')) {
+    return 'En Firefox: clic en el candado de la URL -> Borrar/Bloquear permisos del sitio y volver a permitir ubicación; luego recarga.';
+  }
+  if (ua.includes('safari/')) {
+    return 'En Safari: Safari > Configuración > Sitios web > Ubicación > Permitir para este sitio; luego recarga la página.';
+  }
+  return 'Habilitá el permiso de ubicación en el navegador para este sitio y recargá la página.';
+};
+
+const getGeoErrorMessage = (
+  err: GeolocationPositionError,
+  permissionState: PermissionStateLike,
+): string => {
+  if (err.code === err.PERMISSION_DENIED) {
+    return permissionState === 'denied'
+      ? `No se pudo obtener la ubicación porque el permiso está bloqueado. ${getBrowserPermissionHelp()}`
+      : 'No diste permiso de ubicación. Aceptá el permiso del navegador para continuar.';
+  }
+  if (err.code === err.POSITION_UNAVAILABLE) {
+    return 'No se pudo obtener la ubicación: señal GPS no disponible. Probá en una zona abierta o activá la ubicación del dispositivo.';
+  }
+  if (err.code === err.TIMEOUT) {
+    return 'Se agotó el tiempo para obtener la ubicación. Verificá señal GPS e intentá nuevamente.';
+  }
+  return err.message?.trim() || 'No se pudo obtener la ubicación.';
+};
+
 export const useGPS = (opts?: UseGPSOptions): GPSHookState => {
   const initial = opts?.restoredPosition ?? null;
   const [gps, setGps] = useState<GPSState | null>(() => initial);
@@ -59,6 +96,19 @@ export const useGPS = (opts?: UseGPSOptions): GPSHookState => {
     setGps(null);
 
     let bestPosition: GPSState | null = null;
+    let permissionState: PermissionStateLike = 'unknown';
+
+    // Consulta no bloqueante del estado de permiso para mejorar el mensaje de error.
+    if (navigator.permissions && typeof navigator.permissions.query === 'function') {
+      void navigator.permissions
+        .query({ name: 'geolocation' })
+        .then((p) => {
+          permissionState = p.state;
+        })
+        .catch(() => {
+          permissionState = 'unknown';
+        });
+    }
 
     watchIdRef.current = navigator.geolocation.watchPosition(
       (pos) => {
@@ -83,8 +133,8 @@ export const useGPS = (opts?: UseGPSOptions): GPSHookState => {
           stopTracking();
         }
       },
-      () => {
-        setError('No se pudo obtener la ubicacion.');
+      (geoError) => {
+        setError(getGeoErrorMessage(geoError, permissionState));
         setProgreso(null);
         setEstado('error');
         setCargando(false);

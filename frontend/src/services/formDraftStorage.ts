@@ -12,6 +12,8 @@ export type FormDraftV1 = {
   v: 1;
   savedAt: string;
   formId: string;
+  /** Fecha original del formulario al editar uno existente (no regenerar al reenviar). */
+  originalFechaHora?: string | null;
   idUsuario: string;
   formValues: FormValues;
   fotos: Array<{ nombre_archivo: string; data: string }>;
@@ -43,6 +45,10 @@ export function loadFormDraft(username: string): FormDraftV1 | null {
       v: 1,
       savedAt: typeof o.savedAt === 'string' ? o.savedAt : new Date().toISOString(),
       formId: o.formId,
+      originalFechaHora:
+        typeof o.originalFechaHora === 'string' && o.originalFechaHora.trim() !== ''
+          ? o.originalFechaHora
+          : null,
       idUsuario: o.idUsuario,
       formValues: o.formValues as FormValues,
       fotos: Array.isArray(o.fotos) ? (o.fotos as FormDraftV1['fotos']) : [],

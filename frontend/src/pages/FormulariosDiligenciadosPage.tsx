@@ -408,6 +408,11 @@ export const FormulariosDiligenciadosPage = () => {
         savedAt: new Date().toISOString(),
         // Reutilizar el mismo id para editar el formulario existente (no clonar).
         formId: row.id_formulario,
+        originalFechaHora:
+          row.server?.fecha_hora ??
+          row.historial?.fecha_envio ??
+          row.historial?.fecha_hora ??
+          null,
         idUsuario: (() => {
           const u = row.server?.id_usuario ?? row.historial?.id_usuario;
           if (u) {

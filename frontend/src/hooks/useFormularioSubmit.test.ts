@@ -33,6 +33,7 @@ describe("useFormularioSubmit helpers", () => {
       values,
       requiredFields: REQUIRED_FIELDS,
       formId: "form-123",
+      originalFechaHora: null,
       idUsuario: "",
       authUsername: "  Usuario Prueba  ",
       gps: { latitud: 4.1, longitud: -74.1, precision: 9.9 },
@@ -53,6 +54,7 @@ describe("useFormularioSubmit helpers", () => {
       values,
       requiredFields: REQUIRED_FIELDS,
       formId: "form-precision-0",
+      originalFechaHora: null,
       idUsuario: "demo",
       authUsername: null,
       gps: { latitud: 4.1, longitud: -74.1, precision: 0 },
@@ -72,5 +74,21 @@ describe("useFormularioSubmit helpers", () => {
     expect(sections.has("actividad")).toBe(true);
     expect(sections.has("beneficiario")).toBe(true);
     expect(sections.has("nucleo")).toBe(false);
+  });
+
+  it("buildOfflinePayload conserva fecha_hora original al editar", () => {
+    const values = buildEmptyValues();
+    const payload = buildOfflinePayload({
+      values,
+      requiredFields: REQUIRED_FIELDS,
+      formId: "form-existente",
+      originalFechaHora: "2026-05-01T10:20:30.000Z",
+      idUsuario: "demo",
+      authUsername: null,
+      gps: { latitud: 4.1, longitud: -74.1, precision: 1 },
+      fotos: [],
+      toSafeUserId: (raw) => raw,
+    });
+    expect(payload.fecha_hora).toBe("2026-05-01T10:20:30.000Z");
   });
 });

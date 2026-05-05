@@ -106,6 +106,9 @@ export const FormularioPage = () => {
   const [formId, setFormId] = useState(
     () => loadedDraft?.formId ?? randomUuid(),
   );
+  const [originalFechaHora, setOriginalFechaHora] = useState<string | null>(
+    () => loadedDraft?.originalFechaHora ?? null,
+  );
   const [pendientes, setPendientes] = useState(0);
   const [erroresSync, setErroresSync] = useState(0);
   const [ultimosErrores, setUltimosErrores] = useState<SyncErrorItem[]>([]);
@@ -147,6 +150,8 @@ export const FormularioPage = () => {
   fotosRef.current = fotos;
   const formIdRef = useRef(formId);
   formIdRef.current = formId;
+  const originalFechaHoraRef = useRef(originalFechaHora);
+  originalFechaHoraRef.current = originalFechaHora;
   const gpsRef = useRef(gps);
   gpsRef.current = gps;
 
@@ -157,6 +162,7 @@ export const FormularioPage = () => {
     const idU = idUsuarioRef.current;
     const f = fotosRef.current;
     const fid = formIdRef.current;
+    const fFecha = originalFechaHoraRef.current;
     const g = gpsRef.current;
     if (!shouldPersistFormDraft(values, def, idU, f.length, g !== null)) {
       clearFormDraft(userKey);
@@ -166,6 +172,7 @@ export const FormularioPage = () => {
       v: 1,
       savedAt: new Date().toISOString(),
       formId: fid,
+      originalFechaHora: fFecha,
       idUsuario: idU,
       formValues: values,
       fotos: f,
@@ -207,6 +214,7 @@ export const FormularioPage = () => {
     fotos,
     formId,
     gps,
+    originalFechaHora,
     flushDraftToStorage,
   ]);
 
@@ -352,6 +360,7 @@ export const FormularioPage = () => {
     fotos,
     formId,
     idUsuario,
+    originalFechaHora,
     authUsername,
     draftUserKey,
     defaults,
@@ -361,6 +370,7 @@ export const FormularioPage = () => {
     setEnviando,
     setFotos,
     setFormId,
+    setOriginalFechaHora,
     refreshPendientes,
     reset,
     setOpenSections,

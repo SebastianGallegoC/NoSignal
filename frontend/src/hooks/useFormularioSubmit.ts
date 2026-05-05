@@ -17,6 +17,7 @@ type Args = {
   gps: { latitud: number; longitud: number; precision: number } | null;
   fotos: Array<{ nombre_archivo: string; data: string }>;
   formId: string;
+  originalFechaHora: string | null;
   idUsuario: string;
   authUsername: string | null;
   draftUserKey: string;
@@ -27,6 +28,7 @@ type Args = {
   setEnviando: (v: boolean) => void;
   setFotos: (v: Array<{ nombre_archivo: string; data: string }>) => void;
   setFormId: (v: string) => void;
+  setOriginalFechaHora: (v: string | null) => void;
   refreshPendientes: () => Promise<void>;
   reset: UseFormReset<FormValues>;
   setOpenSections: Dispatch<SetStateAction<Set<string>>>;
@@ -39,6 +41,7 @@ type BuildPayloadArgs = {
   values: FormValues;
   requiredFields: readonly FormFieldKey[];
   formId: string;
+  originalFechaHora: string | null;
   idUsuario: string;
   authUsername: string | null;
   gps: { latitud: number; longitud: number; precision: number };
@@ -64,6 +67,7 @@ export const buildOfflinePayload = ({
   values,
   requiredFields,
   formId,
+  originalFechaHora,
   idUsuario,
   authUsername,
   gps,
@@ -73,7 +77,10 @@ export const buildOfflinePayload = ({
   return {
     id_formulario: formId,
     id_usuario: toSafeUserId(idUsuario || authUsername || "sin_usuario"),
-    fecha_hora: new Date().toISOString(),
+    fecha_hora:
+      originalFechaHora && originalFechaHora.trim() !== ""
+        ? originalFechaHora
+        : new Date().toISOString(),
     gps: {
       latitud: gps.latitud,
       longitud: gps.longitud,
@@ -102,6 +109,7 @@ export const useFormularioSubmit = ({
   gps,
   fotos,
   formId,
+  originalFechaHora,
   idUsuario,
   authUsername,
   draftUserKey,
@@ -112,6 +120,7 @@ export const useFormularioSubmit = ({
   setEnviando,
   setFotos,
   setFormId,
+  setOriginalFechaHora,
   refreshPendientes,
   reset,
   setOpenSections,
@@ -138,6 +147,7 @@ export const useFormularioSubmit = ({
       values,
       requiredFields,
       formId,
+      originalFechaHora,
       idUsuario,
       authUsername,
       gps,
@@ -188,7 +198,7 @@ export const useFormularioSubmit = ({
             tone: "success",
             title: "Enviado correctamente",
             message:
-              "El formulario se guardó y se sincronizó con el servidor. Ya podés cargar un nuevo registro si lo necesitás.",
+              "El formulario se guardó y se sincronizó con el servidor.",
             submittedForm: payload,
           });
         } else {
@@ -204,6 +214,7 @@ export const useFormularioSubmit = ({
       reset(defaults);
       setFotos([]);
       setFormId(randomUuid());
+      setOriginalFechaHora(null);
       await refreshPendientes();
     } catch {
       setBanner(null);
