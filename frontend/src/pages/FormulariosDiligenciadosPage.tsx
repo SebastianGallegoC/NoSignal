@@ -19,7 +19,7 @@ import {
 } from "@/components/form/FormularioRespuestaReadOnly";
 import { Button } from "@/components/ui/button";
 import { ACCESS_TOKEN_KEY } from "@/lib/authStorage";
-import { formatDateTime } from "@/lib/formatDateTime";
+import { formatDateTimeNoSeconds } from "@/lib/formatDateTime";
 import {
   deleteFormFromApi,
   fetchFormPhotoDataUrl,
@@ -197,9 +197,7 @@ export const FormulariosDiligenciadosPage = () => {
         server = await listFormsFromApi();
       } catch (e) {
         err =
-          e instanceof Error
-            ? e.message
-            : "Error al cargar desde el servidor";
+          e instanceof Error ? e.message : "Error al cargar desde el servidor";
       }
     }
 
@@ -309,10 +307,7 @@ export const FormulariosDiligenciadosPage = () => {
           row.server.fotos ?? [],
         );
         const localFotos =
-          row.historial?.fotos ??
-          precarga?.fotos ??
-          live?.fotos ??
-          [];
+          row.historial?.fotos ?? precarga?.fotos ?? live?.fotos ?? [];
 
         const localVisitas = {
           v1: localFotos.filter((f) => f.visita === 1).length,
@@ -320,7 +315,8 @@ export const FormulariosDiligenciadosPage = () => {
           v3: localFotos.filter((f) => f.visita === 3).length,
           null: localFotos.filter((f) => f.visita == null).length,
           typeCounts: {
-            number: localFotos.filter((f) => typeof f.visita === "number").length,
+            number: localFotos.filter((f) => typeof f.visita === "number")
+              .length,
             undefined: localFotos.filter((f) => f.visita === undefined).length,
           },
           total: localFotos.length,
@@ -488,8 +484,13 @@ export const FormulariosDiligenciadosPage = () => {
             return base;
           })
           .filter(
-            (f): f is { nombre_archivo: string; data: string; visita?: 1 | 2 | 3 } =>
-              f !== null,
+            (
+              f,
+            ): f is {
+              nombre_archivo: string;
+              data: string;
+              visita?: 1 | 2 | 3;
+            } => f !== null,
           );
 
         const precarga: PrecargaForm = {
@@ -655,8 +656,12 @@ export const FormulariosDiligenciadosPage = () => {
     try {
       const exportables = rows.map((row) => {
         const datos =
-          (row.historial?.datos_formulario as Record<string, unknown> | undefined) ??
-          (row.server?.datos_formulario as Record<string, unknown> | undefined) ??
+          (row.historial?.datos_formulario as
+            | Record<string, unknown>
+            | undefined) ??
+          (row.server?.datos_formulario as
+            | Record<string, unknown>
+            | undefined) ??
           row.precargaSolo?.datos_formulario ??
           {};
         const gps = row.historial?.gps
@@ -680,19 +685,24 @@ export const FormulariosDiligenciadosPage = () => {
                     : 1,
               }
             : { latitud: 0, longitud: 0, precision: 1 };
-        const fotos =
-          (row.historial?.fotos ?? row.precargaSolo?.fotos ?? []).filter(
-            (
-              f,
-            ): f is {
-              nombre_archivo: string;
-              data: string;
-            } => typeof f?.data === "string" && f.data.trim() !== "",
-          );
+        const fotos = (
+          row.historial?.fotos ??
+          row.precargaSolo?.fotos ??
+          []
+        ).filter(
+          (
+            f,
+          ): f is {
+            nombre_archivo: string;
+            data: string;
+          } => typeof f?.data === "string" && f.data.trim() !== "",
+        );
         return {
           id_formulario: row.id_formulario,
           id_usuario:
-            row.server?.id_usuario ?? row.historial?.id_usuario ?? "sin_usuario",
+            row.server?.id_usuario ??
+            row.historial?.id_usuario ??
+            "sin_usuario",
           fecha_hora:
             row.server?.fecha_hora ??
             row.historial?.fecha_envio ??
@@ -729,69 +739,74 @@ export const FormulariosDiligenciadosPage = () => {
     setPendingDeleteRow(row);
   }, []);
 
-  const ejecutarEliminacionConfirmada = useCallback(async (password: string) => {
-    const row = pendingDeleteRow;
-    if (!row) {
-      return;
-    }
-    setEliminarError(null);
-    setDeletePasswordError(null);
-    const pass = password.trim();
-    if (!pass) {
-      setDeletePasswordError("Ingresá tu contraseña para continuar.");
-      return;
-    }
-    if (!navigator.onLine) {
-      setEliminarError(
-        "Perdiste la conexión. Volvé a conectarte para eliminar.",
-      );
-      return;
-    }
-    const token =
-      typeof localStorage !== "undefined"
-        ? localStorage.getItem(ACCESS_TOKEN_KEY)
-        : null;
-    if (!authUsername) {
-      setDeletePasswordError("No hay una sesión activa para validar contraseña.");
-      return;
-    }
-    try {
-      await loginApi(authUsername, pass);
-    } catch {
-      setDeletePasswordError("Contraseña incorrecta.");
-      return;
-    }
-    const puedeBorrarEnServidor = row.onServer && !!token;
-    setEliminandoId(row.id_formulario);
-    try {
-      if (puedeBorrarEnServidor) {
-        try {
-          await deleteFormFromApi(row.id_formulario);
-        } catch (e) {
-          setEliminarError(
-            e instanceof Error
-              ? e.message
-              : "No se pudo borrar en el servidor.",
-          );
-          return;
+  const ejecutarEliminacionConfirmada = useCallback(
+    async (password: string) => {
+      const row = pendingDeleteRow;
+      if (!row) {
+        return;
+      }
+      setEliminarError(null);
+      setDeletePasswordError(null);
+      const pass = password.trim();
+      if (!pass) {
+        setDeletePasswordError("Ingresá tu contraseña para continuar.");
+        return;
+      }
+      if (!navigator.onLine) {
+        setEliminarError(
+          "Perdiste la conexión. Volvé a conectarte para eliminar.",
+        );
+        return;
+      }
+      const token =
+        typeof localStorage !== "undefined"
+          ? localStorage.getItem(ACCESS_TOKEN_KEY)
+          : null;
+      if (!authUsername) {
+        setDeletePasswordError(
+          "No hay una sesión activa para validar contraseña.",
+        );
+        return;
+      }
+      try {
+        await loginApi(authUsername, pass);
+      } catch {
+        setDeletePasswordError("Contraseña incorrecta.");
+        return;
+      }
+      const puedeBorrarEnServidor = row.onServer && !!token;
+      setEliminandoId(row.id_formulario);
+      try {
+        if (puedeBorrarEnServidor) {
+          try {
+            await deleteFormFromApi(row.id_formulario);
+          } catch (e) {
+            setEliminarError(
+              e instanceof Error
+                ? e.message
+                : "No se pudo borrar en el servidor.",
+            );
+            return;
+          }
         }
+        await eliminarFormularioDeDispositivo(row.id_formulario);
+        if (selectedId === row.id_formulario) {
+          setSelectedId(null);
+          setDetailSnapshot(null);
+          setDetailPrecarga(null);
+        }
+        await loadList();
+        setPendingDeleteRow(null);
+      } catch (e) {
+        setEliminarError(
+          e instanceof Error ? e.message : "No se pudo eliminar el registro.",
+        );
+      } finally {
+        setEliminandoId(null);
       }
-      await eliminarFormularioDeDispositivo(row.id_formulario);
-      if (selectedId === row.id_formulario) {
-        setSelectedId(null);
-        setDetailSnapshot(null);
-        setDetailPrecarga(null);
-      }
-      await loadList();
-      setPendingDeleteRow(null);
-    } catch (e) {
-      setEliminarError(
-        e instanceof Error ? e.message : "No se pudo eliminar el registro.",
-      );
-    } finally {
-      setEliminandoId(null);
-    }
-  }, [authUsername, loadList, pendingDeleteRow, selectedId]);
+    },
+    [authUsername, loadList, pendingDeleteRow, selectedId],
+  );
 
   const cancelarEliminacionPendiente = useCallback(() => {
     if (eliminandoId) {
@@ -995,7 +1010,7 @@ export const FormulariosDiligenciadosPage = () => {
               const nombreBenef = getBeneficiarioDisplayName(row);
               const tituloUsuario = nombreBenef || "No diligenciado";
               const refTs = getFechaReferenciaEnvio(row);
-              const tituloFechaLabel = formatDateTime(refTs);
+              const tituloFechaLabel = formatDateTimeNoSeconds(refTs);
               const ultimaActualizacionTs = Date.parse(
                 h?.fecha_envio ??
                   row.server?.fecha_hora ??
@@ -1003,9 +1018,11 @@ export const FormulariosDiligenciadosPage = () => {
                   precarga?.fecha_precarga ??
                   "",
               );
-              const ultimaActualizacionLabel = Number.isNaN(ultimaActualizacionTs)
+              const ultimaActualizacionLabel = Number.isNaN(
+                ultimaActualizacionTs,
+              )
                 ? "—"
-                : formatDateTime(ultimaActualizacionTs);
+                : formatDateTimeNoSeconds(ultimaActualizacionTs);
               const effectiveDetailSource: DetailSourceKind =
                 isOpen && detailSource != null
                   ? detailSource
@@ -1025,85 +1042,81 @@ export const FormulariosDiligenciadosPage = () => {
                       onClick={() => void selectRow(row)}
                       className="flex min-w-0 flex-1 items-start justify-between gap-3 rounded-xl p-2 text-left sm:p-3"
                     >
-                    <div className="min-w-0 flex-1 space-y-1">
-                      <div className="flex flex-wrap items-center gap-2">
-                        {row.onServer ? (
-                          <span className="rounded-md bg-emerald-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-emerald-900">
-                            Servidor
+                      <div className="min-w-0 flex-1 space-y-1">
+                        <div className="flex flex-wrap items-center gap-2">
+                          {row.onServer ? (
+                            <span className="rounded-md bg-emerald-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-emerald-900">
+                              Servidor
+                            </span>
+                          ) : null}
+                          {row.precargaSolo ? (
+                            <span className="rounded-md bg-indigo-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-indigo-900">
+                              Precarga offline
+                            </span>
+                          ) : null}
+                          {!row.onServer && !row.precargaSolo ? (
+                            <span className="rounded-md bg-slate-200 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-800">
+                              Solo este equipo
+                            </span>
+                          ) : null}
+                          {precargado ? (
+                            <span className="rounded-md bg-indigo-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-indigo-900">
+                              Precargado
+                            </span>
+                          ) : null}
+                          <span
+                            className={`rounded-md px-2 py-0.5 text-[10px] font-semibold ${DETAIL_SOURCE_COLOR[effectiveDetailSource]}`}
+                            title="Fuente usada para el detalle del formulario al expandir"
+                          >
+                            Origen: {DETAIL_SOURCE_LABEL[effectiveDetailSource]}
                           </span>
+                        </div>
+                        <p className="font-medium text-slate-900">
+                          Beneficiario: {tituloUsuario}
+                        </p>
+                        <p className="text-sm text-slate-600">
+                          Fecha de envío / del formulario: {tituloFechaLabel}
+                        </p>
+                        <p className="text-sm text-slate-600">
+                          Última actualización: {ultimaActualizacionLabel}
+                        </p>
+                        {h ? (
+                          <p
+                            className={`text-sm font-semibold ${estadoClass[h.estado]}`}
+                          >
+                            Estado en este dispositivo: {h.estado}
+                          </p>
+                        ) : row.onServer ? (
+                          <p className="text-sm font-semibold text-emerald-700">
+                            Sincronizado en servidor
+                          </p>
+                        ) : row.precargaSolo ? (
+                          <p className="text-sm font-semibold text-indigo-800">
+                            Copia guardada en este dispositivo para uso sin red
+                          </p>
                         ) : null}
-                        {row.precargaSolo ? (
-                          <span className="rounded-md bg-indigo-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-indigo-900">
-                            Precarga offline
-                          </span>
+                        {h?.ultimo_error ? (
+                          <p className="text-sm text-rose-700">
+                            Error: {h.ultimo_error}
+                          </p>
                         ) : null}
-                        {!row.onServer && !row.precargaSolo ? (
-                          <span className="rounded-md bg-slate-200 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-800">
-                            Solo este equipo
-                          </span>
-                        ) : null}
-                        {precargado ? (
-                          <span className="rounded-md bg-indigo-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-indigo-900">
-                            Precargado
-                          </span>
-                        ) : null}
-                        <span
-                          className={`rounded-md px-2 py-0.5 text-[10px] font-semibold ${DETAIL_SOURCE_COLOR[effectiveDetailSource]}`}
-                          title="Fuente usada para el detalle del formulario al expandir"
-                        >
-                          Origen: {DETAIL_SOURCE_LABEL[effectiveDetailSource]}
-                        </span>
                       </div>
-                      <p className="font-medium text-slate-900">
-                        Beneficiario: {tituloUsuario}
-                      </p>
-                      <p className="text-sm text-slate-600">
-                        Fecha de envío / del formulario: {tituloFechaLabel}
-                      </p>
-                      <p className="text-sm text-slate-600">
-                        Última actualización: {ultimaActualizacionLabel}
-                      </p>
-                      {h ? (
-                        <p
-                          className={`text-sm font-semibold ${estadoClass[h.estado]}`}
-                        >
-                          Estado en este dispositivo: {h.estado}
-                        </p>
-                      ) : row.onServer ? (
-                        <p className="text-sm font-semibold text-emerald-700">
-                          Sincronizado en servidor
-                        </p>
-                      ) : row.precargaSolo ? (
-                        <p className="text-sm font-semibold text-indigo-800">
-                          Copia guardada en este dispositivo para uso sin red
-                        </p>
-                      ) : null}
-                      {h?.ultimo_error ? (
-                        <p className="text-sm text-rose-700">
-                          Error: {h.ultimo_error}
-                        </p>
-                      ) : null}
-                    </div>
-                    <span
-                      className={`mt-1 shrink-0 rounded-lg border px-2 py-1 text-xs font-medium ${
-                        isOpen
-                          ? "border-teal-600 bg-teal-50 text-teal-800"
-                          : "border-slate-200 bg-slate-50 text-slate-600"
-                      }`}
-                    >
-                      {isOpen ? "Cerrar" : "Ver formulario"}
-                    </span>
+                      <span
+                        className={`mt-1 shrink-0 rounded-lg border px-2 py-1 text-xs font-medium ${
+                          isOpen
+                            ? "border-teal-600 bg-teal-50 text-teal-800"
+                            : "border-slate-200 bg-slate-50 text-slate-600"
+                        }`}
+                      >
+                        {isOpen ? "Cerrar" : "Ver formulario"}
+                      </span>
                     </button>
                     <Button
                       type="button"
                       variant="outline"
-                      disabled={
-                        !online || eliminandoId === row.id_formulario
-                      }
+                      disabled={!online || eliminandoId === row.id_formulario}
                       title={
-                        !online
-                          ? "Requiere conexión a internet"
-                          : undefined
+                        !online ? "Requiere conexión a internet" : undefined
                       }
                       onClick={(e) => {
                         e.stopPropagation();
@@ -1111,9 +1124,7 @@ export const FormulariosDiligenciadosPage = () => {
                       }}
                       className="shrink-0 self-center border-rose-200 text-rose-800 hover:bg-rose-50"
                     >
-                      {eliminandoId === row.id_formulario
-                        ? "…"
-                        : "Eliminar"}
+                      {eliminandoId === row.id_formulario ? "…" : "Eliminar"}
                     </Button>
                   </div>
 
@@ -1129,7 +1140,8 @@ export const FormulariosDiligenciadosPage = () => {
                             <span
                               className={`rounded-md px-2 py-1 text-xs font-semibold ${DETAIL_SOURCE_COLOR[effectiveDetailSource]}`}
                             >
-                              Origen: {DETAIL_SOURCE_LABEL[effectiveDetailSource]}
+                              Origen:{" "}
+                              {DETAIL_SOURCE_LABEL[effectiveDetailSource]}
                             </span>
                           </div>
                           <FormularioRespuestaReadOnly
@@ -1159,7 +1171,9 @@ export const FormulariosDiligenciadosPage = () => {
                             <Button
                               type="button"
                               variant="outline"
-                              onClick={() => void descargarExcelDelRegistro(row)}
+                              onClick={() =>
+                                void descargarExcelDelRegistro(row)
+                              }
                               disabled={
                                 detailLoading ||
                                 descargandoExcelId === row.id_formulario
@@ -1188,7 +1202,7 @@ export const FormulariosDiligenciadosPage = () => {
                             {precargaMap.has(row.id_formulario) ? (
                               <span className="text-xs text-slate-500">
                                 Precargado el{" "}
-                                {formatDateTime(
+                                {formatDateTimeNoSeconds(
                                   Date.parse(
                                     precargaMap.get(row.id_formulario)
                                       ?.fecha_precarga ?? "",
@@ -1232,8 +1246,7 @@ export const FormulariosDiligenciadosPage = () => {
         onCancel={cancelarEliminacionPendiente}
         onConfirm={(password) => void ejecutarEliminacionConfirmada(password)}
         confirming={
-          !!pendingDeleteRow &&
-          eliminandoId === pendingDeleteRow.id_formulario
+          !!pendingDeleteRow && eliminandoId === pendingDeleteRow.id_formulario
         }
       />
     </div>
