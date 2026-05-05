@@ -251,6 +251,15 @@ export const FormulariosDiligenciadosPage = () => {
         });
       } else if (precarga && !navigator.onLine) {
         setDetailSnapshot(precargaToSnapshot(precarga));
+      } else if (row.historial) {
+        // Si hay historial local, priorizarlo para conservar metadatos locales
+        // como la visita asociada a cada foto.
+        const h = row.historial;
+        setDetailSnapshot({
+          datos_formulario: h.datos_formulario ?? {},
+          gps: h.gps ?? null,
+          fotos: h.fotos ?? [],
+        });
       } else if (row.server) {
         setDetailSnapshot({
           datos_formulario: (row.server.datos_formulario ?? {}) as Record<
@@ -269,13 +278,6 @@ export const FormulariosDiligenciadosPage = () => {
         });
       } else if (precarga) {
         setDetailSnapshot(precargaToSnapshot(precarga));
-      } else if (row.historial) {
-        const h = row.historial;
-        setDetailSnapshot({
-          datos_formulario: h.datos_formulario ?? {},
-          gps: h.gps ?? null,
-          fotos: h.fotos ?? [],
-        });
       }
       setDetailLoading(false);
     },
