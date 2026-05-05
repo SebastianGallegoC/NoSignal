@@ -5,7 +5,7 @@ import { Link } from "react-router-dom";
 
 import {
   FormEnvioResultModal,
-  type FormEnvioModalTone,
+  type FormEnvioResultState,
 } from "@/components/form/FormEnvioResultModal";
 import {
   ImagePreviewModal,
@@ -113,11 +113,9 @@ export const FormularioPage = () => {
   const [enviando, setEnviando] = useState(false);
   const [banner, setBanner] = useState<string | null>(null);
   const [submitFeedback, setSubmitFeedback] = useState<string | null>(null);
-  const [envioModal, setEnvioModal] = useState<{
-    tone: FormEnvioModalTone;
-    title: string;
-    message: string;
-  } | null>(null);
+  const [envioModal, setEnvioModal] = useState<FormEnvioResultState | null>(
+    null,
+  );
   const [openSections, setOpenSections] = useState<Set<string>>(
     () => new Set(["actividad"]),
   );
@@ -375,6 +373,7 @@ export const FormularioPage = () => {
           tone={envioModal.tone}
           title={envioModal.title}
           message={envioModal.message}
+          submittedForm={envioModal.submittedForm}
           onClose={() => setEnvioModal(null)}
         />
       ) : null}

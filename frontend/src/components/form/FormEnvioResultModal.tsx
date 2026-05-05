@@ -1,15 +1,26 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 
 import { Button } from "@/components/ui/button";
+import type { OfflineForm } from "@/services/db";
+import { downloadMatrizCaracterizacionXlsx } from "@/services/matrizCaracterizacionExport";
 
 export type FormEnvioModalTone = "success" | "warning" | "danger";
+
+export type FormEnvioResultState = {
+  tone: FormEnvioModalTone;
+  title: string;
+  message: string;
+  /** Formulario guardado en cola; permite descargar la matriz F-PSA-08. */
+  submittedForm?: OfflineForm;
+};
 
 type Props = {
   open: boolean;
   tone: FormEnvioModalTone;
   title: string;
   message: string;
+  submittedForm?: OfflineForm;
   onClose: () => void;
 };
 
@@ -36,12 +47,16 @@ export const FormEnvioResultModal = ({
   tone,
   title,
   message,
+  submittedForm,
   onClose,
 }: Props) => {
+  const [excelError, setExcelError] = useState<string | null>(null);
+
   useEffect(() => {
     if (!open) {
       return;
     }
+    setExcelError(null);
     const prev = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     const onKey = (e: KeyboardEvent) => {
@@ -85,6 +100,40 @@ export const FormEnvioResultModal = ({
         <p className="mt-3 max-h-[50dvh] overflow-y-auto text-sm leading-relaxed text-slate-700 sm:max-h-none">
           {message}
         </p>
+        {submittedForm ? (
+          <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50/90 px-3 py-3 text-sm text-slate-700">
+            <p className="font-medium text-slate-900">
+              Matriz de caracterización (Excel)
+            </p>
+            <p className="mt-1 text-xs text-slate-600">
+              Podés descargar un archivo con la misma estructura que la hoja
+              «F-PSA-08» de la matriz oficial (columnas de caracterización
+              social).
+            </p>
+            {excelError ? (
+              <p className="mt-2 text-xs text-rose-700">{excelError}</p>
+            ) : null}
+            <Button
+              type="button"
+              variant="outline"
+              className="mt-3 w-full border-teal-200 text-teal-900 hover:bg-teal-50"
+              onClick={() => {
+                void (async () => {
+                  try {
+                    setExcelError(null);
+                    await downloadMatrizCaracterizacionXlsx(submittedForm);
+                  } catch {
+                    setExcelError(
+                      "No se pudo generar el archivo. Reintentá o comprobá el espacio disponible.",
+                    );
+                  }
+                })();
+              }}
+            >
+              Descargar Excel
+            </Button>
+          </div>
+        ) : null}
         <Button
           type="button"
           onClick={onClose}

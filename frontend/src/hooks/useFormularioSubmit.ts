@@ -1,7 +1,7 @@
 import type { Dispatch, SetStateAction } from "react";
 import type { FieldErrors, UseFormReset, UseFormSetFocus } from "react-hook-form";
 
-import type { FormEnvioModalTone } from "@/components/form/FormEnvioResultModal";
+import type { FormEnvioResultState } from "@/components/form/FormEnvioResultModal";
 import { FORM_SECTIONS } from "@/config/formSections";
 import { randomUuid } from "@/lib/randomUuid";
 import type { OfflineForm } from "@/services/db";
@@ -13,12 +13,6 @@ import {
 } from "@/services/formValidation";
 import type { FormFieldKey, FormValues } from "@/types/formFields";
 
-type EnvioModalState = {
-  tone: FormEnvioModalTone;
-  title: string;
-  message: string;
-};
-
 type Args = {
   gps: { latitud: number; longitud: number; precision: number } | null;
   fotos: Array<{ nombre_archivo: string; data: string }>;
@@ -29,7 +23,7 @@ type Args = {
   defaults: FormValues;
   setBanner: (v: string | null) => void;
   setSubmitFeedback: (v: string | null) => void;
-  setEnvioModal: (v: EnvioModalState | null) => void;
+  setEnvioModal: (v: FormEnvioResultState | null) => void;
   setEnviando: (v: boolean) => void;
   setFotos: (v: Array<{ nombre_archivo: string; data: string }>) => void;
   setFormId: (v: string) => void;
@@ -168,6 +162,7 @@ export const useFormularioSubmit = ({
           title: "Guardado localmente (sin red)",
           message:
             "El formulario quedó guardado en este dispositivo y en cola. Se intentará enviar al servidor cuando recuperes Wi‑Fi o datos móviles.",
+          submittedForm: payload,
         });
       } else {
         const result = await syncPendingForms();
@@ -177,6 +172,7 @@ export const useFormularioSubmit = ({
             title: "Guardado local; falló el envío al servidor",
             message:
               "Hay conexión, pero la sincronización no se completó. Revisá «Errores sync» más abajo. Podés usar «Sincronizar ahora» cuando quieras reintentar.",
+            submittedForm: payload,
           });
         } else if (result.sent > 0) {
           setEnvioModal({
@@ -184,6 +180,7 @@ export const useFormularioSubmit = ({
             title: "Enviado correctamente",
             message:
               "El formulario se guardó y se sincronizó con el servidor. Ya podés cargar un nuevo registro si lo necesitás.",
+            submittedForm: payload,
           });
         } else {
           setEnvioModal({
@@ -191,6 +188,7 @@ export const useFormularioSubmit = ({
             title: "En cola para sincronizar",
             message:
               "El formulario quedó guardado localmente en espera de envío (por ejemplo, otro intento en curso o reintento con espera). Se enviará automáticamente cuando corresponda.",
+            submittedForm: payload,
           });
         }
       }
