@@ -15,6 +15,42 @@ export type DisplayRow = {
   precargaSolo?: PrecargaForm;
 };
 
+/**
+ * Tras un `GET /forms` exitoso con sesión, el servidor es la fuente de verdad de qué
+ * envíos siguen existiendo. Un `ENVIADO` local cuyo id ya no viene en la lista se
+ * interpreta como borrado en otro dispositivo y debe dejar de mostrarse (y limpiarse
+ * en IndexedDB en el caller).
+ *
+ * No usar cuando el listado falló o no hubo token: en ese caso no se infiere ausencia.
+ */
+export function reconcileLocalStateWithTrustedServerList(
+  local: HistorialForm[],
+  server: FormReadItem[],
+  precargas: PrecargaForm[],
+): {
+  historialForMerge: HistorialForm[];
+  precargasForMerge: PrecargaForm[];
+  staleEnviadoIds: string[];
+} {
+  const serverIds = new Set(server.map((s) => s.id_formulario));
+  const staleEnviadoIds = local
+    .filter((h) => h.estado === "ENVIADO" && !serverIds.has(h.id_formulario))
+    .map((h) => h.id_formulario);
+  if (staleEnviadoIds.length === 0) {
+    return {
+      historialForMerge: local,
+      precargasForMerge: precargas,
+      staleEnviadoIds: [],
+    };
+  }
+  const stale = new Set(staleEnviadoIds);
+  return {
+    historialForMerge: local.filter((h) => !stale.has(h.id_formulario)),
+    precargasForMerge: precargas.filter((p) => !stale.has(p.id_formulario)),
+    staleEnviadoIds,
+  };
+}
+
 export function mergeForms(server: FormReadItem[], local: HistorialForm[]): DisplayRow[] {
   const map = new Map<string, DisplayRow>();
   for (const s of server) {

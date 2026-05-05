@@ -35,6 +35,7 @@ import {
   mapServerFotos,
   mergeFormsWithPrecargas,
   normalizeTextoBusqueda,
+  reconcileLocalStateWithTrustedServerList,
   parseFiltroDiaFin,
   parseFiltroDiaInicio,
   precargaToSnapshot,
@@ -146,12 +147,39 @@ export const FormulariosDiligenciadosPage = () => {
             : "Error al cargar desde el servidor";
       }
     }
-    const merged = mergeFormsWithPrecargas(server, local, precargaRows);
+
+    let localForMerge = local;
+    let precargaForMerge = precargaRows;
+    if (hasToken && !err) {
+      const reconciled = reconcileLocalStateWithTrustedServerList(
+        local,
+        server,
+        precargaRows,
+      );
+      localForMerge = reconciled.historialForMerge;
+      precargaForMerge = reconciled.precargasForMerge;
+      if (reconciled.staleEnviadoIds.length > 0) {
+        await Promise.all(
+          reconciled.staleEnviadoIds.flatMap((id) => [
+            db.historialFormularios.delete(id).catch(() => undefined),
+            db.precargas.delete(id).catch(() => undefined),
+            db.formulariosOcultos.delete(id).catch(() => undefined),
+            db.formularios.delete(id).catch(() => undefined),
+          ]),
+        );
+      }
+    }
+
+    const merged = mergeFormsWithPrecargas(
+      server,
+      localForMerge,
+      precargaForMerge,
+    );
     const ocultos = await loadHiddenFormIds();
     setRows(merged.filter((r) => !ocultos.has(r.id_formulario)));
     setRemoteError(err);
     setRemoteLoaded(hasToken);
-    setPrecargas(precargaRows);
+    setPrecargas(precargaForMerge);
   }, []);
 
   useEffect(() => {

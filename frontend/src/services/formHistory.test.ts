@@ -5,6 +5,7 @@ import {
   getBeneficiarioDisplayName,
   mergeFormsWithPrecargas,
   normalizeTextoBusqueda,
+  reconcileLocalStateWithTrustedServerList,
   type DisplayRow,
 } from "@/services/formHistory";
 
@@ -83,6 +84,72 @@ describe("formHistory — beneficiario", () => {
     expect(merged).toHaveLength(1);
     expect(merged[0].id_formulario).toBe("solo-p");
     expect(merged[0].precargaSolo).toEqual(precarga);
+  });
+
+  it("reconcileLocalStateWithTrustedServerList quita ENVIADO que ya no está en servidor", () => {
+    const borradoEnOtroEquipo: HistorialForm = {
+      id_formulario: "gone",
+      id_usuario: "u",
+      fecha_hora: "2026-01-01T00:00:00Z",
+      estado: "ENVIADO",
+    };
+    const pendiente: HistorialForm = {
+      id_formulario: "local-only",
+      id_usuario: "u",
+      fecha_hora: "2026-01-02T00:00:00Z",
+      estado: "PENDIENTE",
+    };
+    const server = [
+      {
+        id_formulario: "still",
+        id_usuario: "u",
+        fecha_hora: "2026-01-03T00:00:00Z",
+        latitud: 0,
+        longitud: 0,
+        precision: 1,
+        datos_formulario: {},
+        fotos: [],
+      },
+    ];
+    const precarga: PrecargaForm = {
+      id_formulario: "gone",
+      fecha_precarga: "2026-05-01T12:00:00Z",
+      datos_formulario: {},
+    };
+    const out = reconcileLocalStateWithTrustedServerList(
+      [borradoEnOtroEquipo, pendiente],
+      server,
+      [precarga],
+    );
+    expect(out.staleEnviadoIds).toEqual(["gone"]);
+    expect(out.historialForMerge.map((h) => h.id_formulario)).toEqual([
+      "local-only",
+    ]);
+    expect(out.precargasForMerge).toHaveLength(0);
+  });
+
+  it("reconcileLocalStateWithTrustedServerList conserva ENVIADO que sigue en servidor", () => {
+    const h: HistorialForm = {
+      id_formulario: "x",
+      id_usuario: "u",
+      fecha_hora: "2026-01-01T00:00:00Z",
+      estado: "ENVIADO",
+    };
+    const server = [
+      {
+        id_formulario: "x",
+        id_usuario: "u",
+        fecha_hora: "2026-01-01T00:00:00Z",
+        latitud: 0,
+        longitud: 0,
+        precision: 1,
+        datos_formulario: {},
+        fotos: [],
+      },
+    ];
+    const out = reconcileLocalStateWithTrustedServerList([h], server, []);
+    expect(out.staleEnviadoIds).toHaveLength(0);
+    expect(out.historialForMerge).toEqual([h]);
   });
 
   it("mergeFormsWithPrecargas no duplica si el id ya está en historial", () => {
