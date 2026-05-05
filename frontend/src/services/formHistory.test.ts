@@ -10,7 +10,7 @@ import {
 } from "@/services/formHistory";
 
 describe("formHistory — beneficiario", () => {
-  it("getBeneficiarioDisplayName prioriza historial y recorta espacios", () => {
+  it("getBeneficiarioDisplayName prioriza servidor y recorta espacios", () => {
     const row: DisplayRow = {
       id_formulario: "a",
       onServer: true,
@@ -34,7 +34,7 @@ describe("formHistory — beneficiario", () => {
         },
       } satisfies HistorialForm,
     };
-    expect(getBeneficiarioDisplayName(row)).toBe("Local Gómez");
+    expect(getBeneficiarioDisplayName(row)).toBe("Ana Pérez");
   });
 
   it("getBeneficiarioDisplayName usa servidor si no hay historial", () => {
@@ -72,6 +72,30 @@ describe("formHistory — beneficiario", () => {
       } satisfies PrecargaForm,
     };
     expect(getBeneficiarioDisplayName(row)).toBe("Ana Offline");
+  });
+
+  it("getBeneficiarioDisplayName prioriza precarga sobre historial cuando no hay servidor", () => {
+    const row: DisplayRow = {
+      id_formulario: "p2",
+      onServer: false,
+      historial: {
+        id_formulario: "p2",
+        id_usuario: "u",
+        fecha_hora: "2026-01-01T00:00:00Z",
+        estado: "ENVIADO",
+        datos_formulario: {
+          nombres_apellidos_beneficiario: "Nombre Historial",
+        },
+      } satisfies HistorialForm,
+      precargaSolo: {
+        id_formulario: "p2",
+        fecha_precarga: "2026-05-01T12:00:00Z",
+        datos_formulario: {
+          nombres_apellidos_beneficiario: "Nombre Precarga",
+        },
+      } satisfies PrecargaForm,
+    };
+    expect(getBeneficiarioDisplayName(row)).toBe("Nombre Precarga");
   });
 
   it("mergeFormsWithPrecargas agrega fila huérfana cuando no hay server ni historial", () => {

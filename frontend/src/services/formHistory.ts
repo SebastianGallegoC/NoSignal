@@ -156,19 +156,24 @@ export function getFechaReferenciaEnvio(row: DisplayRow): number {
   return NaN;
 }
 
-/** Nombre del beneficiario desde historial local o fila del servidor (mismo campo que el formulario). */
+/** Nombre del beneficiario con prioridad servidor > precarga > historial local. */
 export function getBeneficiarioDisplayName(row: DisplayRow): string {
   const h = row.historial;
   const s = row.server;
   const solo = row.precargaSolo?.datos_formulario;
-  const raw =
-    (h?.datos_formulario as Record<string, unknown> | undefined)
-      ?.nombres_apellidos_beneficiario ??
-    (s?.datos_formulario as Record<string, unknown> | undefined)
-      ?.nombres_apellidos_beneficiario ??
-    solo?.nombres_apellidos_beneficiario;
+  const rawServer = (s?.datos_formulario as Record<string, unknown> | undefined)
+    ?.nombres_apellidos_beneficiario;
+  if (typeof rawServer === "string" && rawServer.trim() !== "") {
+    return rawServer.trim();
+  }
+  const raw = solo?.nombres_apellidos_beneficiario;
   if (typeof raw === "string" && raw.trim() !== "") {
     return raw.trim();
+  }
+  const rawHistorial = (h?.datos_formulario as Record<string, unknown> | undefined)
+    ?.nombres_apellidos_beneficiario;
+  if (typeof rawHistorial === "string" && rawHistorial.trim() !== "") {
+    return rawHistorial.trim();
   }
   return "";
 }
