@@ -1,9 +1,12 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 
 import { usePwaRegister } from "@/hooks/usePwaRegister";
 
 const UPDATE_PROMPT_SUPPRESS_KEY = "nosignal:pwa:update-clicked-at";
 const UPDATE_PROMPT_SUPPRESS_MS = 3 * 60 * 1000;
+
+/** Ventana desde el primer montaje para considerar "recién abrió la app" y auto-actualizar. */
+export const COLD_START_UPDATE_WINDOW_MS = 5_000;
 
 const shouldStartSuppressed = (): boolean => {
   try {
@@ -24,14 +27,20 @@ export const ReloadPrompt = () => {
     updateServiceWorker,
   } = usePwaRegister();
   const [isUpdating, setIsUpdating] = useState(false);
+  const [autoApplying, setAutoApplying] = useState(false);
   const [promptDismissed, setPromptDismissed] = useState(() =>
     shouldStartSuppressed(),
   );
 
+  const mountedAtRef = useRef(Date.now());
+  const coldStartTriggeredRef = useRef(false);
+
   useEffect(() => {
     if (!needRefresh) {
       setIsUpdating(false);
+      setAutoApplying(false);
       setPromptDismissed(false);
+      coldStartTriggeredRef.current = false;
       try {
         window.sessionStorage.removeItem(UPDATE_PROMPT_SUPPRESS_KEY);
       } catch {
@@ -40,7 +49,7 @@ export const ReloadPrompt = () => {
     }
   }, [needRefresh]);
 
-  const handleReload = async () => {
+  const handleReload = useCallback(async () => {
     setPromptDismissed(true);
     setIsUpdating(true);
     try {
@@ -63,7 +72,45 @@ export const ReloadPrompt = () => {
       }, 900);
       window.setTimeout(() => setIsUpdating(false), 1800);
     }
-  };
+  }, [updateServiceWorker]);
+
+  useLayoutEffect(() => {
+    if (!needRefresh || coldStartTriggeredRef.current) {
+      return;
+    }
+    const elapsed = Date.now() - mountedAtRef.current;
+    if (elapsed <= COLD_START_UPDATE_WINDOW_MS) {
+      coldStartTriggeredRef.current = true;
+      setAutoApplying(true);
+      void handleReload();
+    }
+  }, [needRefresh, handleReload]);
+
+  const showUpdatingOverlay =
+    needRefresh && (autoApplying || isUpdating);
+
+  if (showUpdatingOverlay) {
+    return (
+      <div
+        className="fixed inset-0 z-[300] flex items-center justify-center bg-slate-900/40 p-6 backdrop-blur-[1px]"
+        role="status"
+        aria-live="polite"
+      >
+        <div className="max-w-sm rounded-2xl border border-teal-200 bg-white px-6 py-5 text-center shadow-xl ring-1 ring-teal-100">
+          <div
+            className="mx-auto mb-4 h-10 w-10 animate-spin rounded-full border-2 border-teal-200 border-t-teal-700"
+            aria-hidden="true"
+          />
+          <p className="text-sm font-semibold text-slate-900">
+            Actualizando a la última versión...
+          </p>
+          <p className="mt-2 text-xs text-slate-600">
+            Esto solo tomará un momento.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   if (!needRefresh || promptDismissed) {
     return null;

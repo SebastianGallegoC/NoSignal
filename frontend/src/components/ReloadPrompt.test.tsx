@@ -2,14 +2,18 @@ import { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { ReloadPrompt } from "@/components/ReloadPrompt";
+import {
+  COLD_START_UPDATE_WINDOW_MS,
+  ReloadPrompt,
+} from "@/components/ReloadPrompt";
 
 const mockUpdateServiceWorker = vi.fn<(reloadPage?: boolean) => Promise<void>>();
-let needRefreshState = false;
+
+const pwaMock = { needRefresh: false };
 
 vi.mock("@/hooks/usePwaRegister", () => ({
   usePwaRegister: () => ({
-    needRefresh: [needRefreshState, vi.fn()],
+    needRefresh: [pwaMock.needRefresh, vi.fn()],
     offlineReady: [false, vi.fn()],
     updateServiceWorker: mockUpdateServiceWorker,
   }),
@@ -28,7 +32,7 @@ describe("ReloadPrompt", () => {
     vi.useFakeTimers();
     mockUpdateServiceWorker.mockReset();
     mockUpdateServiceWorker.mockResolvedValue(undefined);
-    needRefreshState = false;
+    pwaMock.needRefresh = false;
     window.sessionStorage.clear();
   });
 
@@ -53,17 +57,28 @@ describe("ReloadPrompt", () => {
     });
   };
 
+  const rerenderPrompt = async () => {
+    await act(async () => {
+      root?.render(<ReloadPrompt />);
+    });
+  };
+
   it("no renderiza aviso cuando no hay actualización", async () => {
-    needRefreshState = false;
+    pwaMock.needRefresh = false;
     await renderPrompt();
     expect(container?.textContent ?? "").not.toContain(
       "Hay una nueva versión disponible.",
     );
   });
 
-  it("renderiza aviso cuando needRefresh es true", async () => {
-    needRefreshState = true;
+  it("renderiza aviso cuando needRefresh es true fuera de la ventana cold-start", async () => {
+    pwaMock.needRefresh = false;
     await renderPrompt();
+    await act(async () => {
+      vi.advanceTimersByTime(COLD_START_UPDATE_WINDOW_MS + 1);
+    });
+    pwaMock.needRefresh = true;
+    await rerenderPrompt();
     expect(container?.textContent ?? "").toContain(
       "Hay una nueva versión disponible.",
     );
@@ -71,8 +86,13 @@ describe("ReloadPrompt", () => {
   });
 
   it("ejecuta updateServiceWorker(true) al hacer clic en actualizar", async () => {
-    needRefreshState = true;
+    pwaMock.needRefresh = false;
     await renderPrompt();
+    await act(async () => {
+      vi.advanceTimersByTime(COLD_START_UPDATE_WINDOW_MS + 1);
+    });
+    pwaMock.needRefresh = true;
+    await rerenderPrompt();
     const button = container?.querySelector("button");
     expect(button).not.toBeNull();
     await act(async () => {
@@ -83,8 +103,13 @@ describe("ReloadPrompt", () => {
   });
 
   it("oculta el modal después de pulsar actualizar", async () => {
-    needRefreshState = true;
+    pwaMock.needRefresh = false;
     await renderPrompt();
+    await act(async () => {
+      vi.advanceTimersByTime(COLD_START_UPDATE_WINDOW_MS + 1);
+    });
+    pwaMock.needRefresh = true;
+    await rerenderPrompt();
     const button = container?.querySelector("button");
     expect(button).not.toBeNull();
     await act(async () => {
@@ -93,5 +118,28 @@ describe("ReloadPrompt", () => {
     expect(container?.textContent ?? "").not.toContain(
       "Hay una nueva versión disponible.",
     );
+  });
+
+  it("auto-aplica update si needRefresh es true en cold start", async () => {
+    pwaMock.needRefresh = true;
+    await renderPrompt();
+    expect(mockUpdateServiceWorker).toHaveBeenCalledTimes(1);
+    expect(mockUpdateServiceWorker).toHaveBeenCalledWith(true);
+    expect(container?.textContent ?? "").toContain(
+      "Actualizando a la última versión...",
+    );
+    expect(container?.textContent ?? "").not.toContain("Actualizar ahora");
+  });
+
+  it("no auto-aplica si needRefresh pasa a true después de la ventana cold-start", async () => {
+    pwaMock.needRefresh = false;
+    await renderPrompt();
+    await act(async () => {
+      vi.advanceTimersByTime(COLD_START_UPDATE_WINDOW_MS + 1);
+    });
+    pwaMock.needRefresh = true;
+    await rerenderPrompt();
+    expect(mockUpdateServiceWorker).not.toHaveBeenCalled();
+    expect(container?.textContent ?? "").toContain("Actualizar ahora");
   });
 });
