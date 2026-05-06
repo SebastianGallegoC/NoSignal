@@ -94,20 +94,20 @@ export class NoSignalDB extends Dexie {
     this.version(5).stores({
       formularios: '&id_formulario, estado_sincronizacion, fecha_hora',
       historialFormularios: '&id_formulario, estado, fecha_hora',
-      precargas: '&id_formulario, fecha_precarga, auto_precarga',
+      precargas: '&id_formulario, fecha_precarga',
       sesionLocal: 'id',
     });
     this.version(6).stores({
       formularios: '&id_formulario, estado_sincronizacion, fecha_hora',
       historialFormularios: '&id_formulario, estado, fecha_hora',
-      precargas: '&id_formulario, fecha_precarga, auto_precarga',
+      precargas: '&id_formulario, fecha_precarga',
       formulariosOcultos: '&id_formulario',
       sesionLocal: 'id',
     });
     this.version(7).stores({
       formularios: '&id_formulario, estado_sincronizacion, fecha_hora',
       historialFormularios: '&id_formulario, estado, fecha_hora',
-      precargas: '&id_formulario, fecha_precarga, auto_precarga',
+      precargas: '&id_formulario, fecha_precarga',
       formulariosOcultos: '&id_formulario',
       sesionLocal: 'id',
     });

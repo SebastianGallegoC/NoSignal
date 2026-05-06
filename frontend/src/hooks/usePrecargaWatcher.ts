@@ -16,7 +16,8 @@ export const usePrecargaWatcher = (enabled = true): void => {
     const checkAll = async () => {
       if (!navigator.onLine) return;
       try {
-        const items = await db.precargas.where('auto_precarga').equals(true).toArray();
+        const allPrecargas = await db.precargas.toArray();
+        const items = allPrecargas.filter(p => p.auto_precarga);
         for (const p of items) {
           try {
             const server = await fetchFormFromApi(p.id_formulario);

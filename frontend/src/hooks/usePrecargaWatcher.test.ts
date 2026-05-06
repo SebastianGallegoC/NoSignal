@@ -31,16 +31,14 @@ describe('usePrecargaWatcher (integration)', () => {
     expect(precargaServiceModule.disableAutoPrecarga).toBeDefined();
   });
 
-  it('el módulo db tiene tabla precargas con método where', () => {
+  it('el módulo db tiene tabla precargas con método toArray', () => {
     const mockDb = dbModule.db as any;
     mockDb.precargas = {
-      where: vi.fn().mockReturnValue({
-        equals: vi.fn().mockResolvedValue([]),
-      }),
+      toArray: vi.fn().mockResolvedValue([]),
     };
 
-    expect(mockDb.precargas.where).toBeDefined();
-    expect(typeof mockDb.precargas.where).toBe('function');
+    expect(mockDb.precargas.toArray).toBeDefined();
+    expect(typeof mockDb.precargas.toArray).toBe('function');
   });
 
   it('fetchFormFromApi se puede llamar para validar versiones', async () => {
