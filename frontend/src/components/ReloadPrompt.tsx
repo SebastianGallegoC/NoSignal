@@ -6,6 +6,20 @@ export const ReloadPrompt = () => {
     updateServiceWorker,
   } = usePwaRegister();
 
+  const handleReload = async () => {
+    try {
+      await updateServiceWorker(true);
+    } catch {
+      // Safari iOS en modo standalone puede ignorar el flujo del plugin.
+    } finally {
+      window.setTimeout(() => {
+        if (document.visibilityState === "visible") {
+          window.location.reload();
+        }
+      }, 900);
+    }
+  };
+
   if (!needRefresh) {
     return null;
   }
@@ -24,7 +38,7 @@ export const ReloadPrompt = () => {
         <div className="mt-3 flex justify-end">
           <button
             type="button"
-            onClick={() => void updateServiceWorker(true)}
+            onClick={() => void handleReload()}
             className="rounded-xl bg-teal-700 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-teal-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600"
           >
             Actualizar ahora
