@@ -1,3 +1,5 @@
+import { useState } from "react";
+
 import { usePwaRegister } from "@/hooks/usePwaRegister";
 
 export const ReloadPrompt = () => {
@@ -5,8 +7,12 @@ export const ReloadPrompt = () => {
     needRefresh: [needRefresh],
     updateServiceWorker,
   } = usePwaRegister();
+  const [isUpdating, setIsUpdating] = useState(false);
+  const [showReopenHint, setShowReopenHint] = useState(false);
 
   const handleReload = async () => {
+    setIsUpdating(true);
+    setShowReopenHint(false);
     try {
       await updateServiceWorker(true);
     } catch {
@@ -17,6 +23,10 @@ export const ReloadPrompt = () => {
           window.location.reload();
         }
       }, 900);
+      window.setTimeout(() => {
+        setShowReopenHint(true);
+        setIsUpdating(false);
+      }, 1800);
     }
   };
 
@@ -35,13 +45,19 @@ export const ReloadPrompt = () => {
           Hay una nueva versión disponible. Por favor, actualiza para aplicar los
           cambios.
         </p>
+        {showReopenHint ? (
+          <p className="mt-2 text-xs text-slate-600">
+            Si no ves cambios inmediatamente, cerrá la app y abrila de nuevo.
+          </p>
+        ) : null}
         <div className="mt-3 flex justify-end">
           <button
             type="button"
             onClick={() => void handleReload()}
+            disabled={isUpdating}
             className="rounded-xl bg-teal-700 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-teal-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600"
           >
-            Actualizar ahora
+            {isUpdating ? "Actualizando..." : "Actualizar ahora"}
           </button>
         </div>
       </div>

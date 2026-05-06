@@ -25,7 +25,9 @@ describe("ReloadPrompt", () => {
 
   beforeEach(() => {
     actEnvironment.IS_REACT_ACT_ENVIRONMENT = true;
+    vi.useFakeTimers();
     mockUpdateServiceWorker.mockReset();
+    mockUpdateServiceWorker.mockResolvedValue(undefined);
     needRefreshState = false;
   });
 
@@ -38,6 +40,7 @@ describe("ReloadPrompt", () => {
     container?.remove();
     container = null;
     root = null;
+    vi.useRealTimers();
   });
 
   const renderPrompt = async () => {
@@ -76,5 +79,22 @@ describe("ReloadPrompt", () => {
     });
     expect(mockUpdateServiceWorker).toHaveBeenCalledTimes(1);
     expect(mockUpdateServiceWorker).toHaveBeenCalledWith(true);
+  });
+
+  it("muestra feedback de actualización y luego sugerencia de reabrir", async () => {
+    needRefreshState = true;
+    await renderPrompt();
+    const button = container?.querySelector("button");
+    expect(button).not.toBeNull();
+    await act(async () => {
+      button?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+    expect(container?.textContent ?? "").toContain("Actualizando...");
+    await act(async () => {
+      vi.advanceTimersByTime(1800);
+    });
+    expect(container?.textContent ?? "").toContain(
+      "Si no ves cambios inmediatamente, cerrá la app y abrila de nuevo.",
+    );
   });
 });
