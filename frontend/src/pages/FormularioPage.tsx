@@ -19,7 +19,6 @@ import { FORM_SECTIONS } from "@/config/formSections";
 import { USUARIOS_FORMULARIO } from "@/config/usuariosFormulario";
 import { useGPS } from "@/hooks/useGPS";
 import { useCameraCapture } from "@/hooks/useCameraCapture";
-import { useOfflineSync } from "@/hooks/useOfflineSync";
 import { useFormularioSubmit } from "@/hooks/useFormularioSubmit";
 import { compressImageFile, fileToDataUrl } from "@/services/imageCompression";
 import {
@@ -69,7 +68,6 @@ const toSafeUserId = (raw: string): string => {
 };
 
 export const FormularioPage = () => {
-  useOfflineSync();
   const authUsername = useAuthStore((s) => s.username);
   const draftUserKey = authUsername ?? "";
 

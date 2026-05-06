@@ -4,6 +4,7 @@ import { createPortal } from "react-dom";
 import { Button } from "@/components/ui/button";
 import type { OfflineForm } from "@/services/db";
 import { downloadMatrizCaracterizacionXlsx } from "@/services/matrizCaracterizacionExport";
+import { downloadPhotosZip } from "@/services/photosExport";
 
 export type FormEnvioModalTone = "success" | "warning" | "danger";
 
@@ -53,12 +54,14 @@ export const FormEnvioResultModal = ({
   onClose,
 }: Props) => {
   const [excelError, setExcelError] = useState<string | null>(null);
+  const [fotosError, setFotosError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!open) {
       return;
     }
     setExcelError(null);
+    setFotosError(null);
     const prev = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     const onKey = (e: KeyboardEvent) => {
@@ -103,37 +106,74 @@ export const FormEnvioResultModal = ({
           {message}
         </p>
         {submittedForm ? (
-          <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50/90 px-3 py-3 text-sm text-slate-700">
-            <p className="font-medium text-slate-900">
-              Matriz de caracterización (Excel)
-            </p>
-            <p className="mt-1 text-xs text-slate-600">
-              Podés descargar un archivo con la misma estructura que la hoja
-              «F-PSA-08» de la matriz oficial (columnas de caracterización
-              social).
-            </p>
-            {excelError ? (
-              <p className="mt-2 text-xs text-rose-700">{excelError}</p>
-            ) : null}
-            <Button
-              type="button"
-              variant="outline"
-              className="mt-3 w-full border-teal-200 text-teal-900 hover:bg-teal-50"
-              onClick={() => {
-                void (async () => {
-                  try {
-                    setExcelError(null);
-                    await downloadMatrizCaracterizacionXlsx(submittedForm);
-                  } catch {
-                    setExcelError(
-                      "No se pudo generar el archivo. Reintentá o comprobá el espacio disponible.",
-                    );
-                  }
-                })();
-              }}
-            >
-              Descargar Excel
-            </Button>
+          <div className="mt-4 space-y-4">
+            <div className="rounded-xl border border-slate-200 bg-slate-50/90 px-3 py-3 text-sm text-slate-700">
+              <p className="font-medium text-slate-900">
+                Matriz de caracterización (Excel)
+              </p>
+              <p className="mt-1 text-xs text-slate-600">
+                Podés descargar un archivo con la misma estructura que la hoja
+                «F-PSA-08» de la matriz oficial (columnas de caracterización
+                social).
+              </p>
+              {excelError ? (
+                <p className="mt-2 text-xs text-rose-700">{excelError}</p>
+              ) : null}
+              <Button
+                type="button"
+                variant="outline"
+                className="mt-3 w-full border-teal-200 text-teal-900 hover:bg-teal-50"
+                onClick={() => {
+                  void (async () => {
+                    try {
+                      setExcelError(null);
+                      await downloadMatrizCaracterizacionXlsx(submittedForm);
+                    } catch {
+                      setExcelError(
+                        "No se pudo generar el archivo. Reintentá o comprobá el espacio disponible.",
+                      );
+                    }
+                  })();
+                }}
+              >
+                Descargar Excel
+              </Button>
+            </div>
+            <div className="rounded-xl border border-slate-200 bg-slate-50/90 px-3 py-3 text-sm text-slate-700">
+              <p className="font-medium text-slate-900">Fotos por visita</p>
+              <p className="mt-1 text-xs text-slate-600">
+                Se descarga un ZIP con carpetas «Visita 1», «Visita 2» y «Visita
+                3» dentro de «Fotos-[nombre del beneficiario]».
+              </p>
+              {(submittedForm.fotos?.length ?? 0) === 0 ? (
+                <p className="mt-2 text-xs text-slate-600">
+                  Este formulario no tiene fotos cargadas.
+                </p>
+              ) : null}
+              {fotosError ? (
+                <p className="mt-2 text-xs text-rose-700">{fotosError}</p>
+              ) : null}
+              <Button
+                type="button"
+                variant="outline"
+                className="mt-3 w-full border-teal-200 text-teal-900 hover:bg-teal-50"
+                disabled={(submittedForm.fotos?.length ?? 0) === 0}
+                onClick={() => {
+                  void (async () => {
+                    try {
+                      setFotosError(null);
+                      await downloadPhotosZip(submittedForm);
+                    } catch {
+                      setFotosError(
+                        "No se pudo generar el ZIP de fotos. Reintentá o comprobá el espacio disponible.",
+                      );
+                    }
+                  })();
+                }}
+              >
+                Descargar fotos
+              </Button>
+            </div>
           </div>
         ) : null}
         <Button

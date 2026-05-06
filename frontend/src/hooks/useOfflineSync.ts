@@ -4,8 +4,17 @@ import { purgeExpiredForms, syncPendingForms } from '../services/sync';
 
 const ONLINE_SYNC_DEBOUNCE_MS = 1200;
 
-export const useOfflineSync = (): void => {
+/**
+ * Sincroniza cola al montar, al evento `online` y al volver la pestaña visible
+ * (algunos móviles no disparan `online` de forma fiable).
+ * Pasar `enabled=false` cuando no haya sesión (p. ej. fuera de rutas protegidas).
+ */
+export const useOfflineSync = (enabled = true): void => {
   useEffect(() => {
+    if (!enabled) {
+      return;
+    }
+
     const runSync = async () => {
       await purgeExpiredForms();
       await syncPendingForms();
@@ -13,23 +22,33 @@ export const useOfflineSync = (): void => {
 
     void runSync();
 
-    let onlineTimer: number | null = null;
-    const handleOnline = () => {
-      if (onlineTimer != null) {
-        window.clearTimeout(onlineTimer);
+    let debounceTimer: number | null = null;
+    const scheduleSync = () => {
+      if (debounceTimer != null) {
+        window.clearTimeout(debounceTimer);
       }
-      onlineTimer = window.setTimeout(() => {
-        onlineTimer = null;
+      debounceTimer = window.setTimeout(() => {
+        debounceTimer = null;
         void runSync();
       }, ONLINE_SYNC_DEBOUNCE_MS);
     };
 
-    window.addEventListener('online', handleOnline);
-    return () => {
-      window.removeEventListener('online', handleOnline);
-      if (onlineTimer != null) {
-        window.clearTimeout(onlineTimer);
+    const handleOnline = () => scheduleSync();
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible' && navigator.onLine) {
+        scheduleSync();
       }
     };
-  }, []);
+
+    window.addEventListener('online', handleOnline);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      if (debounceTimer != null) {
+        window.clearTimeout(debounceTimer);
+      }
+    };
+  }, [enabled]);
 };

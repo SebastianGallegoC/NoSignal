@@ -1,6 +1,7 @@
 import { type ReactNode, useMemo } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 
+import { useOfflineSync } from '@/hooks/useOfflineSync';
 import { isAccessTokenValid } from '@/lib/jwt';
 import { useAuthStore } from '@/store/useAuthStore';
 
@@ -13,6 +14,8 @@ export const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
   const location = useLocation();
 
   const valid = useMemo(() => isAccessTokenValid(token), [token]);
+
+  useOfflineSync(valid);
 
   if (!valid) {
     return <Navigate to="/login" replace state={{ from: location.pathname }} />;
