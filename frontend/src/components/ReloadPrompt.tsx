@@ -1,6 +1,22 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { usePwaRegister } from "@/hooks/usePwaRegister";
+
+const UPDATE_PROMPT_SUPPRESS_KEY = "nosignal:pwa:update-clicked-at";
+const UPDATE_PROMPT_SUPPRESS_MS = 3 * 60 * 1000;
+
+const shouldStartSuppressed = (): boolean => {
+  try {
+    const raw = window.sessionStorage.getItem(UPDATE_PROMPT_SUPPRESS_KEY);
+    const ts = raw ? Number(raw) : NaN;
+    if (!Number.isFinite(ts)) {
+      return false;
+    }
+    return Date.now() - ts < UPDATE_PROMPT_SUPPRESS_MS;
+  } catch {
+    return false;
+  }
+};
 
 export const ReloadPrompt = () => {
   const {
@@ -8,11 +24,33 @@ export const ReloadPrompt = () => {
     updateServiceWorker,
   } = usePwaRegister();
   const [isUpdating, setIsUpdating] = useState(false);
-  const [showReopenHint, setShowReopenHint] = useState(false);
+  const [promptDismissed, setPromptDismissed] = useState(() =>
+    shouldStartSuppressed(),
+  );
+
+  useEffect(() => {
+    if (!needRefresh) {
+      setIsUpdating(false);
+      setPromptDismissed(false);
+      try {
+        window.sessionStorage.removeItem(UPDATE_PROMPT_SUPPRESS_KEY);
+      } catch {
+        // ignore
+      }
+    }
+  }, [needRefresh]);
 
   const handleReload = async () => {
+    setPromptDismissed(true);
     setIsUpdating(true);
-    setShowReopenHint(false);
+    try {
+      window.sessionStorage.setItem(
+        UPDATE_PROMPT_SUPPRESS_KEY,
+        String(Date.now()),
+      );
+    } catch {
+      // ignore
+    }
     try {
       await updateServiceWorker(true);
     } catch {
@@ -23,14 +61,11 @@ export const ReloadPrompt = () => {
           window.location.reload();
         }
       }, 900);
-      window.setTimeout(() => {
-        setShowReopenHint(true);
-        setIsUpdating(false);
-      }, 1800);
+      window.setTimeout(() => setIsUpdating(false), 1800);
     }
   };
 
-  if (!needRefresh) {
+  if (!needRefresh || promptDismissed) {
     return null;
   }
 
@@ -45,11 +80,6 @@ export const ReloadPrompt = () => {
           Hay una nueva versión disponible. Por favor, actualiza para aplicar los
           cambios.
         </p>
-        {showReopenHint ? (
-          <p className="mt-2 text-xs text-slate-600">
-            Si no ves cambios inmediatamente, cerrá la app y abrila de nuevo.
-          </p>
-        ) : null}
         <div className="mt-3 flex justify-end">
           <button
             type="button"

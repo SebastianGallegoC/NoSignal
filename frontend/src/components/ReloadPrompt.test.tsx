@@ -29,6 +29,7 @@ describe("ReloadPrompt", () => {
     mockUpdateServiceWorker.mockReset();
     mockUpdateServiceWorker.mockResolvedValue(undefined);
     needRefreshState = false;
+    window.sessionStorage.clear();
   });
 
   afterEach(async () => {
@@ -81,7 +82,7 @@ describe("ReloadPrompt", () => {
     expect(mockUpdateServiceWorker).toHaveBeenCalledWith(true);
   });
 
-  it("muestra feedback de actualización y luego sugerencia de reabrir", async () => {
+  it("oculta el modal después de pulsar actualizar", async () => {
     needRefreshState = true;
     await renderPrompt();
     const button = container?.querySelector("button");
@@ -89,12 +90,8 @@ describe("ReloadPrompt", () => {
     await act(async () => {
       button?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
     });
-    expect(container?.textContent ?? "").toContain("Actualizando...");
-    await act(async () => {
-      vi.advanceTimersByTime(1800);
-    });
-    expect(container?.textContent ?? "").toContain(
-      "Si no ves cambios inmediatamente, cerrá la app y abrila de nuevo.",
+    expect(container?.textContent ?? "").not.toContain(
+      "Hay una nueva versión disponible.",
     );
   });
 });
