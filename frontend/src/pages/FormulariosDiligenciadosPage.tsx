@@ -546,13 +546,52 @@ export const FormulariosDiligenciadosPage = () => {
   );
 
   const usarComoBase = useCallback(
-    (row: DisplayRow) => {
+    async (row: DisplayRow) => {
       if (!detailSnapshot) {
         return;
       }
       const formValues = buildFormValuesFromSnapshot(detailSnapshot);
       const sourceFotos = detailPrecarga?.fotos ?? detailSnapshot.fotos ?? [];
-      const fotos = fotosConVisitaDesdeDetalle(sourceFotos);
+      let fotos = fotosConVisitaDesdeDetalle(sourceFotos);
+      const shouldHydrateFromServer =
+        fotos.length === 0 &&
+        !!row.server &&
+        (row.server.fotos?.length ?? 0) > 0;
+      if (shouldHydrateFromServer) {
+        const serverRow = row.server;
+        if (!serverRow) {
+          return;
+        }
+        const serverFotos = mapServerFotos(
+          serverRow.id_formulario,
+          serverRow.fotos ?? [],
+        );
+        const fetched: FotoForm[] = [];
+        for (const foto of serverFotos) {
+          if (foto.serverFormId == null || foto.serverIndex == null) {
+            continue;
+          }
+          try {
+            const data = await fetchFormPhotoDataUrl(
+              foto.serverFormId,
+              foto.serverIndex,
+            );
+            fetched.push({
+              nombre_archivo: foto.nombre_archivo,
+              data,
+              visita:
+                foto.visita === 1 || foto.visita === 2 || foto.visita === 3
+                  ? foto.visita
+                  : 1,
+            });
+          } catch {
+            // Si una foto falla, continuamos con las demás.
+          }
+        }
+        if (fetched.length > 0) {
+          fotos = fetched;
+        }
+      }
       const gps = detailSnapshot.gps
         ? {
             latitud: detailSnapshot.gps.latitud,
@@ -1170,7 +1209,9 @@ export const FormulariosDiligenciadosPage = () => {
                             ) : null}
                             <Button
                               type="button"
-                              onClick={() => usarComoBase(row)}
+                              onClick={() => {
+                                void usarComoBase(row);
+                              }}
                             >
                               Editar este formulario
                             </Button>
