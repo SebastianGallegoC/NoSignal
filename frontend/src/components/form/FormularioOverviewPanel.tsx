@@ -12,6 +12,7 @@ type Props = {
   erroresSync: number;
   ultimosErrores: SyncErrorItem[];
   onSolicitarGps: () => void;
+  onAbrirManual: () => void;
   buildMapUrl: (lat: number, lon: number) => string;
   buildExternalMapUrl: (lat: number, lon: number) => string;
 };
@@ -26,6 +27,7 @@ export const FormularioOverviewPanel = ({
   erroresSync,
   ultimosErrores,
   onSolicitarGps,
+  onAbrirManual,
   buildMapUrl,
   buildExternalMapUrl,
 }: Props) => {
@@ -55,15 +57,26 @@ export const FormularioOverviewPanel = ({
                   ? `Error: ${error}`
                   : "Sin ubicación registrada"}
           </p>
-          <Button
-            type="button"
-            variant="outline"
-            className="mt-3 border-teal-200 text-teal-800 hover:bg-teal-50"
-            onClick={onSolicitarGps}
-            disabled={cargando}
-          >
-            {cargando ? "Buscando GPS…" : "Tomar ubicación"}
-          </Button>
+          <div className="mt-3 flex gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              className="flex-1 border-teal-200 text-teal-800 hover:bg-teal-50"
+              onClick={onSolicitarGps}
+              disabled={cargando}
+            >
+              {cargando ? "Buscando GPS…" : "GPS automático"}
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              className="flex-1 border-teal-200 text-teal-800 hover:bg-teal-50"
+              onClick={onAbrirManual}
+              disabled={cargando}
+            >
+              Ingresar manualmente
+            </Button>
+          </div>
           {gps ? (
             <div className="mt-4 overflow-hidden rounded-xl border border-teal-100 bg-slate-50">
               <div className="h-48 overflow-hidden">

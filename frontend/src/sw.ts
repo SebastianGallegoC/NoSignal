@@ -5,6 +5,8 @@ import { clientsClaim } from 'workbox-core';
 import { cleanupOutdatedCaches, createHandlerBoundToURL, precacheAndRoute } from 'workbox-precaching';
 import { NavigationRoute, registerRoute } from 'workbox-routing';
 import { CacheFirst, NetworkFirst, NetworkOnly } from 'workbox-strategies';
+import { ExpirationPlugin } from 'workbox-expiration';
+import { CacheableResponsePlugin } from 'workbox-cacheable-response';
 
 declare let self: ServiceWorkerGlobalScope;
 
@@ -53,5 +55,22 @@ registerRoute(
     ['image', 'font'].includes(request.destination),
   new CacheFirst({
     cacheName: 'nosignal-media-v1',
+  }),
+);
+
+// Tile server caching (OpenStreetMap): cache-first with expiration.
+// Esto permite que tiles visitados previamente estén disponibles offline.
+registerRoute(
+  ({ url }) => url.hostname.endsWith('tile.openstreetmap.org'),
+  new CacheFirst({
+    cacheName: 'osm-tiles-v1',
+    plugins: [
+      new ExpirationPlugin({
+        maxEntries: 500,
+        maxAgeSeconds: 30 * 24 * 60 * 60, // 30 días
+        purgeOnQuotaError: true,
+      }),
+      new CacheableResponsePlugin({ statuses: [0, 200] }),
+    ],
   }),
 );

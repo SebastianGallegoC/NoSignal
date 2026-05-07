@@ -13,6 +13,7 @@ import {
 } from "@/components/form/ImagePreviewModal";
 import { FormularioFotosSection } from "@/components/form/FormularioFotosSection";
 import { FormularioOverviewPanel } from "@/components/form/FormularioOverviewPanel";
+import { ManualCoordinatesModal } from "@/components/form/ManualCoordinatesModal";
 import { FormFieldRow } from "@/components/form/FormFieldRow";
 import { Button } from "@/components/ui/button";
 import { FORM_SECTIONS } from "@/config/formSections";
@@ -118,6 +119,7 @@ export const FormularioPage = () => {
   const [envioModal, setEnvioModal] = useState<FormEnvioResultState | null>(
     null,
   );
+  const [mostrarModalManual, setMostrarModalManual] = useState(false);
   const navigate = useNavigate();
   const [openSections, setOpenSections] = useState<Set<string>>(
     () => new Set(["actividad"]),
@@ -351,6 +353,39 @@ export const FormularioPage = () => {
     return { grados, minutos, segundos };
   };
 
+  const handleCoordenadasManual = (coords: {
+    latitud: number;
+    longitud: number;
+    precision: number;
+  }) => {
+    // Convertir a DMS y actualizar campos del formulario
+    const longDms = decimalToDms(coords.longitud);
+    const latDms = decimalToDms(coords.latitud);
+
+    setValue("longitud", coords.longitud.toFixed(6));
+    setValue("latitud", coords.latitud.toFixed(6));
+    setValue("x_grados", String(longDms.grados));
+    setValue("x_minutos", String(longDms.minutos));
+    setValue("x_segundos", longDms.segundos.toFixed(3));
+    setValue("y_grados", String(latDms.grados));
+    setValue("y_minutos", String(latDms.minutos));
+    setValue("y_segundos", latDms.segundos.toFixed(3));
+
+    setMostrarModalManual(false);
+
+    // Guardar en borrador
+    saveFormDraft(draftUserKey, {
+      v: 1,
+      savedAt: new Date().toISOString(),
+      formId,
+      idUsuario,
+      fotos,
+      gps: coords,
+      originalFechaHora,
+      formValues: getValues(),
+    });
+  };
+
   useEffect(() => {
     if (!gps) {
       return;
@@ -453,8 +488,15 @@ export const FormularioPage = () => {
           erroresSync={erroresSync}
           ultimosErrores={ultimosErrores}
           onSolicitarGps={solicitarGPS}
+          onAbrirManual={() => setMostrarModalManual(true)}
           buildMapUrl={buildMapUrl}
           buildExternalMapUrl={buildExternalMapUrl}
+        />
+
+        <ManualCoordinatesModal
+          isOpen={mostrarModalManual}
+          onClose={() => setMostrarModalManual(false)}
+          onSubmit={handleCoordenadasManual}
         />
 
         {banner ? (

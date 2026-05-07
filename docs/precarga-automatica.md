@@ -262,6 +262,115 @@ if (prec?.auto_precarga) {
 - 🆕 `frontend/src/hooks/usePrecargaWatcher.ts` — Watcher periódico de cambios.
 - 📄 `docs/precarga-automatica.md` — Este documento.
 
+## Entrada Manual de Coordenadas GPS
+
+### Resumen de la Funcionalidad
+
+Complementando la captura automática de GPS mediante PWA, se implementó la posibilidad de que el usuario ingrese manualmente coordenadas de ubicación en formato decimal (latitud, longitud, precisión). Esto es útil cuando:
+
+- No hay acceso a GPS (ej: cámara web con navegador limitado)
+- Se requiere corregir una ubicación capturada
+- El usuario prefiere ingresar coordenadas de fuente externa
+
+### Componentes Implementados
+
+#### `frontend/src/components/form/ManualCoordinatesModal.tsx`
+
+Modal interactivo que permite al usuario ingresar:
+
+- **Latitud** (rango: -90 a 90 grados)
+- **Longitud** (rango: -180 a 180 grados)
+- **Precisión** (metros, default: 5, mínimo: 0)
+
+**Validación**:
+
+- Campos requeridos (no vacíos después de trim)
+- Rangos numéricamente válidos
+- Conversión a tipo `number` con `parseFloat()`
+- Mensajes de error específicos para cada validación
+
+**Estado Interno**:
+
+- `lat`, `lon`, `precision`: strings (capturan entrada del usuario)
+- `error`: mensaje de validación o null
+
+**Props**:
+
+```typescript
+type Props = {
+  isOpen: boolean;
+  onClose: () => void;
+  onSubmit: (coords: {
+    latitud: number;
+    longitud: number;
+    precision: number;
+  }) => void;
+};
+```
+
+#### Integración en `FormularioOverviewPanel.tsx`
+
+**Cambios**:
+
+- Agregado prop `onAbrirManual: () => void` al type `Props`
+- Reemplazado botón único "Tomar ubicación" con dual-button group:
+  - Botón izq: "GPS automático" — dispara GPS hardware
+  - Botón der: "Ingresar manualmente" — abre modal
+
+**Renderizado**:
+
+```typescript
+<div className="mt-3 flex gap-2">
+  <Button onClick={onSolicitarGps} disabled={cargando}>
+    {cargando ? "Buscando GPS…" : "GPS automático"}
+  </Button>
+  <Button onClick={onAbrirManual} disabled={cargando}>
+    Ingresar manualmente
+  </Button>
+</div>
+```
+
+#### Integración en `FormularioPage.tsx`
+
+**Cambios**:
+
+- Import: `ManualCoordinatesModal`
+- State: `const [mostrarModalManual, setMostrarModalManual] = useState(false);`
+- Callback: `handleCoordenadasManual()` que:
+  - Convierte coordenadas decimales a DMS (grados/minutos/segundos)
+  - Actualiza campos del formulario via `setValue()`
+  - Cierra modal
+  - Guarda borrador con nuevas coordenadas
+- Renderizado del modal con binding a estado y callback
+
+### Flujo de Usuario
+
+1. **Acceder al formulario** → Sección GPS muestra dos botones: "GPS automático" e "Ingresar manualmente"
+2. **Clic en "Ingresar manualmente"** → Abre modal con tres inputs
+3. **Ingresar coordenadas** → Ej: Lat -34.603722, Lon -58.381592, Precision 10
+4. **Validación en tiempo real** → Si error: muestra mensaje específico en rose-50 box
+5. **Clic en "Guardar ubicación"** → Convierte a DMS, actualiza campos, guarda borrador, cierra modal
+6. **Formulario actualizado** → Mapa renderiza ubicación; campos DMS y decimales sincronizados
+
+### Comparación: Automático vs Manual
+
+| Aspecto          | GPS Automático         | Manual                                          |
+| ---------------- | ---------------------- | ----------------------------------------------- |
+| Activación       | Botón "GPS automático" | Botón "Ingresar manualmente"                    |
+| Datos requeridos | Hardware GPS/WiFi      | Entrada usuario (3 campos)                      |
+| Precisión        | Varía (1-100+ metros)  | Usuario especifica                              |
+| Contexto         | Ubicación actual       | Cualquier punto (histórico, externo, corregido) |
+| Offline          | Requiere WiFi/GPS      | Funciona offline                                |
+| Error handling   | Reintento automático   | Validación modal                                |
+
+### Desarrollo Futuro
+
+- Importar coordenadas desde archivo (CSV, GeoJSON)
+- Búsqueda de ubicación por nombre (Nominatim, Google Places)
+- Historial de coordenadas ingresadas
+- Exportar rutas como GeoJSON
+- Integración con aplicaciones externas de mapas
+
 ## Referencias
 
 - **IndexedDB Limits**: ~50 MB por aplicación (varía por navegador; Chrome/Edge: 50 MB).
