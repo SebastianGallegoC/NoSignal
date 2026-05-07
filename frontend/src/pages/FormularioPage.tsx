@@ -565,8 +565,8 @@ export const FormularioPage = () => {
               {navigator.onLine ? "online" : "offline"}
             </p>
           </div>
-          <div className="flex w-full min-w-0 flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-6">
-            <div className="flex flex-wrap gap-2">
+          <div className="flex w-full min-w-0 flex-row items-center justify-between gap-2 sm:gap-6">
+            <div className="flex min-w-0 flex-wrap gap-2">
               <Link to="/inicio" className="inline-flex">
                 <Button
                   type="button"
@@ -586,7 +586,7 @@ export const FormularioPage = () => {
               </Button>
             </div>
             {hayContenidoDiligenciado ? (
-              <div className="flex border-t border-slate-200 pt-3 sm:border-l sm:border-t-0 sm:pl-6 sm:pt-0">
+              <div className="flex shrink-0 border-l border-slate-200 pl-3 sm:pl-6">
                 <Button
                   type="button"
                   variant="outline"
