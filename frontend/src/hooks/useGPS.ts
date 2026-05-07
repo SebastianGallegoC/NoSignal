@@ -18,6 +18,8 @@ interface GPSHookState {
   estado: 'idle' | 'buscando' | 'ok' | 'error';
   progreso: string | null;
   solicitarGPS: () => void;
+  /** Detiene el seguimiento y deja el hook como al cargar la página (sin ubicación). */
+  limpiarUbicacion: () => void;
 }
 
 const MAX_ACCURACY_METERS = 100;
@@ -80,6 +82,15 @@ export const useGPS = (opts?: UseGPSOptions): GPSHookState => {
       timeoutRef.current = null;
     }
   }, []);
+
+  const limpiarUbicacion = useCallback(() => {
+    stopTracking();
+    setGps(null);
+    setCargando(false);
+    setError(null);
+    setEstado('idle');
+    setProgreso(null);
+  }, [stopTracking]);
 
   const solicitarGPS = useCallback(() => {
     if (!('geolocation' in navigator)) {
@@ -168,5 +179,5 @@ export const useGPS = (opts?: UseGPSOptions): GPSHookState => {
     };
   }, [stopTracking]);
 
-  return { gps, cargando, error, estado, progreso, solicitarGPS };
+  return { gps, cargando, error, estado, progreso, solicitarGPS, limpiarUbicacion };
 };

@@ -83,7 +83,15 @@ export const FormularioPage = () => {
     return { ...defaults, ...loadedDraft.formValues } as FormValues;
   }, [defaults, loadedDraft]);
 
-  const { gps, cargando, error, estado, progreso, solicitarGPS } = useGPS({
+  const {
+    gps,
+    cargando,
+    error,
+    estado,
+    progreso,
+    solicitarGPS,
+    limpiarUbicacion,
+  } = useGPS({
     restoredPosition: loadedDraft?.gps ?? null,
   });
   const [idUsuario, setIdUsuario] = useState(
@@ -116,6 +124,7 @@ export const FormularioPage = () => {
   const [openSections, setOpenSections] = useState<Set<string>>(
     () => new Set(["actividad"]),
   );
+  const [modalLimpiarAbierto, setModalLimpiarAbierto] = useState(false);
   const pickerInputRef = useRef<HTMLInputElement | null>(null);
 
   const {
@@ -133,6 +142,19 @@ export const FormularioPage = () => {
   });
 
   const formValues = watch();
+
+  const hayContenidoDiligenciado = useMemo(
+    () =>
+      shouldPersistFormDraft(
+        formValues,
+        defaults,
+        idUsuario,
+        fotos.length,
+        gps !== null,
+      ),
+    [formValues, defaults, idUsuario, fotos.length, gps],
+  );
+
   const gpsFormulario = useMemo(() => {
     if (modoCoordenadas !== "manual") {
       return gps;
@@ -307,6 +329,45 @@ export const FormularioPage = () => {
     setFotos((prev) => prev.filter((_, i) => i !== index));
   };
 
+  const confirmarLimpiarFormulario = useCallback(() => {
+    stopCamera();
+    limpiarUbicacion();
+    reset(defaults);
+    setIdUsuario("");
+    setFotos([]);
+    setFormId(randomUuid());
+    setOriginalFechaHora(null);
+    setModoCoordenadas("automatico");
+    clearFormDraft(draftUserKey);
+    setBanner(null);
+    setSubmitFeedback(null);
+    setVisitaFotoSeleccionada(null);
+    setPreviewFoto(null);
+    setOpenSections(new Set(["actividad"]));
+    if (pickerInputRef.current) {
+      pickerInputRef.current.value = "";
+    }
+    setModalLimpiarAbierto(false);
+  }, [limpiarUbicacion, reset, defaults, draftUserKey, stopCamera]);
+
+  useEffect(() => {
+    if (!modalLimpiarAbierto) {
+      return;
+    }
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setModalLimpiarAbierto(false);
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => {
+      document.body.style.overflow = prev;
+      window.removeEventListener("keydown", onKey);
+    };
+  }, [modalLimpiarAbierto]);
+
   const sincronizarAhora = async () => {
     setSincronizando(true);
     setBanner(null);
@@ -444,6 +505,54 @@ export const FormularioPage = () => {
           }}
         />
       ) : null}
+      {modalLimpiarAbierto ? (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          role="presentation"
+        >
+          <button
+            type="button"
+            className="absolute inset-0 bg-slate-900/45 backdrop-blur-[1px]"
+            aria-label="Cerrar"
+            onClick={() => setModalLimpiarAbierto(false)}
+          />
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="limpiar-formulario-title"
+            className="relative z-10 w-full max-w-md rounded-2xl border border-amber-200 bg-white p-6 shadow-xl ring-1 ring-amber-100"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h2
+              id="limpiar-formulario-title"
+              className="text-lg font-semibold text-slate-900"
+            >
+              ¿Vaciar todo el formulario?
+            </h2>
+            <p className="mt-3 text-sm leading-relaxed text-slate-600">
+              Se borrarán los datos diligenciados, las fotos y la ubicación
+              (GPS o manual). Vas a obtener un formulario nuevo vacío. Esta
+              acción no se puede deshacer.
+            </p>
+            <div className="mt-6 flex flex-wrap justify-end gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setModalLimpiarAbierto(false)}
+              >
+                Cancelar
+              </Button>
+              <Button
+                type="button"
+                className="bg-amber-700 text-white hover:bg-amber-800"
+                onClick={confirmarLimpiarFormulario}
+              >
+                Sí, vaciar
+              </Button>
+            </div>
+          </div>
+        </div>
+      ) : null}
       <div className="mx-auto flex w-full max-w-5xl flex-col gap-6">
         <header className="flex flex-col gap-3 border-b border-teal-100 pb-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
@@ -466,6 +575,16 @@ export const FormularioPage = () => {
                 Regresar
               </Button>
             </Link>
+            {hayContenidoDiligenciado ? (
+              <Button
+                type="button"
+                variant="outline"
+                className="border-amber-200 text-amber-950 hover:bg-amber-50"
+                onClick={() => setModalLimpiarAbierto(true)}
+              >
+                Limpiar
+              </Button>
+            ) : null}
             <Button
               type="button"
               onClick={() => void sincronizarAhora()}
