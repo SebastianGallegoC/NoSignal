@@ -192,18 +192,22 @@ export const syncPendingForms = async (): Promise<SyncRunResult> => {
         fotos: form.fotos,
         modo_coordenadas: form.modo_coordenadas,
       });
-      // Si existe una precarga automática, refrescarla con la versión servidor resultante
+      // Precarga local: al ver sin red el listado usa origen «Precarga» y muestra datos offline.
       try {
-        const prec = await db.precargas.get(form.id_formulario);
-        if (prec?.auto_precarga) {
-          // importar dinámico para evitar ciclos en tiempo de módulo
-          const mod = await import('@/services/precargaService');
-          if (mod?.downloadAndSavePrecarga) {
-            void mod.downloadAndSavePrecarga(form.id_formulario, { optimizePhotos: true });
-          }
+        const mod = await import('@/services/precargaService');
+        if (mod?.downloadAndSavePrecarga) {
+          await mod.downloadAndSavePrecarga(form.id_formulario, { optimizePhotos: true });
         }
       } catch {
-        // ignore
+        await db.precargas.put({
+          id_formulario: form.id_formulario,
+          fecha_precarga: new Date().toISOString(),
+          modo_coordenadas: form.modo_coordenadas,
+          datos_formulario: form.datos_formulario,
+          gps: form.gps,
+          fotos: form.fotos,
+          auto_precarga: true,
+        });
       }
 
       await db.formularios.delete(form.id_formulario);
