@@ -565,34 +565,38 @@ export const FormularioPage = () => {
               {navigator.onLine ? "online" : "offline"}
             </p>
           </div>
-          <div className="flex flex-wrap gap-2">
-            <Link to="/inicio" className="inline-flex">
+          <div className="flex w-full min-w-0 flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-6">
+            <div className="flex flex-wrap gap-2">
+              <Link to="/inicio" className="inline-flex">
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="border-slate-200"
+                >
+                  Regresar
+                </Button>
+              </Link>
               <Button
                 type="button"
-                variant="outline"
-                className="border-slate-200"
+                onClick={() => void sincronizarAhora()}
+                disabled={sincronizando}
+                className="bg-slate-900 text-white hover:bg-slate-800"
               >
-                Regresar
+                {sincronizando ? "Sincronizando…" : "Sincronizar ahora"}
               </Button>
-            </Link>
+            </div>
             {hayContenidoDiligenciado ? (
-              <Button
-                type="button"
-                variant="outline"
-                className="border-amber-200 text-amber-950 hover:bg-amber-50"
-                onClick={() => setModalLimpiarAbierto(true)}
-              >
-                Limpiar
-              </Button>
+              <div className="flex border-t border-slate-200 pt-3 sm:border-l sm:border-t-0 sm:pl-6 sm:pt-0">
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="border-amber-200 text-amber-950 hover:bg-amber-50"
+                  onClick={() => setModalLimpiarAbierto(true)}
+                >
+                  Limpiar
+                </Button>
+              </div>
             ) : null}
-            <Button
-              type="button"
-              onClick={() => void sincronizarAhora()}
-              disabled={sincronizando}
-              className="bg-slate-900 text-white hover:bg-slate-800"
-            >
-              {sincronizando ? "Sincronizando…" : "Sincronizar ahora"}
-            </Button>
           </div>
         </header>
 
