@@ -103,15 +103,8 @@ export const FormularioOverviewPanel = ({
               : error
                 ? `Error: ${error}`
                 : "Sin ubicación registrada"
-          : "Editá latitud y longitud en los campos del formulario (sección correspondiente)."}
+          : "Agregue las coordenadas en los campos del formulario."}
       </p>
-
-      {!isGps ? (
-        <p className="mt-3 rounded-xl border border-slate-200 bg-slate-50/90 px-3 py-2 text-xs text-slate-600">
-          En modo Manual no se usa el mapa ni el botón de ubicación; el envío
-          tomará las coordenadas que ingreses en el formulario.
-        </p>
-      ) : null}
 
       {isGps && gps ? (
         <div className="mt-4 overflow-hidden rounded-xl border border-teal-100 bg-slate-50">

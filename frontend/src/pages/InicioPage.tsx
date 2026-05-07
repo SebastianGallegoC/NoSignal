@@ -44,30 +44,46 @@ export const InicioPage = () => {
           <p className="text-xs font-semibold uppercase tracking-[0.35em] text-teal-700">
             NoSignal
           </p>
-          <section className="mt-4 mb-4 grid gap-4 sm:grid-cols-2">
-            <div className="rounded-2xl border border-amber-100 bg-white/80 p-4 shadow-[0_18px_40px_-35px_rgba(180,83,9,0.6)] sm:p-5">
-              <h2 className="text-xs font-semibold uppercase tracking-wide text-amber-700">
-                Pendientes
-              </h2>
-              <p className="mt-2 text-4xl font-semibold text-slate-900">
-                {pendientes}
+          <section className="mb-5 mt-4 grid gap-3 sm:grid-cols-2">
+            <div className="rounded-2xl border border-amber-200/80 bg-white/95 p-4 shadow-sm ring-1 ring-amber-100/60 sm:p-5">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-amber-700">
+                    Pendientes
+                  </p>
+                  <p className="mt-2 text-4xl font-semibold leading-none text-slate-900">
+                    {pendientes}
+                  </p>
+                </div>
+                <span className="rounded-full bg-amber-50 px-2.5 py-1 text-[11px] font-medium text-amber-700">
+                  Cola local
+                </span>
+              </div>
+              <p className="mt-3 text-sm text-slate-600">
+                Formularios guardados en este equipo y pendientes por sincronizar.
               </p>
-              <p className="text-sm text-slate-600">Formularios en cola local.</p>
             </div>
-            <div className="rounded-2xl border border-rose-100 bg-white/80 p-4 shadow-[0_18px_40px_-35px_rgba(190,24,93,0.5)] sm:p-5">
-              <h2 className="text-xs font-semibold uppercase tracking-wide text-rose-700">
-                Errores sync
-              </h2>
-              <p className="mt-2 text-4xl font-semibold text-slate-900">
-                {erroresSync}
-              </p>
-              <p className="text-sm text-slate-600">
-                Registros con error de envío.
+            <div className="rounded-2xl border border-rose-200/80 bg-white/95 p-4 shadow-sm ring-1 ring-rose-100/60 sm:p-5">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-rose-700">
+                    Errores sync
+                  </p>
+                  <p className="mt-2 text-4xl font-semibold leading-none text-slate-900">
+                    {erroresSync}
+                  </p>
+                </div>
+                <span className="rounded-full bg-rose-50 px-2.5 py-1 text-[11px] font-medium text-rose-700">
+                  Requiere revisión
+                </span>
+              </div>
+              <p className="mt-3 text-sm text-slate-600">
+                Registros que fallaron al enviar y necesitan reintento.
               </p>
             </div>
           </section>
           <h1 className="mt-2 text-3xl font-semibold">
-            Selecciona una opción V.1.3
+            Selecciona una opción V.1
           </h1>
           <p className="mt-2 text-sm text-slate-600">
             Puedes diligenciar un nuevo formulario o revisar los ya registrados.
