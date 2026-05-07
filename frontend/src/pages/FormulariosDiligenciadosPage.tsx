@@ -187,6 +187,9 @@ export const FormulariosDiligenciadosPage = () => {
   const [precargaLoadingId, setPrecargaLoadingId] = useState<string | null>(
     null,
   );
+  const [eliminandoPrecargaId, setEliminandoPrecargaId] = useState<
+    string | null
+  >(null);
   const [precargaError, setPrecargaError] = useState<string | null>(null);
   const [descargandoExcelId, setDescargandoExcelId] = useState<string | null>(
     null,
@@ -261,7 +264,7 @@ export const FormulariosDiligenciadosPage = () => {
     return out;
   }, [rows, filtroDesde, filtroHasta, filtroBeneficiario]);
 
-  const loadList = useCallback(async () => {
+  const loadList = useCallback(async (): Promise<DisplayRow[]> => {
     const local = await db.historialFormularios
       .orderBy("fecha_hora")
       .reverse()
@@ -309,10 +312,12 @@ export const FormulariosDiligenciadosPage = () => {
       precargaForMerge,
     );
     const ocultos = await loadHiddenFormIds();
-    setRows(merged.filter((r) => !ocultos.has(r.id_formulario)));
+    const visible = merged.filter((r) => !ocultos.has(r.id_formulario));
+    setRows(visible);
     setRemoteError(err);
     setRemoteLoaded(hasToken);
     setPrecargas(precargaForMerge);
+    return visible;
   }, []);
 
   useEffect(() => {
@@ -346,15 +351,18 @@ export const FormulariosDiligenciadosPage = () => {
   }, [rowsFiltrados, selectedId]);
 
   const selectRow = useCallback(
-    async (row: DisplayRow) => {
-      if (selectedId === row.id_formulario) {
+    async (row: DisplayRow, options?: { refreshOnly?: boolean }) => {
+      const refreshOnly = options?.refreshOnly === true;
+      if (selectedId === row.id_formulario && !refreshOnly) {
         setSelectedId(null);
         setDetailSnapshot(null);
         setDetailSource(null);
         setDetailPrecarga(null);
         return;
       }
-      setSelectedId(row.id_formulario);
+      if (!refreshOnly) {
+        setSelectedId(row.id_formulario);
+      }
       setDetailLoading(true);
       setDetailSnapshot(null);
       setDetailSource(null);
@@ -603,6 +611,49 @@ export const FormulariosDiligenciadosPage = () => {
       }
     },
     [loadList, precargaLoadingId, selectedId],
+  );
+
+  const eliminarPrecargaRow = useCallback(
+    async (row: DisplayRow) => {
+      if (eliminandoPrecargaId === row.id_formulario) {
+        return;
+      }
+      if (!precargaMap.has(row.id_formulario)) {
+        return;
+      }
+      setEliminandoPrecargaId(row.id_formulario);
+      setPrecargaError(null);
+      try {
+        await db.precargas.delete(row.id_formulario);
+        const visible = await loadList();
+        if (selectedId === row.id_formulario) {
+          const fresh = visible.find((r) => r.id_formulario === row.id_formulario);
+          if (fresh) {
+            await selectRow(fresh, { refreshOnly: true });
+          } else {
+            setSelectedId(null);
+            setDetailSnapshot(null);
+            setDetailSource(null);
+            setDetailPrecarga(null);
+          }
+        }
+      } catch (e) {
+        setPrecargaError(
+          e instanceof Error
+            ? e.message
+            : "No se pudo eliminar la precarga de este dispositivo.",
+        );
+      } finally {
+        setEliminandoPrecargaId(null);
+      }
+    },
+    [
+      eliminandoPrecargaId,
+      loadList,
+      precargaMap,
+      selectRow,
+      selectedId,
+    ],
   );
 
   const usarComoBase = useCallback(
@@ -1399,6 +1450,26 @@ export const FormulariosDiligenciadosPage = () => {
                                       {precargaMap.has(row.id_formulario)
                                         ? "Actualizar precarga"
                                         : "Precargar para visita"}
+                                    </Button>
+                                  ) : null}
+                                  {precargaMap.has(row.id_formulario) ? (
+                                    <Button
+                                      type="button"
+                                      variant="outline"
+                                      onClick={() =>
+                                        void eliminarPrecargaRow(row)
+                                      }
+                                      disabled={
+                                        precargaLoadingId ===
+                                          row.id_formulario ||
+                                        eliminandoPrecargaId ===
+                                          row.id_formulario
+                                      }
+                                      className="border-slate-200 text-slate-800"
+                                    >
+                                      {eliminandoPrecargaId === row.id_formulario
+                                        ? "Quitando precarga…"
+                                        : "Quitar precarga"}
                                     </Button>
                                   ) : null}
                                   <Button
