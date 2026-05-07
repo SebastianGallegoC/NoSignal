@@ -22,6 +22,10 @@ export type DisplayRow = {
  * interpreta como borrado en otro dispositivo y debe dejar de mostrarse (y limpiarse
  * en IndexedDB en el caller).
  *
+ * Además, una precarga cuyo id ya no está en el listado del servidor se elimina del
+ * merge (salvo que el historial local siga en PENDIENTE o ERROR: envío aún no
+ * reflejado en el listado o pendiente de reintento).
+ *
  * No usar cuando el listado falló o no hubo token: en ese caso no se infiere ausencia.
  */
 export function reconcileLocalStateWithTrustedServerList(
@@ -32,23 +36,40 @@ export function reconcileLocalStateWithTrustedServerList(
   historialForMerge: HistorialForm[];
   precargasForMerge: PrecargaForm[];
   staleEnviadoIds: string[];
+  /** Precargas a borrar en IndexedDB: id no está en servidor y no hay cola PENDIENTE/ERROR. */
+  orphanPrecargaIds: string[];
 } {
   const serverIds = new Set(server.map((s) => s.id_formulario));
   const staleEnviadoIds = local
     .filter((h) => h.estado === "ENVIADO" && !serverIds.has(h.id_formulario))
     .map((h) => h.id_formulario);
-  if (staleEnviadoIds.length === 0) {
-    return {
-      historialForMerge: local,
-      precargasForMerge: precargas,
-      staleEnviadoIds: [],
-    };
-  }
   const stale = new Set(staleEnviadoIds);
+  let historialForMerge = local.filter((h) => !stale.has(h.id_formulario));
+  let precargasForMerge = precargas.filter((p) => !stale.has(p.id_formulario));
+
+  const orphanPrecargaIds: string[] = [];
+  for (const p of precargasForMerge) {
+    if (serverIds.has(p.id_formulario)) {
+      continue;
+    }
+    const h = historialForMerge.find((x) => x.id_formulario === p.id_formulario);
+    const keepForPendingSync =
+      h != null && (h.estado === "PENDIENTE" || h.estado === "ERROR");
+    if (!keepForPendingSync) {
+      orphanPrecargaIds.push(p.id_formulario);
+    }
+  }
+
+  if (orphanPrecargaIds.length > 0) {
+    const orphan = new Set(orphanPrecargaIds);
+    precargasForMerge = precargasForMerge.filter((p) => !orphan.has(p.id_formulario));
+  }
+
   return {
-    historialForMerge: local.filter((h) => !stale.has(h.id_formulario)),
-    precargasForMerge: precargas.filter((p) => !stale.has(p.id_formulario)),
+    historialForMerge,
+    precargasForMerge,
     staleEnviadoIds,
+    orphanPrecargaIds,
   };
 }
 

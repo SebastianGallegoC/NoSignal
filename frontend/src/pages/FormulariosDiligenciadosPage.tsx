@@ -310,6 +310,13 @@ export const FormulariosDiligenciadosPage = () => {
           ]),
         );
       }
+      if (reconciled.orphanPrecargaIds.length > 0) {
+        await Promise.all(
+          reconciled.orphanPrecargaIds.map((id) =>
+            db.precargas.delete(id).catch(() => undefined),
+          ),
+        );
+      }
     }
 
     const merged = mergeFormsWithPrecargas(

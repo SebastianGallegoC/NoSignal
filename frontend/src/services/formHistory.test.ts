@@ -165,6 +165,7 @@ describe("formHistory — beneficiario", () => {
       [precarga],
     );
     expect(out.staleEnviadoIds).toEqual(["gone"]);
+    expect(out.orphanPrecargaIds).toEqual([]);
     expect(out.historialForMerge.map((h) => h.id_formulario)).toEqual([
       "local-only",
     ]);
@@ -193,7 +194,71 @@ describe("formHistory — beneficiario", () => {
     ];
     const out = reconcileLocalStateWithTrustedServerList([h], server, []);
     expect(out.staleEnviadoIds).toHaveLength(0);
+    expect(out.orphanPrecargaIds).toHaveLength(0);
     expect(out.historialForMerge).toEqual([h]);
+  });
+
+  it("reconcileLocalStateWithTrustedServerList elimina precarga huérfana cuando el id ya no está en el servidor", () => {
+    const server = [
+      {
+        id_formulario: "still",
+        id_usuario: "u",
+        fecha_hora: "2026-01-03T00:00:00Z",
+        fecha_actualizacion: "2026-01-03T00:00:00Z",
+        latitud: 0,
+        longitud: 0,
+        precision: 1,
+        datos_formulario: {},
+        fotos: [],
+      },
+    ];
+    const precarga: PrecargaForm = {
+      id_formulario: "borrado-en-otro-dispositivo",
+      fecha_precarga: "2026-05-01T12:00:00Z",
+      datos_formulario: {},
+    };
+    const out = reconcileLocalStateWithTrustedServerList([], server, [precarga]);
+    expect(out.orphanPrecargaIds).toEqual(["borrado-en-otro-dispositivo"]);
+    expect(out.precargasForMerge).toHaveLength(0);
+  });
+
+  it("reconcileLocalStateWithTrustedServerList conserva precarga si historial PENDIENTE (id aún no en listado)", () => {
+    const pendiente: HistorialForm = {
+      id_formulario: "solo-local",
+      id_usuario: "u",
+      fecha_hora: "2026-01-02T00:00:00Z",
+      estado: "PENDIENTE",
+    };
+    const prec: PrecargaForm = {
+      id_formulario: "solo-local",
+      fecha_precarga: "2026-05-01T12:00:00Z",
+      datos_formulario: {},
+    };
+    const out = reconcileLocalStateWithTrustedServerList(
+      [pendiente],
+      [],
+      [prec],
+    );
+    expect(out.orphanPrecargaIds).toHaveLength(0);
+    expect(out.precargasForMerge).toHaveLength(1);
+    expect(out.precargasForMerge[0].id_formulario).toBe("solo-local");
+  });
+
+  it("reconcileLocalStateWithTrustedServerList conserva precarga si historial ERROR (reintento pendiente)", () => {
+    const err: HistorialForm = {
+      id_formulario: "sync-error",
+      id_usuario: "u",
+      fecha_hora: "2026-01-02T00:00:00Z",
+      estado: "ERROR",
+    };
+    const prec: PrecargaForm = {
+      id_formulario: "sync-error",
+      fecha_precarga: "2026-05-01T12:00:00Z",
+      datos_formulario: {},
+    };
+    const out = reconcileLocalStateWithTrustedServerList([err], [], [prec]);
+    expect(out.orphanPrecargaIds).toHaveLength(0);
+    expect(out.precargasForMerge).toHaveLength(1);
   });
 
   it("mergeFormsWithPrecargas no duplica si el id ya está en historial", () => {
