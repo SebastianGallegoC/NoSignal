@@ -1,7 +1,10 @@
 import { db } from "@/services/db";
 
-/** Quita cola, historial y precarga; marca id como oculto en listados locales (p. ej. fila solo-servidor). */
-export async function eliminarFormularioDeDispositivo(
+/**
+ * Quita cola (`formularios`), historial y precarga para ese id, sin ocultar la fila
+ * del listado cuando el formulario sigue existiendo en el servidor.
+ */
+export async function eliminarCopiaLocalFormulario(
   id_formulario: string,
 ): Promise<void> {
   await Promise.all([
@@ -9,6 +12,13 @@ export async function eliminarFormularioDeDispositivo(
     db.historialFormularios.delete(id_formulario).catch(() => undefined),
     db.precargas.delete(id_formulario).catch(() => undefined),
   ]);
+}
+
+/** Quita cola, historial y precarga; marca id como oculto en listados locales (p. ej. fila solo-servidor). */
+export async function eliminarFormularioDeDispositivo(
+  id_formulario: string,
+): Promise<void> {
+  await eliminarCopiaLocalFormulario(id_formulario);
   await db.formulariosOcultos.put({ id_formulario });
 }
 

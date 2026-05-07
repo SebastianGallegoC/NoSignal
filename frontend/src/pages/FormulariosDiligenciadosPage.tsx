@@ -46,6 +46,7 @@ import {
   downloadPhotosZip,
 } from "@/services/photosExport";
 import {
+  eliminarCopiaLocalFormulario,
   eliminarFormularioDeDispositivo,
   loadHiddenFormIds,
 } from "@/services/formLocalDelete";
@@ -620,17 +621,19 @@ export const FormulariosDiligenciadosPage = () => {
       }
       if (!navigator.onLine) {
         setPrecargaError(
-          "Necesitás conexión para eliminar la precarga de este dispositivo.",
+          "Necesitás conexión para eliminar la copia local de este formulario.",
         );
         return;
       }
-      if (!precargaMap.has(row.id_formulario)) {
+      const tieneCopiaLocal =
+        precargaMap.has(row.id_formulario) || !!row.historial;
+      if (!tieneCopiaLocal) {
         return;
       }
       setEliminandoPrecargaId(row.id_formulario);
       setPrecargaError(null);
       try {
-        await db.precargas.delete(row.id_formulario);
+        await eliminarCopiaLocalFormulario(row.id_formulario);
         const visible = await loadList();
         if (selectedId === row.id_formulario) {
           const fresh = visible.find((r) => r.id_formulario === row.id_formulario);
@@ -647,7 +650,7 @@ export const FormulariosDiligenciadosPage = () => {
         setPrecargaError(
           e instanceof Error
             ? e.message
-            : "No se pudo eliminar la precarga de este dispositivo.",
+            : "No se pudo eliminar la copia local de este formulario.",
         );
       } finally {
         setEliminandoPrecargaId(null);
@@ -1458,8 +1461,9 @@ export const FormulariosDiligenciadosPage = () => {
                                         : "Precargar para visita"}
                                     </Button>
                                   ) : null}
-                                  {precargaMap.has(row.id_formulario) &&
-                                  online ? (
+                                  {online &&
+                                  (precargaMap.has(row.id_formulario) ||
+                                    row.historial) ? (
                                     <Button
                                       type="button"
                                       variant="outline"
@@ -1475,8 +1479,10 @@ export const FormulariosDiligenciadosPage = () => {
                                       className="shrink-0 border-rose-200 text-rose-800 hover:bg-rose-50"
                                     >
                                       {eliminandoPrecargaId === row.id_formulario
-                                        ? "Eliminando precarga…"
-                                        : "Eliminar precarga"}
+                                        ? "Eliminando…"
+                                        : precargaMap.has(row.id_formulario)
+                                          ? "Eliminar precarga"
+                                          : "Eliminar datos locales"}
                                     </Button>
                                   ) : null}
                                   <Button
