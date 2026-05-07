@@ -6,11 +6,6 @@ import {
   type ReactNode,
 } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { usePrecargaWatcher } from "@/hooks/usePrecargaWatcher";
-import {
-  enableAutoPrecarga,
-  disableAutoPrecarga,
-} from "@/services/precargaService";
 
 import { ConfirmDeleteFormModal } from "@/components/ConfirmDeleteFormModal";
 import {
@@ -218,30 +213,9 @@ export const FormulariosDiligenciadosPage = () => {
   const [deletePasswordError, setDeletePasswordError] = useState<string | null>(
     null,
   );
-  const [autoPrecargaStates, setAutoPrecargaStates] = useState<
-    Map<string, boolean>
-  >(new Map());
-  const [togglingAutoPrecargaId, setTogglingAutoPrecargaId] = useState<
-    string | null
-  >(null);
-
-  // Activar el watcher de precarga automática
-  const hasToken =
-    typeof localStorage !== "undefined" &&
-    !!localStorage.getItem(ACCESS_TOKEN_KEY);
-  usePrecargaWatcher(hasToken);
 
   const precargaMap = useMemo(() => {
     return new Map(precargas.map((p) => [p.id_formulario, p]));
-  }, [precargas]);
-
-  // Actualizar autoPrecargaStates cada vez que precargas cambie
-  useEffect(() => {
-    const newStates = new Map<string, boolean>();
-    for (const p of precargas) {
-      newStates.set(p.id_formulario, p.auto_precarga ?? false);
-    }
-    setAutoPrecargaStates(newStates);
   }, [precargas]);
 
   const rowsFiltrados = useMemo(() => {
@@ -1052,41 +1026,6 @@ export const FormulariosDiligenciadosPage = () => {
     setPendingDeleteRow(null);
   }, [eliminandoId]);
 
-  const toggleAutoPrecarga = useCallback(
-    async (row: DisplayRow) => {
-      if (togglingAutoPrecargaId === row.id_formulario) {
-        return;
-      }
-      if (!navigator.onLine) {
-        setPrecargaError(
-          "Necesitás conexión para cambiar la precarga automática.",
-        );
-        return;
-      }
-      setTogglingAutoPrecargaId(row.id_formulario);
-      setPrecargaError(null);
-      try {
-        const isCurrentlyEnabled =
-          autoPrecargaStates.get(row.id_formulario) ?? false;
-        if (isCurrentlyEnabled) {
-          await disableAutoPrecarga(row.id_formulario);
-        } else {
-          await enableAutoPrecarga(row.id_formulario);
-        }
-        await loadList();
-      } catch (e) {
-        setPrecargaError(
-          e instanceof Error
-            ? e.message
-            : "No se pudo cambiar la precarga automática.",
-        );
-      } finally {
-        setTogglingAutoPrecargaId(null);
-      }
-    },
-    [autoPrecargaStates, togglingAutoPrecargaId, loadList],
-  );
-
   const deleteModalDescription: ReactNode = useMemo(() => {
     if (!pendingDeleteRow) {
       return null;
@@ -1446,54 +1385,21 @@ export const FormulariosDiligenciadosPage = () => {
                               const canDownloadPhotos =
                                 !detailLoading &&
                                 (fotosConData || hayFotosServidor);
-                              const isAutoPrecargaEnabled =
-                                autoPrecargaStates.get(row.id_formulario) ??
-                                false;
                               return (
                                 <>
                                   {row.server ? (
-                                    <>
-                                      <Button
-                                        type="button"
-                                        variant="outline"
-                                        onClick={() => void precargarRow(row)}
-                                        disabled={
-                                          precargaLoadingId ===
-                                          row.id_formulario
-                                        }
-                                      >
-                                        {precargaMap.has(row.id_formulario)
-                                          ? "Actualizar precarga"
-                                          : "Precargar para visita"}
-                                      </Button>
-                                      <Button
-                                        type="button"
-                                        variant={
-                                          isAutoPrecargaEnabled
-                                            ? "default"
-                                            : "outline"
-                                        }
-                                        onClick={() =>
-                                          void toggleAutoPrecarga(row)
-                                        }
-                                        disabled={
-                                          togglingAutoPrecargaId ===
-                                          row.id_formulario
-                                        }
-                                        className={
-                                          isAutoPrecargaEnabled
-                                            ? "bg-indigo-600 text-white hover:bg-indigo-700"
-                                            : ""
-                                        }
-                                      >
-                                        {togglingAutoPrecargaId ===
-                                        row.id_formulario
-                                          ? "Cambiando…"
-                                          : isAutoPrecargaEnabled
-                                            ? "✓ Precarga automática activa"
-                                            : "Activar precarga automática"}
-                                      </Button>
-                                    </>
+                                    <Button
+                                      type="button"
+                                      variant="outline"
+                                      onClick={() => void precargarRow(row)}
+                                      disabled={
+                                        precargaLoadingId === row.id_formulario
+                                      }
+                                    >
+                                      {precargaMap.has(row.id_formulario)
+                                        ? "Actualizar precarga"
+                                        : "Precargar para visita"}
+                                    </Button>
                                   ) : null}
                                   <Button
                                     type="button"
