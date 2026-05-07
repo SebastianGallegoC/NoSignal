@@ -343,6 +343,30 @@ type Props = {
   - Guarda borrador con nuevas coordenadas
 - Renderizado del modal con binding a estado y callback
 
+### Alternancia entre ubicación automática y manual
+
+La alternancia quedó resuelta con dos acciones distintas en la UI, pero con un mismo resultado final: el formulario termina guardando una sola ubicación válida.
+
+- **GPS automático**: toma la ubicación desde el celular o el navegador cuando el dispositivo puede resolverla.
+- **Entrada manual**: permite escribir latitud, longitud y precisión sin depender del hardware ni de la red.
+
+No se implementaron dos modelos de datos separados. En ambos casos, el valor resultante se lleva al mismo formulario, se transforma a formato decimal y DMS, y se guarda como borrador local.
+
+### Por qué se separaron los caminos
+
+- El GPS automático sigue siendo la opción más rápida cuando el dispositivo responde bien.
+- La entrada manual cubre los casos donde el GPS no está disponible, es impreciso o el usuario necesita cargar un punto exacto de otra fuente.
+- Separar ambos botones evita confusión y hace visible qué método está usando el formulario.
+- Como ambos flujos convergen en el mismo estado de ubicación, no fue necesario cambiar backend ni persistencia.
+
+### Qué cambió en la interfaz
+
+- Antes existía un único botón para tomar ubicación.
+- Ahora hay dos botones:
+  - uno para iniciar la captura automática,
+  - otro para abrir el modal de ingreso manual.
+- El modal valida los valores antes de aceptar la ubicación.
+
 ### Flujo de Usuario
 
 1. **Acceder al formulario** → Sección GPS muestra dos botones: "GPS automático" e "Ingresar manualmente"

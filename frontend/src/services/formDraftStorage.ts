@@ -16,6 +16,7 @@ export type FormDraftV1 = {
   /** Fecha original del formulario al editar uno existente (no regenerar al reenviar). */
   originalFechaHora?: string | null;
   idUsuario: string;
+  modoCoordenadas?: 'automatico' | 'manual';
   formValues: FormValues;
   fotos: FotoForm[];
   gps: GpsDraft | null;
@@ -51,6 +52,7 @@ export function loadFormDraft(username: string): FormDraftV1 | null {
           ? o.originalFechaHora
           : null,
       idUsuario: o.idUsuario,
+      modoCoordenadas: o.modoCoordenadas === 'manual' ? 'manual' : 'automatico',
       formValues: o.formValues as FormValues,
       fotos: Array.isArray(o.fotos) ? (o.fotos as FormDraftV1['fotos']) : [],
       gps:

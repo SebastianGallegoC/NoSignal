@@ -1,62 +1,95 @@
-import type { Control, UseFormRegister } from 'react-hook-form';
+import type { Control, UseFormRegister } from "react-hook-form";
 
-import { fieldLabel, inputKindForField, triOptions } from '@/config/formFieldMeta';
-import { fieldSelectOptions } from '@/config/formSelectOptions';
-import type { FormFieldKey, FormValues } from '@/types/formFields';
+import {
+  fieldLabel,
+  inputKindForField,
+  triOptions,
+} from "@/config/formFieldMeta";
+import { fieldSelectOptions } from "@/config/formSelectOptions";
+import type { FormFieldKey, FormValues } from "@/types/formFields";
 
-import { SearchableSelect, type SelectOption } from './SearchableSelect';
+import { SearchableSelect, type SelectOption } from "./SearchableSelect";
 
 const inputClass =
-  'mt-1 w-full min-w-0 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm [overflow-wrap:anywhere] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600';
+  "mt-1 w-full min-w-0 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm [overflow-wrap:anywhere] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600";
 
-const SELECT_FALLBACK: SelectOption[] = [{ value: '', label: '' }];
+const SELECT_FALLBACK: SelectOption[] = [{ value: "", label: "" }];
 
-const TRIO_OPTIONS_LIST: SelectOption[] = triOptions.map((o) => ({ value: o.value, label: o.label }));
+const TRIO_OPTIONS_LIST: SelectOption[] = triOptions.map((o) => ({
+  value: o.value,
+  label: o.label,
+}));
 
 interface FormFieldRowProps {
   name: FormFieldKey;
   register: UseFormRegister<FormValues>;
   control: Control<FormValues>;
   error?: string;
+  editableGpsFields?: boolean;
 }
 
-export const FormFieldRow = ({ name, register, control, error }: FormFieldRowProps) => {
+export const FormFieldRow = ({
+  name,
+  register,
+  control,
+  error,
+  editableGpsFields = false,
+}: FormFieldRowProps) => {
   const kind = inputKindForField(name);
   const label = fieldLabel(name);
 
-  if (kind === 'textarea') {
+  if (kind === "textarea") {
     return (
       <label className="flex min-w-0 flex-col text-sm font-medium text-slate-800 md:col-span-2">
         {label}
         <textarea rows={3} className={inputClass} {...register(name)} />
-        {error ? <span className="mt-1 text-xs text-red-600">{error}</span> : null}
+        {error ? (
+          <span className="mt-1 text-xs text-red-600">{error}</span>
+        ) : null}
       </label>
     );
   }
 
-  if (kind === 'select-tri') {
-    return <SearchableSelect name={name} control={control} options={TRIO_OPTIONS_LIST} label={label} error={error} />;
+  if (kind === "select-tri") {
+    return (
+      <SearchableSelect
+        name={name}
+        control={control}
+        options={TRIO_OPTIONS_LIST}
+        label={label}
+        error={error}
+      />
+    );
   }
 
-  if (kind === 'select') {
+  if (kind === "select") {
     const options = fieldSelectOptions[name] ?? SELECT_FALLBACK;
-    return <SearchableSelect name={name} control={control} options={options} label={label} error={error} />;
+    return (
+      <SearchableSelect
+        name={name}
+        control={control}
+        options={options}
+        label={label}
+        error={error}
+      />
+    );
   }
 
-  const type = kind === 'date' ? 'date' : kind === 'number' ? 'number' : 'text';
+  const type = kind === "date" ? "date" : kind === "number" ? "number" : "text";
 
-  const isPositiveInt = name === 'estrato' || name === 'usuario_cens';
-  const isSatisfaccion = name === 'satisfaccion_1_5';
+  const isPositiveInt = name === "estrato" || name === "usuario_cens";
+  const isSatisfaccion = name === "satisfaccion_1_5";
   const isGpsDerivedField =
-    name === 'x_grados' ||
-    name === 'x_minutos' ||
-    name === 'x_segundos' ||
-    name === 'y_grados' ||
-    name === 'y_minutos' ||
-    name === 'y_segundos' ||
-    name === 'latitud' ||
-    name === 'longitud';
-  const gpsReadOnlyClass = isGpsDerivedField ? ' bg-slate-100 text-slate-600' : '';
+    name === "x_grados" ||
+    name === "x_minutos" ||
+    name === "x_segundos" ||
+    name === "y_grados" ||
+    name === "y_minutos" ||
+    name === "y_segundos" ||
+    name === "latitud" ||
+    name === "longitud";
+  const isReadOnly = isGpsDerivedField && !editableGpsFields;
+  const gpsReadOnlyClass = isReadOnly ? " bg-slate-100 text-slate-600" : "";
 
   return (
     <label className="flex min-w-0 flex-col text-sm font-medium text-slate-800">
@@ -66,12 +99,26 @@ export const FormFieldRow = ({ name, register, control, error }: FormFieldRowPro
         type={type}
         min={isPositiveInt || isSatisfaccion ? 1 : undefined}
         max={isSatisfaccion ? 5 : undefined}
-        step={type === 'number' ? ((isPositiveInt || isSatisfaccion) ? 1 : 'any') : undefined}
-        readOnly={isGpsDerivedField}
-        title={isGpsDerivedField ? 'Este campo se actualiza al tomar ubicación GPS.' : undefined}
+        step={
+          type === "number"
+            ? isPositiveInt || isSatisfaccion
+              ? 1
+              : "any"
+            : undefined
+        }
+        readOnly={isReadOnly}
+        title={
+          isGpsDerivedField
+            ? isReadOnly
+              ? "Este campo se actualiza al tomar ubicación GPS."
+              : "Este campo puede editarse manualmente."
+            : undefined
+        }
         {...register(name)}
       />
-      {error ? <span className="mt-1 text-xs text-red-600">{error}</span> : null}
+      {error ? (
+        <span className="mt-1 text-xs text-red-600">{error}</span>
+      ) : null}
     </label>
   );
 };

@@ -13,7 +13,6 @@ import {
 } from "@/components/form/ImagePreviewModal";
 import { FormularioFotosSection } from "@/components/form/FormularioFotosSection";
 import { FormularioOverviewPanel } from "@/components/form/FormularioOverviewPanel";
-import { ManualCoordinatesModal } from "@/components/form/ManualCoordinatesModal";
 import { FormFieldRow } from "@/components/form/FormFieldRow";
 import { Button } from "@/components/ui/button";
 import { FORM_SECTIONS } from "@/config/formSections";
@@ -119,7 +118,9 @@ export const FormularioPage = () => {
   const [envioModal, setEnvioModal] = useState<FormEnvioResultState | null>(
     null,
   );
-  const [mostrarModalManual, setMostrarModalManual] = useState(false);
+  const [modoCoordenadas, setModoCoordenadas] = useState<
+    "automatico" | "manual"
+  >(() => loadedDraft?.modoCoordenadas ?? "automatico");
   const navigate = useNavigate();
   const [openSections, setOpenSections] = useState<Set<string>>(
     () => new Set(["actividad"]),
@@ -141,6 +142,21 @@ export const FormularioPage = () => {
   });
 
   const formValues = watch();
+  const gpsFormulario = useMemo(() => {
+    if (modoCoordenadas !== "manual") {
+      return gps;
+    }
+    const latitud = Number.parseFloat(formValues.latitud);
+    const longitud = Number.parseFloat(formValues.longitud);
+    if (!Number.isFinite(latitud) || !Number.isFinite(longitud)) {
+      return null;
+    }
+    return {
+      latitud,
+      longitud,
+      precision: gps?.precision ?? 5,
+    };
+  }, [formValues.latitud, formValues.longitud, gps, modoCoordenadas]);
 
   const draftUserKeyRef = useRef(draftUserKey);
   draftUserKeyRef.current = draftUserKey;
@@ -156,6 +172,8 @@ export const FormularioPage = () => {
   originalFechaHoraRef.current = originalFechaHora;
   const gpsRef = useRef(gps);
   gpsRef.current = gps;
+  const modoCoordenadasRef = useRef(modoCoordenadas);
+  modoCoordenadasRef.current = modoCoordenadas;
 
   const flushDraftToStorage = useCallback(() => {
     const userKey = draftUserKeyRef.current;
@@ -166,6 +184,7 @@ export const FormularioPage = () => {
     const fid = formIdRef.current;
     const fFecha = originalFechaHoraRef.current;
     const g = gpsRef.current;
+    const modo = modoCoordenadasRef.current;
     if (!shouldPersistFormDraft(values, def, idU, f.length, g !== null)) {
       clearFormDraft(userKey);
       return;
@@ -176,6 +195,7 @@ export const FormularioPage = () => {
       formId: fid,
       originalFechaHora: fFecha,
       idUsuario: idU,
+      modoCoordenadas: modo,
       formValues: values,
       fotos: f,
       gps: g
@@ -353,41 +373,8 @@ export const FormularioPage = () => {
     return { grados, minutos, segundos };
   };
 
-  const handleCoordenadasManual = (coords: {
-    latitud: number;
-    longitud: number;
-    precision: number;
-  }) => {
-    // Convertir a DMS y actualizar campos del formulario
-    const longDms = decimalToDms(coords.longitud);
-    const latDms = decimalToDms(coords.latitud);
-
-    setValue("longitud", coords.longitud.toFixed(6));
-    setValue("latitud", coords.latitud.toFixed(6));
-    setValue("x_grados", String(longDms.grados));
-    setValue("x_minutos", String(longDms.minutos));
-    setValue("x_segundos", longDms.segundos.toFixed(3));
-    setValue("y_grados", String(latDms.grados));
-    setValue("y_minutos", String(latDms.minutos));
-    setValue("y_segundos", latDms.segundos.toFixed(3));
-
-    setMostrarModalManual(false);
-
-    // Guardar en borrador
-    saveFormDraft(draftUserKey, {
-      v: 1,
-      savedAt: new Date().toISOString(),
-      formId,
-      idUsuario,
-      fotos,
-      gps: coords,
-      originalFechaHora,
-      formValues: getValues(),
-    });
-  };
-
   useEffect(() => {
-    if (!gps) {
+    if (!gps || modoCoordenadas === "manual") {
       return;
     }
     const longDms = decimalToDms(gps.longitud);
@@ -401,10 +388,33 @@ export const FormularioPage = () => {
     setValue("y_grados", String(latDms.grados));
     setValue("y_minutos", String(latDms.minutos));
     setValue("y_segundos", latDms.segundos.toFixed(3));
-  }, [gps, setValue]);
+  }, [gps, modoCoordenadas, setValue]);
+
+  useEffect(() => {
+    if (modoCoordenadas !== "manual") {
+      return;
+    }
+
+    const longitud = Number.parseFloat(formValues.longitud);
+    const latitud = Number.parseFloat(formValues.latitud);
+
+    if (!Number.isFinite(longitud) || !Number.isFinite(latitud)) {
+      return;
+    }
+
+    const longDms = decimalToDms(longitud);
+    const latDms = decimalToDms(latitud);
+
+    setValue("x_grados", String(longDms.grados));
+    setValue("x_minutos", String(longDms.minutos));
+    setValue("x_segundos", longDms.segundos.toFixed(3));
+    setValue("y_grados", String(latDms.grados));
+    setValue("y_minutos", String(latDms.minutos));
+    setValue("y_segundos", latDms.segundos.toFixed(3));
+  }, [formValues.latitud, formValues.longitud, modoCoordenadas, setValue]);
 
   const { onValid, onInvalid } = useFormularioSubmit({
-    gps,
+    gps: gpsFormulario,
     fotos,
     formId,
     idUsuario,
@@ -481,22 +491,21 @@ export const FormularioPage = () => {
         <FormularioOverviewPanel
           estado={estado}
           progreso={progreso}
-          gps={gps}
+          gps={gpsFormulario}
           error={error}
           cargando={cargando}
           pendientes={pendientes}
           erroresSync={erroresSync}
           ultimosErrores={ultimosErrores}
-          onSolicitarGps={solicitarGPS}
-          onAbrirManual={() => setMostrarModalManual(true)}
+          onSolicitarGps={() => {
+            setModoCoordenadas("automatico");
+            solicitarGPS();
+          }}
+          onAbrirManual={() => {
+            setModoCoordenadas("manual");
+          }}
           buildMapUrl={buildMapUrl}
           buildExternalMapUrl={buildExternalMapUrl}
-        />
-
-        <ManualCoordinatesModal
-          isOpen={mostrarModalManual}
-          onClose={() => setMostrarModalManual(false)}
-          onSubmit={handleCoordenadasManual}
         />
 
         {banner ? (
@@ -581,6 +590,7 @@ export const FormularioPage = () => {
                     register={register}
                     control={control}
                     error={errors[field]?.message as string | undefined}
+                    editableGpsFields={modoCoordenadas === "manual"}
                   />
                 ))}
               </div>
