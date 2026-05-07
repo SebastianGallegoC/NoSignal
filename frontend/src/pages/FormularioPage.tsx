@@ -27,13 +27,7 @@ import {
   saveFormDraft,
   shouldPersistFormDraft,
 } from "@/services/formDraftStorage";
-import {
-  countErrorForms,
-  countPendingForms,
-  listSyncErrors,
-  syncPendingForms,
-  type SyncErrorItem,
-} from "@/services/sync";
+import { syncPendingForms } from "@/services/sync";
 import type { FotoForm } from "@/services/db";
 import { randomUuid } from "@/lib/randomUuid";
 import { useAuthStore } from "@/store/useAuthStore";
@@ -108,9 +102,6 @@ export const FormularioPage = () => {
   const [originalFechaHora, setOriginalFechaHora] = useState<string | null>(
     () => loadedDraft?.originalFechaHora ?? null,
   );
-  const [pendientes, setPendientes] = useState(0);
-  const [erroresSync, setErroresSync] = useState(0);
-  const [ultimosErrores, setUltimosErrores] = useState<SyncErrorItem[]>([]);
   const [sincronizando, setSincronizando] = useState(false);
   const [enviando, setEnviando] = useState(false);
   const [banner, setBanner] = useState<string | null>(null);
@@ -241,19 +232,8 @@ export const FormularioPage = () => {
   ]);
 
   const refreshPendientes = useCallback(async () => {
-    const [pendingCount, errorCount, lastErrors] = await Promise.all([
-      countPendingForms(),
-      countErrorForms(),
-      listSyncErrors(5),
-    ]);
-    setPendientes(pendingCount);
-    setErroresSync(errorCount);
-    setUltimosErrores(lastErrors);
+    // Contadores viven en Inicio; el hook de envío sigue esperando esta firma.
   }, []);
-
-  useEffect(() => {
-    void refreshPendientes();
-  }, [refreshPendientes]);
 
   const processIncomingFiles = async (
     files: File[],
@@ -343,7 +323,7 @@ export const FormularioPage = () => {
         message:
           detail && detail.length > 0
             ? `No se pudo sincronizar ${result.failed} formulario(s). Detalle: ${detail}`
-            : `No se pudo sincronizar ${result.failed} formulario(s). Revisá la sección «Errores sync» y reintentá cuando tengas conexión estable.`,
+            : `No se pudo sincronizar ${result.failed} formulario(s). Revisá el contador de errores en Inicio y reintentá cuando tengas conexión estable.`,
       });
     } else if (result.sent > 0) {
       setBanner(null);
@@ -494,9 +474,6 @@ export const FormularioPage = () => {
           gps={gpsFormulario}
           error={error}
           cargando={cargando}
-          pendientes={pendientes}
-          erroresSync={erroresSync}
-          ultimosErrores={ultimosErrores}
           onSolicitarGps={() => {
             setModoCoordenadas("automatico");
             solicitarGPS();

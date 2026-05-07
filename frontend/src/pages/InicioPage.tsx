@@ -1,6 +1,42 @@
+import { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 
+import { countErrorForms, countPendingForms } from "@/services/sync";
+
 export const InicioPage = () => {
+  const [pendientes, setPendientes] = useState(0);
+  const [erroresSync, setErroresSync] = useState(0);
+
+  const refreshCounts = useCallback(async () => {
+    const [pendingCount, errorCount] = await Promise.all([
+      countPendingForms(),
+      countErrorForms(),
+    ]);
+    setPendientes(pendingCount);
+    setErroresSync(errorCount);
+  }, []);
+
+  useEffect(() => {
+    void refreshCounts();
+  }, [refreshCounts]);
+
+  useEffect(() => {
+    const onOnline = () => {
+      void refreshCounts();
+    };
+    const onVisibility = () => {
+      if (document.visibilityState === "visible") {
+        void refreshCounts();
+      }
+    };
+    window.addEventListener("online", onOnline);
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => {
+      window.removeEventListener("online", onOnline);
+      document.removeEventListener("visibilitychange", onVisibility);
+    };
+  }, [refreshCounts]);
+
   return (
     <div className="min-h-screen bg-[radial-gradient(circle_at_top,_#e2f2ee_0,_#f6f7f5_45%,_#f6f7f5_100%)] px-4 py-10 text-slate-900">
       <div className="mx-auto w-full max-w-4xl">
@@ -9,12 +45,35 @@ export const InicioPage = () => {
             NoSignal
           </p>
           <h1 className="mt-2 text-3xl font-semibold">
-            Selecciona una opción  V.1.2
+            Selecciona una opción V.1.2
           </h1>
           <p className="mt-2 text-sm text-slate-600">
             Puedes diligenciar un nuevo formulario o revisar los ya registrados.
           </p>
         </header>
+
+        <section className="mb-6 grid gap-4 sm:grid-cols-2">
+          <div className="rounded-2xl border border-amber-100 bg-white/80 p-4 shadow-[0_18px_40px_-35px_rgba(180,83,9,0.6)] sm:p-5">
+            <h2 className="text-xs font-semibold uppercase tracking-wide text-amber-700">
+              Pendientes
+            </h2>
+            <p className="mt-2 text-4xl font-semibold text-slate-900">
+              {pendientes}
+            </p>
+            <p className="text-sm text-slate-600">Formularios en cola local.</p>
+          </div>
+          <div className="rounded-2xl border border-rose-100 bg-white/80 p-4 shadow-[0_18px_40px_-35px_rgba(190,24,93,0.5)] sm:p-5">
+            <h2 className="text-xs font-semibold uppercase tracking-wide text-rose-700">
+              Errores sync
+            </h2>
+            <p className="mt-2 text-4xl font-semibold text-slate-900">
+              {erroresSync}
+            </p>
+            <p className="text-sm text-slate-600">
+              Registros con error de envío.
+            </p>
+          </div>
+        </section>
 
         <section className="grid gap-4 md:grid-cols-2">
           <Link

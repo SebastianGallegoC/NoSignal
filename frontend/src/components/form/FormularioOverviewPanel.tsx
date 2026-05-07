@@ -1,5 +1,3 @@
-import { formatDateTime } from "@/lib/formatDateTime";
-import type { SyncErrorItem } from "@/services/sync";
 import { Button } from "@/components/ui/button";
 
 type Props = {
@@ -8,9 +6,6 @@ type Props = {
   gps: { latitud: number; longitud: number; precision: number } | null;
   error: string | null;
   cargando: boolean;
-  pendientes: number;
-  erroresSync: number;
-  ultimosErrores: SyncErrorItem[];
   onSolicitarGps: () => void;
   modoCoordenadas: "automatico" | "manual";
   onChangeModoCoordenadas: (modo: "automatico" | "manual") => void;
@@ -24,210 +19,164 @@ export const FormularioOverviewPanel = ({
   gps,
   error,
   cargando,
-  pendientes,
-  erroresSync,
-  ultimosErrores,
   onSolicitarGps,
   modoCoordenadas,
   onChangeModoCoordenadas,
   buildMapUrl,
   buildExternalMapUrl,
 }: Props) => {
+  const isGps = modoCoordenadas === "automatico";
+
   return (
-    <>
-      <section className="grid gap-4 md:grid-cols-3">
-        <div className="rounded-2xl border border-teal-100 bg-white/80 p-4 shadow-[0_18px_40px_-35px_rgba(15,118,110,0.6)]">
-          <h2 className="text-xs font-semibold uppercase tracking-wide text-teal-700">
+    <section className="rounded-2xl border border-teal-100 bg-white/80 p-4 shadow-[0_18px_40px_-35px_rgba(15,118,110,0.6)] sm:p-5">
+      <div className="flex flex-col gap-1 sm:flex-row sm:items-baseline sm:justify-between">
+        <h2 className="text-xs font-semibold uppercase tracking-wide text-teal-700">
+          Ubicación
+        </h2>
+        <p className="text-xs text-slate-500">
+          Elegí si usás el GPS del dispositivo o coordenadas manuales.
+        </p>
+      </div>
+
+      <div
+        className="mt-4 flex w-full flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
+        role="group"
+        aria-label="Modo de coordenadas"
+      >
+        <div className="inline-flex w-full rounded-xl border border-slate-200 bg-slate-50/90 p-1 sm:w-auto sm:min-w-[220px]">
+          <button
+            type="button"
+            aria-pressed={isGps}
+            onClick={() => onChangeModoCoordenadas("automatico")}
+            className={`flex-1 rounded-lg px-3 py-2 text-sm font-semibold transition sm:flex-none sm:px-4 ${
+              isGps
+                ? "bg-teal-600 text-white shadow-sm"
+                : "text-slate-600 hover:bg-white/80"
+            }`}
+          >
             GPS
-          </h2>
-          <p className="mt-2 text-sm font-medium text-slate-700">
-            Estado:{" "}
-            {estado === "buscando"
-              ? "Tomando ubicación..."
-              : estado === "ok"
-                ? "Ubicación capturada"
-                : estado === "error"
-                  ? "Error de GPS"
-                  : "Sin lectura"}
-          </p>
-          <p className="mt-1 text-sm text-slate-600">
-            {estado === "buscando"
-              ? (progreso ?? "Buscando señal GPS...")
-              : gps
-                ? `OK · precisión ${gps.precision.toFixed(1)} m`
-                : error
-                  ? `Error: ${error}`
-                  : "Sin ubicación registrada"}
-          </p>
-          <div className="mt-3 flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <label className="text-sm font-medium text-slate-700">
-                Ubicación
-              </label>
-              <div className="relative inline-flex items-center">
-                <div
-                  role="switch"
-                  tabIndex={0}
-                  aria-checked={modoCoordenadas === "automatico"}
-                  onClick={() => {
-                    if (modoCoordenadas === "automatico") {
-                      onChangeModoCoordenadas("manual");
-                    } else {
-                      onChangeModoCoordenadas("automatico");
-                      onSolicitarGps();
-                    }
-                  }}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" || e.key === " ") {
-                      e.preventDefault();
-                      if (modoCoordenadas === "automatico") {
-                        onChangeModoCoordenadas("manual");
-                      } else {
-                        onChangeModoCoordenadas("automatico");
-                        onSolicitarGps();
-                      }
-                    }
-                  }}
-                  className={`relative inline-flex h-8 w-14 items-center rounded-full border ${modoCoordenadas === "automatico" ? "bg-teal-600 border-teal-600" : "bg-white border-slate-200"}`}
-                >
-                  <span className="sr-only">Alternar modo de coordenadas</span>
-                  <span
-                    className={`block h-6 w-6 rounded-full bg-white shadow transform transition-transform ${modoCoordenadas === "automatico" ? "translate-x-6" : "translate-x-1"}`}
-                  />
+          </button>
+          <button
+            type="button"
+            aria-pressed={!isGps}
+            onClick={() => onChangeModoCoordenadas("manual")}
+            className={`flex-1 rounded-lg px-3 py-2 text-sm font-semibold transition sm:flex-none sm:px-4 ${
+              !isGps
+                ? "bg-teal-600 text-white shadow-sm"
+                : "text-slate-600 hover:bg-white/80"
+            }`}
+          >
+            Manual
+          </button>
+        </div>
+
+        {isGps ? (
+          <Button
+            type="button"
+            onClick={onSolicitarGps}
+            disabled={cargando}
+            className="w-full shrink-0 bg-teal-600 text-white hover:bg-teal-700 sm:w-auto"
+          >
+            {cargando ? "Buscando GPS…" : "Tomar ubicación"}
+          </Button>
+        ) : null}
+      </div>
+
+      <p className="mt-3 text-sm font-medium text-slate-700">
+        Estado:{" "}
+        {isGps
+          ? estado === "buscando"
+            ? "Tomando ubicación..."
+            : estado === "ok"
+              ? "Ubicación capturada"
+              : estado === "error"
+                ? "Error de GPS"
+                : "Sin lectura"
+          : "Coordenadas manuales"}
+      </p>
+      <p className="mt-1 text-sm text-slate-600">
+        {isGps
+          ? estado === "buscando"
+            ? (progreso ?? "Buscando señal GPS...")
+            : gps
+              ? `OK · precisión ${gps.precision.toFixed(1)} m`
+              : error
+                ? `Error: ${error}`
+                : "Sin ubicación registrada"
+          : "Editá latitud y longitud en los campos del formulario (sección correspondiente)."}
+      </p>
+
+      {!isGps ? (
+        <p className="mt-3 rounded-xl border border-slate-200 bg-slate-50/90 px-3 py-2 text-xs text-slate-600">
+          En modo Manual no se usa el mapa ni el botón de ubicación; el envío
+          tomará las coordenadas que ingreses en el formulario.
+        </p>
+      ) : null}
+
+      {isGps && gps ? (
+        <div className="mt-4 overflow-hidden rounded-xl border border-teal-100 bg-slate-50">
+          <div className="h-48 overflow-hidden sm:h-56">
+            {typeof navigator !== "undefined" && navigator.onLine ? (
+              <iframe
+                title="Mapa de ubicación capturada"
+                className="h-[calc(100%+36px)] w-full"
+                src={buildMapUrl(gps.latitud, gps.longitud)}
+                loading="lazy"
+                style={{ marginBottom: "-36px" }}
+              />
+            ) : (
+              <div className="flex h-48 w-full items-center justify-center bg-slate-100 sm:h-56">
+                <div className="text-center px-4">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="96"
+                    height="96"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="#0f766e"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className="mx-auto mb-2"
+                  >
+                    <path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 1 1 18 0z" />
+                    <circle cx="12" cy="10" r="2" />
+                  </svg>
+                  <div className="text-sm font-medium text-slate-700">
+                    Sin conexión: mapa no disponible.
+                  </div>
+                  <div className="mt-1 text-xs text-slate-600">
+                    Lat: {gps.latitud.toFixed(6)} · Lon:{" "}
+                    {gps.longitud.toFixed(6)}
+                  </div>
                 </div>
               </div>
-            </div>
-            <div className="flex items-center gap-3">
-              {modoCoordenadas === "automatico" ? (
-                <Button
-                  type="button"
-                  onClick={onSolicitarGps}
-                  disabled={cargando}
-                  className="bg-teal-600 text-white"
-                >
-                  {cargando ? "Buscando GPS…" : "Tomar ubicación"}
-                </Button>
-              ) : null}
-              <div className="text-sm text-slate-500">
-                {modoCoordenadas === "automatico"
-                  ? "Usando GPS del dispositivo"
-                  : "Editar coordenadas manualmente"}
-              </div>
-            </div>
+            )}
           </div>
-          {modoCoordenadas === "automatico" && gps ? (
-            <div className="mt-4 overflow-hidden rounded-xl border border-teal-100 bg-slate-50">
-              <div className="h-48 overflow-hidden">
-                {typeof navigator !== "undefined" && navigator.onLine ? (
-                  <iframe
-                    title="Mapa de ubicación capturada"
-                    className="h-[calc(100%+36px)] w-full"
-                    src={buildMapUrl(gps.latitud, gps.longitud)}
-                    loading="lazy"
-                    style={{ marginBottom: "-36px" }}
-                  />
-                ) : (
-                  <div className="flex h-48 w-full items-center justify-center bg-slate-100">
-                    <div className="text-center">
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        width="96"
-                        height="96"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="#0f766e"
-                        strokeWidth="1.5"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        className="mx-auto mb-2"
-                      >
-                        <path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 1 1 18 0z" />
-                        <circle cx="12" cy="10" r="2" />
-                      </svg>
-                      <div className="text-sm font-medium text-slate-700">
-                        Sin conexión: mapa no disponible.
-                      </div>
-                      <div className="mt-1 text-xs text-slate-600">
-                        Lat: {gps.latitud.toFixed(6)} · Lon:{" "}
-                        {gps.longitud.toFixed(6)}
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
-              <div className="px-3 py-2 text-xs text-slate-700">
-                Lat: {gps.latitud.toFixed(6)} · Lon: {gps.longitud.toFixed(6)} ·
-                Precisión: {gps.precision.toFixed(1)} m
-              </div>
-              <a
-                className={`block px-3 pb-3 text-xs font-medium ${navigator.onLine ? "text-teal-800 underline" : "text-slate-400"}`}
-                href={
-                  navigator.onLine
-                    ? buildExternalMapUrl(gps.latitud, gps.longitud)
-                    : undefined
-                }
-                target="_blank"
-                rel="noreferrer"
-                aria-disabled={!navigator.onLine}
-                onClick={(e) => {
-                  if (!navigator.onLine) e.preventDefault();
-                }}
-              >
-                {navigator.onLine
-                  ? "Abrir ubicación en OpenStreetMap"
-                  : "Abrir ubicación (requiere conexión)"}
-              </a>
-            </div>
-          ) : null}
+          <div className="px-3 py-2 text-xs text-slate-700">
+            Lat: {gps.latitud.toFixed(6)} · Lon: {gps.longitud.toFixed(6)} ·
+            Precisión: {gps.precision.toFixed(1)} m
+          </div>
+          <a
+            className={`block px-3 pb-3 text-xs font-medium ${navigator.onLine ? "text-teal-800 underline" : "text-slate-400"}`}
+            href={
+              navigator.onLine
+                ? buildExternalMapUrl(gps.latitud, gps.longitud)
+                : undefined
+            }
+            target="_blank"
+            rel="noreferrer"
+            aria-disabled={!navigator.onLine}
+            onClick={(e) => {
+              if (!navigator.onLine) e.preventDefault();
+            }}
+          >
+            {navigator.onLine
+              ? "Abrir ubicación en OpenStreetMap"
+              : "Abrir ubicación (requiere conexión)"}
+          </a>
         </div>
-        <div className="rounded-2xl border border-amber-100 bg-white/80 p-4 shadow-[0_18px_40px_-35px_rgba(180,83,9,0.6)]">
-          <h2 className="text-xs font-semibold uppercase tracking-wide text-amber-700">
-            Pendientes
-          </h2>
-          <p className="mt-2 text-4xl font-semibold">{pendientes}</p>
-          <p className="text-sm text-slate-600">Formularios en cola local.</p>
-        </div>
-        <div className="rounded-2xl border border-rose-100 bg-white/80 p-4 shadow-[0_18px_40px_-35px_rgba(190,24,93,0.5)]">
-          <h2 className="text-xs font-semibold uppercase tracking-wide text-rose-700">
-            Errores sync
-          </h2>
-          <p className="mt-2 text-4xl font-semibold">{erroresSync}</p>
-          <p className="text-sm text-slate-600">
-            Registros con error de envío.
-          </p>
-        </div>
-      </section>
-
-      <section className="rounded-2xl border border-slate-200 bg-white/90 p-4 shadow-sm">
-        <h2 className="text-sm font-semibold text-slate-900">
-          Últimos errores de sincronización
-        </h2>
-        {ultimosErrores.length === 0 ? (
-          <p className="mt-2 text-sm text-slate-500">Sin errores recientes.</p>
-        ) : (
-          <ul className="mt-3 space-y-2 text-sm">
-            {ultimosErrores.map((item) => (
-              <li
-                key={item.id_formulario}
-                className="rounded-xl border border-rose-100 bg-rose-50/40 p-3"
-              >
-                <p className="font-medium text-slate-900">
-                  {item.id_formulario} · usuario {item.id_usuario}
-                </p>
-                <p className="text-slate-600">
-                  Intentos: {item.errores_sync}
-                  {item.fecha_intento
-                    ? ` · último: ${formatDateTime(item.fecha_intento)}`
-                    : ""}
-                </p>
-                <p className="text-rose-700">
-                  {item.ultimo_error ?? "Error no especificado"}
-                </p>
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
-    </>
+      ) : null}
+    </section>
   );
 };

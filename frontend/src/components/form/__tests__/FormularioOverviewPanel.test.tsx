@@ -9,9 +9,6 @@ const defaultProps = {
   gps: { latitud: 1, longitud: 2, precision: 5 },
   error: null,
   cargando: false,
-  pendientes: 0,
-  erroresSync: 0,
-  ultimosErrores: [],
   onSolicitarGps: vi.fn(),
   modoCoordenadas: "automatico" as const,
   onChangeModoCoordenadas: vi.fn(),
@@ -21,7 +18,7 @@ const defaultProps = {
 };
 
 describe("FormularioOverviewPanel", () => {
-  it("llama onChangeModoCoordenadas al activar switch con click", () => {
+  it("muestra botones GPS / Manual y dispara onChangeModoCoordenadas al elegir Manual", () => {
     const onChange = vi.fn();
     const container = document.createElement("div");
     document.body.appendChild(container);
@@ -36,15 +33,17 @@ describe("FormularioOverviewPanel", () => {
       );
     });
 
-    const sw = container.querySelector('[role="switch"]') as HTMLElement;
-    sw.dispatchEvent(new MouseEvent("click", { bubbles: true }));
-    expect(onChange).toHaveBeenCalled();
+    const manualBtn = Array.from(container.querySelectorAll("button")).find(
+      (b) => b.textContent === "Manual",
+    ) as HTMLButtonElement;
+    expect(manualBtn).toBeDefined();
+    manualBtn.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    expect(onChange).toHaveBeenCalledWith("manual");
     root.unmount();
     container.remove();
   });
 
-  it("responde a teclado (Enter/Space) sobre el switch", () => {
-    const onChange = vi.fn();
+  it("en modo Manual no muestra Tomar ubicación ni iframe del mapa", () => {
     const container = document.createElement("div");
     document.body.appendChild(container);
     const root = createRoot(container);
@@ -52,18 +51,18 @@ describe("FormularioOverviewPanel", () => {
       root.render(
         <FormularioOverviewPanel
           {...defaultProps}
-          modoCoordenadas="automatico"
-          onChangeModoCoordenadas={onChange}
+          modoCoordenadas="manual"
+          onChangeModoCoordenadas={vi.fn()}
         />,
       );
     });
 
-    const sw = container.querySelector('[role="switch"]') as HTMLElement;
-    sw.dispatchEvent(
-      new KeyboardEvent("keydown", { key: "Enter", bubbles: true }),
-    );
-    sw.dispatchEvent(new KeyboardEvent("keydown", { key: " ", bubbles: true }));
-    expect(onChange).toHaveBeenCalledTimes(2);
+    expect(
+      Array.from(container.querySelectorAll("button")).some(
+        (b) => b.textContent?.includes("Tomar ubicación"),
+      ),
+    ).toBe(false);
+    expect(container.querySelector("iframe")).toBeNull();
     root.unmount();
     container.remove();
   });

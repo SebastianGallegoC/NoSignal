@@ -194,7 +194,7 @@ export const useFormularioSubmit = ({
             message:
               detail && detail.length > 0
                 ? `Hay conexión, pero la sincronización no se completó. Detalle: ${detail}`
-                : "Hay conexión, pero la sincronización no se completó. Revisá «Errores sync» más abajo. Podés usar «Sincronizar ahora» cuando quieras reintentar.",
+                : "Hay conexión, pero la sincronización no se completó. Revisá el contador en Inicio. Podés usar «Sincronizar ahora» cuando quieras reintentar.",
             submittedForm: payload,
             isEdit: !!_originalFechaHora,
           });
