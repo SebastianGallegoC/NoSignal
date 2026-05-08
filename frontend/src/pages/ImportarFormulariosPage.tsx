@@ -32,7 +32,6 @@ export const ImportarFormulariosPage = () => {
   const [busy, setBusy] = useState(false);
   const [busyImport, setBusyImport] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
-  const [importBuffer, setImportBuffer] = useState<ArrayBuffer | null>(null);
   const [fileLabel, setFileLabel] = useState<string | null>(null);
   const [previewErrors, setPreviewErrors] = useState<
     { row: number; message: string }[]
@@ -51,7 +50,6 @@ export const ImportarFormulariosPage = () => {
   );
 
   const resetPreview = useCallback(() => {
-    setImportBuffer(null);
     setFileLabel(null);
     setPreviewRows(null);
     setPreviewErrors([]);
@@ -63,7 +61,6 @@ export const ImportarFormulariosPage = () => {
       setMessage(null);
       setPreviewRows(null);
       setPreviewErrors([]);
-      setImportBuffer(null);
       setFileLabel(null);
       if (!file) {
         return;
@@ -77,7 +74,6 @@ export const ImportarFormulariosPage = () => {
       try {
         const buffer = await file.arrayBuffer();
         const { rows, errors } = await previewPlantillaWorkbook(buffer, idUsuario);
-        setImportBuffer(buffer);
         setFileLabel(file.name);
         setPreviewErrors(errors);
         setPreviewRows(rows);
