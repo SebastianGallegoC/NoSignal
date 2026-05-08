@@ -3,10 +3,30 @@ import { useEffect, useMemo, useState } from "react";
 const HEALTH_CHECK_INTERVAL_MS = 15_000;
 const HEALTH_CHECK_TIMEOUT_MS = 2_500;
 
-const buildHealthUrl = (): string => {
-  const apiBase = import.meta.env.VITE_API_URL ?? "";
+export const buildHealthUrl = (apiBase = import.meta.env.VITE_API_URL ?? ""): string => {
   const base = apiBase || (typeof window !== "undefined" ? window.location.origin : "");
   return new URL("/health", base).toString();
+};
+
+export const checkConnectivity = async (
+  healthUrl: string,
+  fetchImpl: typeof fetch = fetch,
+): Promise<boolean> => {
+  const controller = new AbortController();
+  const timeoutId = window.setTimeout(() => controller.abort(), HEALTH_CHECK_TIMEOUT_MS);
+
+  try {
+    const response = await fetchImpl(healthUrl, {
+      cache: "no-store",
+      credentials: "omit",
+      signal: controller.signal,
+    });
+    return response.ok;
+  } catch {
+    return false;
+  } finally {
+    window.clearTimeout(timeoutId);
+  }
 };
 
 export const useConnectivityStatus = (): boolean => {
@@ -31,24 +51,9 @@ export const useConnectivityStatus = (): boolean => {
         return;
       }
 
-      const controller = new AbortController();
-      const timeoutId = window.setTimeout(() => controller.abort(), HEALTH_CHECK_TIMEOUT_MS);
-
-      try {
-        const response = await fetch(healthUrl, {
-          cache: "no-store",
-          credentials: "omit",
-          signal: controller.signal,
-        });
-        if (active) {
-          setIsOnline(response.ok);
-        }
-      } catch {
-        if (active) {
-          setIsOnline(false);
-        }
-      } finally {
-        window.clearTimeout(timeoutId);
+      const online = await checkConnectivity(healthUrl);
+      if (active) {
+        setIsOnline(online);
       }
     };
 
