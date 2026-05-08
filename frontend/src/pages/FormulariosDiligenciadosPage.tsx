@@ -334,13 +334,17 @@ export const FormulariosDiligenciadosPage = () => {
   }, []);
 
   useEffect(() => {
-    void loadList();
+    void loadList().catch((err) => {
+      console.debug("Offline: loadList error ignored", err);
+    });
   }, [loadList]);
 
   useEffect(() => {
     const onOnline = () => {
       setOnline(true);
-      void loadList();
+      void loadList().catch((err) => {
+        console.debug("Offline: loadList error on reconnect ignored", err);
+      });
     };
     const onOffline = () => setOnline(false);
     window.addEventListener("online", onOnline);
