@@ -103,7 +103,7 @@ const SearchableSelectInner = ({
   return (
     <label className="flex min-w-0 flex-col text-sm font-medium text-slate-800 md:col-span-2">
       {label}
-      <div className="relative z-20 mt-1">
+      <div className={`relative mt-1 ${open ? "z-[5000]" : "z-0"}`}>
         <input
           ref={binding.inputRef}
           name={binding.name}
@@ -152,7 +152,7 @@ const SearchableSelectInner = ({
           <ul
             id={listId}
             role="listbox"
-            className="absolute z-[100] mt-1 max-h-52 w-full overflow-auto rounded-xl border border-slate-200 bg-white py-1 shadow-lg"
+            className="absolute z-10 mt-1 max-h-52 w-full overflow-auto rounded-xl border border-slate-200 bg-white py-1 shadow-lg"
           >
             {filtered.map((o) => (
               <li
