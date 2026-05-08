@@ -45,7 +45,9 @@ describe("FormularioOverviewPanel connectivity", () => {
     });
 
     expect(container.querySelector("iframe")).toBeNull();
-    expect(container.textContent).toContain("Sin conexión: mapa no disponible.");
+    expect(container.textContent).toContain(
+      "Sin conexión: mapa no disponible.",
+    );
     const link = container.querySelector("a");
     expect(link?.textContent).toContain("Abrir ubicación (requiere conexión)");
     expect(link?.getAttribute("href")).toBeNull();

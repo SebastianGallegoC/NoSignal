@@ -8,6 +8,25 @@ const MAX_GPS_ACCURACY_METERS = 100;
 const MIN_PHOTOS = 0;
 const MAX_PHOTOS = 15;
 
+/**
+ * Detecta si un error es un error HTTP 5xx (error del servidor).
+ * Ejemplo: "HTTP_503: offline" → true
+ */
+export const isHttpServerError = (error: unknown): boolean => {
+  const rawMessage =
+    error instanceof Error
+      ? `${error.name}: ${error.message}`
+      : typeof error === 'string'
+        ? error
+        : '';
+  // Detecta patrones como HTTP_500, HTTP_502, HTTP_503, HTTP_504, HTTP_505
+  return /HTTP_5\d{2}/.test(rawMessage);
+};
+
+/**
+ * Detecta si un error es un error de red real (no conectividad, no resolución DNS, etc).
+ * Excluye explícitamente errores HTTP (5xx o cualquier HTTP_NNN).
+ */
 export const isNetworkLikeError = (error: unknown): boolean => {
   const rawMessage =
     error instanceof Error
@@ -16,6 +35,12 @@ export const isNetworkLikeError = (error: unknown): boolean => {
         ? error
         : '';
   const message = rawMessage.toLowerCase();
+  
+  // Si es un error HTTP, no es un error de red (es un error del servidor)
+  if (/HTTP_\d{3}/.test(rawMessage)) {
+    return false;
+  }
+  
   return (
     message.includes('failed to fetch') ||
     message.includes('networkerror') ||
@@ -23,7 +48,6 @@ export const isNetworkLikeError = (error: unknown): boolean => {
     message.includes('net::err_name_not_resolved') ||
     message.includes('net::err_failed') ||
     message.includes('load failed') ||
-    message.includes('offline') ||
     message.includes('the internet connection appears to be offline')
   );
 };
@@ -247,6 +271,7 @@ export const syncPendingForms = async (): Promise<SyncRunResult> => {
       result.sent += 1;
     } catch (error) {
       const message = error instanceof Error ? error.message : 'sync_error';
+      // Errores de red reales (sin conectividad, DNS, etc.) → reintentar más tarde
       if (isNetworkLikeError(error)) {
         result.skipped += 1;
         if (!result.first_error) {
@@ -260,6 +285,7 @@ export const syncPendingForms = async (): Promise<SyncRunResult> => {
         continue;
       }
 
+      // Cualquier otro error (incluyendo HTTP 5xx) es un fallo de sincronización
       result.failed += 1;
       const errores_sync = (form.errores_sync ?? 0) + 1;
       if (!result.first_error) {

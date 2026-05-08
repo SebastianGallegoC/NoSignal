@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import type { OfflineForm } from "./db";
-import { validateFormPayload } from "./sync";
+import { validateFormPayload, isNetworkLikeError, isHttpServerError } from "./sync";
 
 const baseForm = (): OfflineForm => ({
   id_formulario: "f-1",
@@ -48,5 +48,84 @@ describe("validateFormPayload", () => {
     form.fotos = [{ nombre_archivo: "f1.jpg", data: "data:image/jpeg;base64,abc" }];
     const errors = validateFormPayload(form);
     expect(errors).toContain("fotos_visita_required");
+  });
+});
+
+describe("isNetworkLikeError", () => {
+  it("detecta failed to fetch", () => {
+    expect(isNetworkLikeError("TypeError: Failed to fetch")).toBe(true);
+  });
+
+  it("detecta NetworkError", () => {
+    expect(isNetworkLikeError("NetworkError: timeout")).toBe(true);
+  });
+
+  it("detecta net::ERR_NAME_NOT_RESOLVED", () => {
+    expect(isNetworkLikeError("net::ERR_NAME_NOT_RESOLVED")).toBe(true);
+  });
+
+  it("detecta offline en el mensaje", () => {
+    expect(isNetworkLikeError("The internet connection appears to be offline")).toBe(true);
+  });
+
+  it("no clasifica HTTP_503 como error de red", () => {
+    expect(isNetworkLikeError("HTTP_503: offline")).toBe(false);
+  });
+
+  it("no clasifica HTTP_500 como error de red", () => {
+    expect(isNetworkLikeError("HTTP_500: Internal Server Error")).toBe(false);
+  });
+
+  it("no clasifica HTTP_502 como error de red", () => {
+    expect(isNetworkLikeError("HTTP_502: Bad Gateway")).toBe(false);
+  });
+
+  it("no clasifica HTTP_400 como error de red", () => {
+    expect(isNetworkLikeError("HTTP_400: Bad Request")).toBe(false);
+  });
+
+  it("maneja Error objects correctamente", () => {
+    const error = new Error("Failed to fetch");
+    expect(isNetworkLikeError(error)).toBe(true);
+  });
+
+  it("maneja Error HTTP_503 correctamente", () => {
+    const error = new Error("HTTP_503: Service Unavailable");
+    expect(isNetworkLikeError(error)).toBe(false);
+  });
+});
+
+describe("isHttpServerError", () => {
+  it("detecta HTTP_500", () => {
+    expect(isHttpServerError("HTTP_500: Internal Server Error")).toBe(true);
+  });
+
+  it("detecta HTTP_503", () => {
+    expect(isHttpServerError("HTTP_503: offline")).toBe(true);
+  });
+
+  it("detecta HTTP_502", () => {
+    expect(isHttpServerError("HTTP_502: Bad Gateway")).toBe(true);
+  });
+
+  it("detecta HTTP_504", () => {
+    expect(isHttpServerError("HTTP_504: Gateway Timeout")).toBe(true);
+  });
+
+  it("no detecta HTTP_400 como servidor error", () => {
+    expect(isHttpServerError("HTTP_400: Bad Request")).toBe(false);
+  });
+
+  it("no detecta HTTP_404 como servidor error", () => {
+    expect(isHttpServerError("HTTP_404: Not Found")).toBe(false);
+  });
+
+  it("no detecta errores de red", () => {
+    expect(isHttpServerError("Failed to fetch")).toBe(false);
+  });
+
+  it("maneja Error objects correctamente", () => {
+    const error = new Error("HTTP_503: Service Unavailable");
+    expect(isHttpServerError(error)).toBe(true);
   });
 });
