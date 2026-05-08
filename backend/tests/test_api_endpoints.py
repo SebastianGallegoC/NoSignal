@@ -135,6 +135,54 @@ def test_delete_form_not_found(monkeypatch):
     app.dependency_overrides.clear()
 
 
+def test_get_form_by_id_ok(monkeypatch):
+    from app.api.v1 import forms as forms_mod
+
+    app.dependency_overrides[get_session] = _fake_session
+    app.dependency_overrides[get_current_user] = _fake_user
+
+    async def fake_get_form(_session, form_id):
+        if form_id != "f-123":
+            return None
+        return {
+            "id_formulario": "f-123",
+            "id_usuario": "u-1",
+            "fecha_hora": "2026-05-04T12:00:00Z",
+            "fecha_actualizacion": "2026-05-04T12:30:00Z",
+            "latitud": 1.123,
+            "longitud": -76.55,
+            "precision": None,
+            "datos_formulario": {"entidad_aportante": "X"},
+            "fotos": [],
+        }
+
+    monkeypatch.setattr(forms_mod, "get_form_for_read_by_id", fake_get_form)
+    client = TestClient(app)
+    resp = client.get("/api/v1/forms/f-123")
+    assert resp.status_code == 200
+    body = resp.json()
+    assert body["id_formulario"] == "f-123"
+    assert body["id_usuario"] == "u-1"
+    app.dependency_overrides.clear()
+
+
+def test_get_form_by_id_not_found(monkeypatch):
+    from app.api.v1 import forms as forms_mod
+
+    app.dependency_overrides[get_session] = _fake_session
+    app.dependency_overrides[get_current_user] = _fake_user
+
+    async def fake_get_form(_session, _form_id):
+        return None
+
+    monkeypatch.setattr(forms_mod, "get_form_for_read_by_id", fake_get_form)
+    client = TestClient(app)
+    resp = client.get("/api/v1/forms/no-existe")
+    assert resp.status_code == 404
+    assert resp.json()["detail"] == "form_not_found"
+    app.dependency_overrides.clear()
+
+
 def test_delete_form_returns_204(monkeypatch):
     from app.api.v1 import forms as forms_mod
 

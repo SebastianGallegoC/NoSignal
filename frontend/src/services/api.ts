@@ -198,6 +198,19 @@ export const fetchFormFromApi = async (formId: string): Promise<FormReadItem> =>
   });
   if (!response.ok) {
     const t = await response.text();
+    // Compatibilidad temporal: servidores antiguos no exponen GET /forms/{id} (405/404).
+    // Intentamos recuperar por listado para no bloquear la edición/precarga.
+    if (response.status === 404 || response.status === 405) {
+      try {
+        const items = await listFormsFromApi(500);
+        const fallback = items.find((it) => it.id_formulario === formId);
+        if (fallback) {
+          return fallback;
+        }
+      } catch {
+        // Si también falla el listado, preservamos error original abajo.
+      }
+    }
     throw new Error(t || `forms_get_${response.status}`);
   }
   return (await response.json()) as FormReadItem;

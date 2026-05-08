@@ -47,6 +47,52 @@ async def delete_form(session: AsyncSession, form_id: str) -> bool:
     return True
 
 
+def _mapping_to_form_read_item(row) -> FormReadItem | None:
+    geo = json.loads(row["geojson"])
+    if geo.get("type") != "Point" or not isinstance(geo.get("coordinates"), list):
+        return None
+    coords = geo["coordinates"]
+    if len(coords) < 2:
+        return None
+    lon, lat = float(coords[0]), float(coords[1])
+    fh = row["fecha_hora"]
+    fa = row.get("fecha_actualizacion") or fh
+    fecha_iso = fh.isoformat() if hasattr(fh, "isoformat") else str(fh)
+    fecha_actualizacion_iso = fa.isoformat() if hasattr(fa, "isoformat") else str(fa)
+    datos = row["datos_formulario"] if isinstance(row["datos_formulario"], dict) else {}
+    fotos_list = fotos_json_for_api_list(row["fotos"])
+    return FormReadItem(
+        id_formulario=row["id_formulario"],
+        id_usuario=row["id_usuario"],
+        fecha_hora=fecha_iso,
+        fecha_actualizacion=fecha_actualizacion_iso,
+        latitud=lat,
+        longitud=lon,
+        precision=None,
+        datos_formulario=datos,
+        fotos=fotos_list,
+    )
+
+
+async def get_form_for_read_by_id(session: AsyncSession, form_id: str) -> FormReadItem | None:
+    cols = (
+        FormRecord.id_formulario,
+        FormRecord.id_usuario,
+        FormRecord.fecha_hora,
+        FormRecord.datos_formulario,
+        FormRecord.fotos,
+        cast(ST_AsGeoJSON(FormRecord.gps), String).label("geojson"),
+    )
+    if forms_has_fecha_actualizacion:
+        cols = cols + (FormRecord.fecha_actualizacion,)
+    stmt = select(*cols).where(FormRecord.id_formulario == form_id).limit(1)
+    result = await session.execute(stmt)
+    row = result.mappings().first()
+    if row is None:
+        return None
+    return _mapping_to_form_read_item(row)
+
+
 async def list_forms_for_read(session: AsyncSession, limit: int) -> list[FormReadItem]:
     cols = (
         FormRecord.id_formulario,
@@ -62,32 +108,7 @@ async def list_forms_for_read(session: AsyncSession, limit: int) -> list[FormRea
     result = await session.execute(stmt)
     items: list[FormReadItem] = []
     for row in result.mappings():
-        geo = json.loads(row["geojson"])
-        if geo.get("type") != "Point" or not isinstance(geo.get("coordinates"), list):
-            continue
-        coords = geo["coordinates"]
-        if len(coords) < 2:
-            continue
-        lon, lat = float(coords[0]), float(coords[1])
-        fh = row["fecha_hora"]
-        fa = row.get("fecha_actualizacion") or fh
-        fecha_iso = fh.isoformat() if hasattr(fh, "isoformat") else str(fh)
-        fecha_actualizacion_iso = (
-            fa.isoformat() if hasattr(fa, "isoformat") else str(fa)
-        )
-        datos = row["datos_formulario"] if isinstance(row["datos_formulario"], dict) else {}
-        fotos_list = fotos_json_for_api_list(row["fotos"])
-        items.append(
-            FormReadItem(
-                id_formulario=row["id_formulario"],
-                id_usuario=row["id_usuario"],
-                fecha_hora=fecha_iso,
-                fecha_actualizacion=fecha_actualizacion_iso,
-                latitud=lat,
-                longitud=lon,
-                precision=None,
-                datos_formulario=datos,
-                fotos=fotos_list,
-            ),
-        )
+        item = _mapping_to_form_read_item(row)
+        if item is not None:
+            items.append(item)
     return items

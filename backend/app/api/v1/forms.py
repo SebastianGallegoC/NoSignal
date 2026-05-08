@@ -8,9 +8,14 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.api.deps import get_current_user
 from app.core.database import get_session
 from app.core.schema_flags import forms_has_fecha_actualizacion
-from app.repository.forms import delete_form, get_form_fotos_paths_by_id, list_forms_for_read
+from app.repository.forms import (
+    delete_form,
+    get_form_fotos_paths_by_id,
+    get_form_for_read_by_id,
+    list_forms_for_read,
+)
 from app.schemas.form_payload import FormPayload
-from app.schemas.form_read import FormListResponse
+from app.schemas.form_read import FormListResponse, FormReadItem
 from app.services.forms import persist_form
 from app.services.storage import media_type_for_image, validated_photo_path
 
@@ -55,6 +60,19 @@ async def list_forms(
         _current_user,
     )
     return FormListResponse(items=items)
+
+
+@router.get("/{form_id}", response_model=FormReadItem)
+async def get_form_by_id_endpoint(
+    form_id: str,
+    session: AsyncSession = Depends(get_session),
+    _current_user: str = Depends(get_current_user),
+):
+    """Obtiene un formulario puntual por id para detalle/precarga en frontend."""
+    item = await get_form_for_read_by_id(session, form_id)
+    if item is None:
+        raise HTTPException(status_code=404, detail="form_not_found")
+    return item
 
 
 @router.get("/{form_id}/fotos/{photo_index}")
