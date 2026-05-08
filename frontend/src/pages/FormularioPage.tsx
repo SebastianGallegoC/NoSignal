@@ -27,7 +27,7 @@ import {
   saveFormDraft,
   shouldPersistFormDraft,
 } from "@/services/formDraftStorage";
-import { syncPendingForms } from "@/services/sync";
+import { isNetworkLikeError, syncPendingForms } from "@/services/sync";
 import type { FotoForm } from "@/services/db";
 import { randomUuid } from "@/lib/randomUuid";
 import { useAuthStore } from "@/store/useAuthStore";
@@ -375,7 +375,18 @@ export const FormularioPage = () => {
     const result = await syncPendingForms();
     await refreshPendientes();
     setSubmitFeedback(null);
-    if (result.failed > 0) {
+    if (
+      result.skipped > 0 ||
+      (result.failed > 0 && isNetworkLikeError(result.first_error ?? ""))
+    ) {
+      setBanner(null);
+      setEnvioModal({
+        tone: "warning",
+        title: "Sin conexión estable",
+        message:
+          "El formulario quedó guardado localmente y la sincronización se reintentará automáticamente cuando vuelva internet.",
+      });
+    } else if (result.failed > 0) {
       const detail = result.first_error?.trim();
       setBanner(null);
       setEnvioModal({
@@ -530,9 +541,9 @@ export const FormularioPage = () => {
               ¿Vaciar todo el formulario?
             </h2>
             <p className="mt-3 text-sm leading-relaxed text-slate-600">
-              Se borrarán los datos diligenciados, las fotos y la ubicación
-              (GPS o manual). Vas a obtener un formulario nuevo vacío. Esta
-              acción no se puede deshacer.
+              Se borrarán los datos diligenciados, las fotos y la ubicación (GPS
+              o manual). Vas a obtener un formulario nuevo vacío. Esta acción no
+              se puede deshacer.
             </p>
             <div className="mt-6 flex flex-wrap justify-end gap-2">
               <Button

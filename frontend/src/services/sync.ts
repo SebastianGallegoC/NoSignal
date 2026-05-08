@@ -8,6 +8,25 @@ const MAX_GPS_ACCURACY_METERS = 100;
 const MIN_PHOTOS = 0;
 const MAX_PHOTOS = 15;
 
+export const isNetworkLikeError = (error: unknown): boolean => {
+  const rawMessage =
+    error instanceof Error
+      ? `${error.name}: ${error.message}`
+      : typeof error === 'string'
+        ? error
+        : '';
+  const message = rawMessage.toLowerCase();
+  return (
+    message.includes('failed to fetch') ||
+    message.includes('networkerror') ||
+    message.includes('network request failed') ||
+    message.includes('net::err_name_not_resolved') ||
+    message.includes('net::err_failed') ||
+    message.includes('load failed') ||
+    message.includes('the internet connection appears to be offline')
+  );
+};
+
 export const validateFormPayload = (form: OfflineForm): string[] => {
   const errors: string[] = [];
 
@@ -226,9 +245,22 @@ export const syncPendingForms = async (): Promise<SyncRunResult> => {
       await db.formularios.delete(form.id_formulario);
       result.sent += 1;
     } catch (error) {
+      const message = error instanceof Error ? error.message : 'sync_error';
+      if (isNetworkLikeError(error)) {
+        result.skipped += 1;
+        if (!result.first_error) {
+          result.first_error = message;
+        }
+        await db.formularios.update(form.id_formulario, {
+          estado_sincronizacion: 'PENDIENTE',
+          fecha_intento: new Date().toISOString(),
+          ultimo_error: undefined,
+        });
+        continue;
+      }
+
       result.failed += 1;
       const errores_sync = (form.errores_sync ?? 0) + 1;
-      const message = error instanceof Error ? error.message : 'sync_error';
       if (!result.first_error) {
         result.first_error = message;
       }
