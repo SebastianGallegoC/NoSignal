@@ -9,13 +9,28 @@ export const usePwaRegister = () => {
     onRegisteredSW: (_swUrl, registration) => {
       registrationRef.current = registration ?? null;
       // Al abrir la app, pedir de inmediato si hay SW nuevo (crítico para cold-start).
-      void registration?.update();
+      try {
+        if (typeof navigator === 'undefined' || navigator.onLine) {
+          void registration?.update();
+        }
+      } catch (e) {
+        // Ignorar errores iniciales de actualización (p. ej. offline).
+        // eslint-disable-next-line no-console
+        console.warn('ServiceWorker initial update failed (ignored)', e);
+      }
     },
   });
 
   useEffect(() => {
     const triggerUpdate = () => {
-      void registrationRef.current?.update();
+      if (typeof navigator !== 'undefined' && !navigator.onLine) return;
+      try {
+        void registrationRef.current?.update();
+      } catch (e) {
+        // Ignoramos fallos al actualizar el Service Worker (por ejemplo, sin red).
+        // eslint-disable-next-line no-console
+        console.warn('ServiceWorker update failed (ignored)', e);
+      }
     };
     const onVisible = () => {
       if (document.visibilityState === "visible") {

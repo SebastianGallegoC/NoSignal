@@ -14,6 +14,21 @@ precacheAndRoute(self.__WB_MANIFEST);
 cleanupOutdatedCaches();
 clientsClaim();
 
+// Evita que errores no capturados en el Service Worker escalen a la consola del cliente
+self.addEventListener('error', (ev: ErrorEvent) => {
+  // eslint-disable-next-line no-console
+  console.warn('ServiceWorker error (caught)', ev.message, ev.error ?? null);
+});
+
+self.addEventListener('unhandledrejection', (ev: PromiseRejectionEvent) => {
+  // Evitamos mensajes "Uncaught (in promise)" cuando Workbox falla al intentar replay.
+  // eslint-disable-next-line no-console
+  console.warn('ServiceWorker unhandledrejection (caught)', ev.reason ?? null);
+  try {
+    ev.preventDefault?.();
+  } catch {}
+});
+
 self.addEventListener('message', (event) => {
   if (event.data && event.data.type === 'SKIP_WAITING') {
     void self.skipWaiting();
