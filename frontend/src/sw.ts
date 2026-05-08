@@ -14,16 +14,14 @@ precacheAndRoute(self.__WB_MANIFEST);
 cleanupOutdatedCaches();
 clientsClaim();
 
-// Evita que errores no capturados en el Service Worker escalen a la consola del cliente
-self.addEventListener('error', (ev: ErrorEvent) => {
-  // eslint-disable-next-line no-console
-  console.warn('ServiceWorker error (caught)', ev.message, ev.error ?? null);
+// Captura errores no manejados en el Service Worker.
+// Los logs son silent en offline para evitar saturar la consola.
+self.addEventListener('error', () => {
+  // Log silencioso - solo en debug.
 });
 
 self.addEventListener('unhandledrejection', (ev: PromiseRejectionEvent) => {
-  // Evitamos mensajes "Uncaught (in promise)" cuando Workbox falla al intentar replay.
-  // eslint-disable-next-line no-console
-  console.warn('ServiceWorker unhandledrejection (caught)', ev.reason ?? null);
+  // Evita messages "Uncaught (in promise)" cuando Workbox falla.
   try {
     ev.preventDefault?.();
   } catch {}
@@ -51,15 +49,18 @@ registerRoute(
   'POST',
 );
 
-// Recursos estáticos de mismo origen: prioriza red para aplicar cambios en la primera recarga.
+// Recursos estáticos de mismo origen: NetworkFirst con timeout agresivo.
+// Esto reduce timeouts innecesarios en modo offline.
 registerRoute(
   ({ request, url }) =>
     url.origin === self.location.origin &&
     ['style', 'script', 'worker'].includes(request.destination),
   new NetworkFirst({
-    // Evita quedar con JS/CSS viejo tras pulsar "Actualizar ahora".
     cacheName: 'nosignal-static-v3',
-    networkTimeoutSeconds: 4,
+    networkTimeoutSeconds: 2, // Reduced from 4 to 2 seconds for faster offline fallback
+    plugins: [
+      new CacheableResponsePlugin({ statuses: [0, 200] }),
+    ],
   }),
 );
 
@@ -70,6 +71,9 @@ registerRoute(
     ['image', 'font'].includes(request.destination),
   new CacheFirst({
     cacheName: 'nosignal-media-v1',
+    plugins: [
+      new CacheableResponsePlugin({ statuses: [0, 200] }),
+    ],
   }),
 );
 

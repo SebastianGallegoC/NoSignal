@@ -5,16 +5,31 @@ const DEFAULT_UPDATE_CHECK_MS = 60_000;
 
 export const usePwaRegister = () => {
   const registrationRef = useRef<ServiceWorkerRegistration | null>(null);
+  const isUpdatingRef = useRef(false);
+
   const safeUpdate = (registration: ServiceWorkerRegistration | null) => {
-    if (!registration) {
+    if (!registration || isUpdatingRef.current) {
       return;
     }
+
+    // Verifica estado de conectividad antes de intentar actualizar.
+    if (typeof navigator !== 'undefined' && !navigator.onLine) {
+      return;
+    }
+
+    isUpdatingRef.current = true;
     void registration.update().catch((error) => {
       // Offline o fallo de fetch del sw.js: no lo tratamos como error fatal.
-      // eslint-disable-next-line no-console
-      console.warn('ServiceWorker update failed (ignored)', error);
+      // Solo log en debug para no saturar la consola en modo offline.
+      if (navigator.onLine) {
+        // eslint-disable-next-line no-console
+        console.debug('ServiceWorker update failed', error?.message ?? error);
+      }
+    }).finally(() => {
+      isUpdatingRef.current = false;
     });
   };
+
   const sw = useRegisterSW({
     onRegisteredSW: (_swUrl, registration) => {
       registrationRef.current = registration ?? null;
@@ -30,10 +45,22 @@ export const usePwaRegister = () => {
       if (typeof navigator !== 'undefined' && !navigator.onLine) return;
       safeUpdate(registrationRef.current);
     };
+
     const onVisible = () => {
       if (document.visibilityState === "visible") {
         triggerUpdate();
       }
+    };
+
+    const onOnline = () => {
+      // Reinicia intentos cuando se recupera conexión.
+      isUpdatingRef.current = false;
+      triggerUpdate();
+    };
+
+    const onOffline = () => {
+      // Cancela intentos cuando se pierde conexión.
+      isUpdatingRef.current = false;
     };
 
     triggerUpdate();
@@ -42,7 +69,8 @@ export const usePwaRegister = () => {
     );
 
     const timer = window.setInterval(triggerUpdate, DEFAULT_UPDATE_CHECK_MS);
-    window.addEventListener("online", triggerUpdate);
+    window.addEventListener("online", onOnline);
+    window.addEventListener("offline", onOffline);
     document.addEventListener("visibilitychange", onVisible);
 
     return () => {
@@ -50,7 +78,8 @@ export const usePwaRegister = () => {
         window.clearTimeout(id);
       }
       window.clearInterval(timer);
-      window.removeEventListener("online", triggerUpdate);
+      window.removeEventListener("online", onOnline);
+      window.removeEventListener("offline", onOffline);
       document.removeEventListener("visibilitychange", onVisible);
     };
   }, []);

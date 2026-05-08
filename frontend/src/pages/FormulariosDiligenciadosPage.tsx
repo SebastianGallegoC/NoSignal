@@ -281,13 +281,28 @@ export const FormulariosDiligenciadosPage = () => {
     const hasToken =
       typeof localStorage !== "undefined" &&
       !!localStorage.getItem(ACCESS_TOKEN_KEY);
-    if (hasToken) {
+
+    // Solo intenta fetch al servidor si está online.
+    const isOnline = typeof navigator !== "undefined" && navigator.onLine;
+    if (hasToken && isOnline) {
       try {
         server = await listFormsFromApi();
       } catch (e) {
-        err =
+        const errMsg =
           e instanceof Error ? e.message : "Error al cargar desde el servidor";
+        // Detecta errores de red y proporciona mensaje mejorado.
+        if (
+          errMsg.includes("ERR_NAME_NOT_RESOLVED") ||
+          errMsg.includes("Failed to fetch")
+        ) {
+          err = "Sin conexión a internet - mostrando datos locales";
+        } else {
+          err = errMsg;
+        }
       }
+    } else if (hasToken && !isOnline) {
+      // Offline con token: muestra estado pero no error crítico.
+      err = "Modo sin conexión - mostrando datos locales";
     }
 
     let localForMerge = local;
