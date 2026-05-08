@@ -87,6 +87,24 @@ describe("parsePlantillaWorkbook", () => {
     );
   });
 
+  it("no reutiliza el UUID de la columna A: siempre crea id_formulario nuevo", async () => {
+    const excelId = "aaaaaaaa-bbbb-4ccc-dddd-eeeeeeeeeeee";
+    const row = new Array<string | number | null>(76).fill(null);
+    row[0] = excelId;
+    row[7] = "Copia";
+    row[29] = "-74.0";
+    row[33] = "4.0";
+    const buffer = await buildMinimalPlantillaBuffer(row);
+    const { ok, errors } = await parsePlantillaWorkbook(buffer, "u");
+
+    expect(errors).toHaveLength(0);
+    expect(ok).toHaveLength(1);
+    expect(ok[0].id_formulario).not.toBe(excelId);
+    expect(ok[0].id_formulario).toMatch(
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i,
+    );
+  });
+
   it("rechaza fila sin coordenadas", async () => {
     const row = new Array<string | number | null>(76).fill(null);
     row[7] = "Sin GPS";

@@ -15,9 +15,6 @@ import {
 import type { FormFieldKey, FormValues } from "@/types/formFields";
 import { REQUIRED_FIELDS } from "@/types/formFields";
 
-const UUID_RE =
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-
 export type ImportRowError = { row: number; message: string };
 
 export type PlantillaImportResult = {
@@ -223,22 +220,16 @@ function parseCoord(s: string): number | null {
   return Number.isFinite(n) ? n : null;
 }
 
+/**
+ * Cada fila importada es un formulario nuevo en cola local: no se reutiliza el UUID
+ * de la columna A (p. ej. si el Excel viene de una exportación de otro registro).
+ */
 function rowToOfflineForm(
   cells: string[],
   idUsuario: string,
   nowIso: string,
 ): { form?: OfflineForm; error?: string } {
-  const idRaw = (cells[0] ?? "").trim();
-  let idFormulario: string;
-  if (!idRaw) {
-    idFormulario = randomUuid();
-  } else if (!UUID_RE.test(idRaw)) {
-    return {
-      error: `ID inválido (usá UUID vacío para generar uno nuevo): "${idRaw.slice(0, 40)}${idRaw.length > 40 ? "…" : ""}"`,
-    };
-  } else {
-    idFormulario = idRaw;
-  }
+  const idFormulario = randomUuid();
 
   const datos: Record<string, unknown> = {};
   let lonStr = "";
@@ -334,14 +325,6 @@ export function analyzeImportRow(
   const idRaw = (cells[0] ?? "").trim();
   const fieldErrors: ImportPreviewFieldErrors = {};
   const rowMessages: string[] = [];
-
-  if (idRaw && !UUID_RE.test(idRaw)) {
-    mergeFieldError(
-      fieldErrors,
-      "id_formulario",
-      `ID no es un UUID válido. Dejá la celda vacía para generar uno nuevo. Valor: «${idRaw.slice(0, 40)}${idRaw.length > 40 ? "…" : ""}».`,
-    );
-  }
 
   let lonStr = "";
   let latStr = "";

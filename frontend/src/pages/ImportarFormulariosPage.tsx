@@ -208,9 +208,10 @@ export const ImportarFormulariosPage = () => {
               <strong>LATITUD</strong> numéricas.
             </li>
             <li>
-              La columna <strong>ID</strong> puede ir vacía (se genera un UUID)
-              o con un UUID existente (si coincide con un borrador en cola, se
-              reemplaza).
+              La columna <strong>ID</strong> del Excel es solo referencia (p. ej.
+              si exportaste un formulario). Al importar{" "}
+              <strong>siempre se crea un registro nuevo</strong> con un UUID nuevo;
+              no se actualiza un formulario existente por ese ID.
             </li>
             <li>
               Los registros quedan en <strong>cola local</strong> como pendientes

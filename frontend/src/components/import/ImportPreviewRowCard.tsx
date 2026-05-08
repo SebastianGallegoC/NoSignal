@@ -120,6 +120,11 @@ export const ImportPreviewRowCard = ({
                 onChange={(v) => onPatch(sheetRow, { idRaw: v })}
               />
             </div>
+            <p className="mt-2 text-xs text-slate-500">
+              Al confirmar la importación se asigna un{" "}
+              <strong>UUID nuevo</strong>; el valor de la columna A no reemplaza
+              formularios ya guardados en la cola.
+            </p>
           </section>
 
           {FORM_SECTIONS.map((section) => (
