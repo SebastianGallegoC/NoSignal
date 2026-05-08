@@ -68,8 +68,8 @@ describe("isNetworkLikeError", () => {
     expect(isNetworkLikeError("The internet connection appears to be offline")).toBe(true);
   });
 
-  it("no clasifica HTTP_503 como error de red", () => {
-    expect(isNetworkLikeError("HTTP_503: offline")).toBe(false);
+  it("clasifica HTTP_503 offline del service worker como error de red", () => {
+    expect(isNetworkLikeError("HTTP_503: offline")).toBe(true);
   });
 
   it("no clasifica HTTP_500 como error de red", () => {
@@ -100,8 +100,12 @@ describe("isHttpServerError", () => {
     expect(isHttpServerError("HTTP_500: Internal Server Error")).toBe(true);
   });
 
-  it("detecta HTTP_503", () => {
-    expect(isHttpServerError("HTTP_503: offline")).toBe(true);
+  it("no trata HTTP_503 offline del SW como error del servidor", () => {
+    expect(isHttpServerError("HTTP_503: offline")).toBe(false);
+  });
+
+  it("detecta HTTP_503 real del backend (sin marcador offline)", () => {
+    expect(isHttpServerError("HTTP_503: Service Unavailable")).toBe(true);
   });
 
   it("detecta HTTP_502", () => {

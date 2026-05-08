@@ -9,8 +9,8 @@ const MIN_PHOTOS = 0;
 const MAX_PHOTOS = 15;
 
 /**
- * Detecta si un error es un error HTTP 5xx (error del servidor).
- * Ejemplo: "HTTP_503: offline" → true
+ * Detecta si un error es un error HTTP 5xx del **servidor**.
+ * Excluye `HTTP_503` + `offline`: respuesta sintética del service worker sin red (sw.ts).
  */
 export const isHttpServerError = (error: unknown): boolean => {
   const rawMessage =
@@ -19,13 +19,16 @@ export const isHttpServerError = (error: unknown): boolean => {
       : typeof error === 'string'
         ? error
         : '';
-  // Detecta patrones como HTTP_500, HTTP_502, HTTP_503, HTTP_504, HTTP_505
+  const lower = rawMessage.toLowerCase();
+  if (/HTTP_503/.test(rawMessage) && lower.includes('offline')) {
+    return false;
+  }
   return /HTTP_5\d{2}/.test(rawMessage);
 };
 
 /**
- * Detecta si un error es un error de red real (no conectividad, no resolución DNS, etc).
- * Excluye explícitamente errores HTTP (5xx o cualquier HTTP_NNN).
+ * Detecta fallo de conectividad (fetch imposible, SW offline, etc.).
+ * Incluye la respuesta sintética del SW en POST sin red: 503 + detail "offline".
  */
 export const isNetworkLikeError = (error: unknown): boolean => {
   const rawMessage =
@@ -35,12 +38,16 @@ export const isNetworkLikeError = (error: unknown): boolean => {
         ? error
         : '';
   const message = rawMessage.toLowerCase();
-  
-  // Si es un error HTTP, no es un error de red (es un error del servidor)
+
+  // sw.ts: POST /api/v1/forms interceptado; sin red → Response 503 { detail: 'offline' }
+  if (/HTTP_503/.test(rawMessage) && message.includes('offline')) {
+    return true;
+  }
+
   if (/HTTP_\d{3}/.test(rawMessage)) {
     return false;
   }
-  
+
   return (
     message.includes('failed to fetch') ||
     message.includes('networkerror') ||

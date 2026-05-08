@@ -204,15 +204,17 @@ export const useFormularioSubmit = ({
       } else {
         setSubmitFeedback("Enviando al servidor (puede tardar si hay muchas fotos)…");
         const result = await syncPendingForms();
+        const firstErr = result.first_error?.trim() ?? "";
         const networkLikeFailure =
-          result.failed > 0 && isNetworkLikeError(result.first_error ?? "");
-        if (networkLikeFailure || result.skipped > 0) {
-          const detail = result.first_error?.trim();
+          result.failed > 0 && isNetworkLikeError(firstErr);
+        const skippedWithoutHardFail = result.skipped > 0 && result.failed === 0;
+        if (networkLikeFailure || skippedWithoutHardFail) {
+          const detail = firstErr;
           setEnvioModal({
             tone: "warning",
             title: "Guardado localmente (sin conexión)",
             message:
-              detail && detail.length > 0
+              detail.length > 0
                 ? `No hubo conexión estable para sincronizar ahora. El formulario quedó guardado localmente y se reintentará automáticamente. Detalle: ${detail}`
                 : "No hubo conexión estable para sincronizar ahora. El formulario quedó guardado localmente y se reintentará automáticamente cuando vuelva internet.",
             submittedForm: payload,
