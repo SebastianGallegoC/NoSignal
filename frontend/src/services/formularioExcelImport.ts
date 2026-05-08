@@ -3,7 +3,6 @@ import ExcelJS from "exceljs";
 import { randomUuid } from "@/lib/randomUuid";
 import type { OfflineForm } from "@/services/db";
 import {
-  MATRIZ_F_PSA_HEADERS,
   MATRIZ_ROW_CELL_SOURCES,
   MATRIZ_SHEET_NAME,
 } from "@/services/matrizCaracterizacionExport";
@@ -21,23 +20,6 @@ export type PlantillaImportResult = {
   ok: OfflineForm[];
   errors: ImportRowError[];
 };
-
-function normalizeHeaderText(s: string): string {
-  return s.replace(/\s+/g, " ").trim();
-}
-
-function headersMatchRow7(headerRow: ExcelJS.Row): boolean {
-  for (let i = 0; i < MATRIZ_F_PSA_HEADERS.length; i++) {
-    const expected = normalizeHeaderText(MATRIZ_F_PSA_HEADERS[i]);
-    const got = normalizeHeaderText(
-      cellValueToImportString(headerRow.getCell(i + 1)),
-    );
-    if (got.toLowerCase() !== expected.toLowerCase()) {
-      return false;
-    }
-  }
-  return true;
-}
 
 function valueToImportString(raw: unknown): string {
   if (raw == null) {
@@ -211,7 +193,8 @@ function rowToOfflineForm(
 }
 
 /**
- * Lee un .xlsx con estructura PLANTILLA (hoja F-PSA-08, encabezados fila 7, datos desde fila 8).
+ * Lee un .xlsx alineado a la plantilla: hoja F-PSA-08 (o la primera hoja), fila 7 reservada a
+ * encabezados (no se validan los textos), datos desde la fila 8 por posición de columna (1–76).
  */
 export async function parsePlantillaWorkbook(
   buffer: ArrayBuffer,
@@ -236,16 +219,6 @@ export async function parsePlantillaWorkbook(
       ok: [],
       errors: [{ row: 0, message: "El archivo no contiene hojas." }],
     };
-  }
-
-  const headerRow = ws.getRow(7);
-  if (!headersMatchRow7(headerRow)) {
-    errors.push({
-      row: 7,
-      message:
-        "La fila 7 no coincide con los encabezados de PLANTILLA.xlsx (hoja F-PSA-08). Descargá la plantilla desde el enlace de esta página.",
-    });
-    return { ok, errors };
   }
 
   const nowIso = new Date().toISOString();

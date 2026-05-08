@@ -80,13 +80,23 @@ describe("parsePlantillaWorkbook", () => {
     expect(errors[0].message).toMatch(/LONGITUD|LATITUD/i);
   });
 
-  it("rechaza archivo si la fila 7 no coincide con la plantilla", async () => {
+  it("importa aunque los textos de la fila 7 no coincidan con la plantilla oficial", async () => {
     const wb = new ExcelJS.Workbook();
     const ws = wb.addWorksheet(MATRIZ_SHEET_NAME);
-    ws.getCell(7, 1).value = "NO ES ID";
-    for (let i = 1; i < 76; i++) {
-      ws.getCell(7, i + 1).value = MATRIZ_F_PSA_HEADERS[i];
+    ws.getCell(7, 1).value = "Encabezado arbitrario";
+    ws.getCell(7, 2).value = "Otro título";
+
+    const row = new Array<string | number | null>(76).fill(null);
+    row[7] = "María Pérez";
+    row[29] = "-74.08175";
+    row[33] = "4.60971";
+    for (let c = 0; c < 76; c++) {
+      const v = row[c];
+      if (v != null && v !== "") {
+        ws.getCell(8, c + 1).value = v;
+      }
     }
+
     const buf = await wb.xlsx.writeBuffer();
     const u8 = new Uint8Array(buf as ArrayBuffer);
     const buffer = u8.buffer.slice(
@@ -95,8 +105,11 @@ describe("parsePlantillaWorkbook", () => {
     );
 
     const { ok, errors } = await parsePlantillaWorkbook(buffer, "u");
-    expect(ok).toHaveLength(0);
-    expect(errors[0].row).toBe(7);
+    expect(errors).toHaveLength(0);
+    expect(ok).toHaveLength(1);
+    expect(ok[0].datos_formulario.nombres_apellidos_beneficiario).toBe(
+      "María Pérez",
+    );
   });
 
   it("rechaza id_usuario vacío", async () => {
