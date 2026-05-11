@@ -3,7 +3,7 @@ import { createRoot } from "react-dom/client";
 import { describe, expect, it, vi, afterEach } from "vitest";
 
 import type { FormularioSnapshot } from "@/components/form/FormularioRespuestaReadOnly";
-import type { PrecargaForm } from "@/services/db";
+import type { FotoForm, PrecargaForm } from "@/services/db";
 import type { DisplayRow } from "@/services/formHistory";
 import { useFormExports } from "@/pages/formulariosDiligenciados/useFormExports";
 
@@ -18,9 +18,9 @@ const photoMocks = vi.hoisted(() => ({
 }));
 
 const helperMocks = vi.hoisted(() => ({
-  fotosConVisitaDesdeDetalle: vi.fn(() => []),
+  fotosConVisitaDesdeDetalle: vi.fn((): FotoForm[] => []),
   hydrateFotosFromServerIfNeeded: vi.fn(
-    async (_row: DisplayRow, fotos: unknown[]) => fotos,
+    async (_row: DisplayRow, fotos: FotoForm[]): Promise<FotoForm[]> => fotos,
   ),
 }));
 
@@ -67,7 +67,7 @@ describe("useFormExports", () => {
     helperMocks.fotosConVisitaDesdeDetalle.mockImplementation(() => []);
     helperMocks.hydrateFotosFromServerIfNeeded.mockReset();
     helperMocks.hydrateFotosFromServerIfNeeded.mockImplementation(
-      async (_row: DisplayRow, fotos: unknown[]) => fotos,
+      async (_row: DisplayRow, fotos: FotoForm[]) => fotos,
     );
   });
 

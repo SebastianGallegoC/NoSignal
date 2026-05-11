@@ -1,4 +1,4 @@
-import type { ChangeEvent, RefObject } from "react";
+import type { ChangeEvent, Ref, RefObject } from "react";
 
 import { Button } from "@/components/ui/button";
 import type { ImagePreview } from "@/components/form/ImagePreviewModal";
@@ -12,7 +12,7 @@ type Props = {
   onVisitaSeleccionadaChange: (v: VisitaNumero | null) => void;
   pickerInputRef: RefObject<HTMLInputElement | null>;
   cameraOpen: boolean;
-  cameraVideoRef: RefObject<HTMLVideoElement | null>;
+  cameraVideoRef: Ref<HTMLVideoElement | null>;
   captureFlash: boolean;
   captureBadge: boolean;
   onOpenCamera: () => void;

@@ -1,5 +1,5 @@
 import { useCallback } from 'react';
-import type { ChangeEvent, RefObject } from 'react';
+import type { ChangeEvent, MutableRefObject } from 'react';
 
 import { useCameraCapture } from '@/hooks/useCameraCapture';
 import { compressImageFile, fileToDataUrl } from '@/services/imageCompression';
@@ -15,9 +15,9 @@ type Args = {
 type UsePhotoCaptureResult = {
   cameraOpen: boolean;
   captureFlash: boolean;
-  captureBadge: string | null;
-  cameraVideoRef: RefObject<HTMLVideoElement>;
-  openCamera: () => Promise<void>;
+  captureBadge: boolean;
+  cameraVideoRef: MutableRefObject<HTMLVideoElement | null>;
+  openCamera: () => void;
   stopCamera: () => void;
   captureFromCamera: () => Promise<void>;
   onFotosChange: (event: ChangeEvent<HTMLInputElement>) => Promise<void>;
