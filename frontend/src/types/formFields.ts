@@ -1,4 +1,4 @@
-/** Todas las claves del formulario (persistencia y payload); el envío no las exige todas llenas. */
+/** Todas las claves del formulario (persistencia y payload). */
 export const REQUIRED_FIELDS = [
   'entidad_aportante',
   'tipo_organizacion_entidad_aportante',
@@ -78,5 +78,10 @@ export const REQUIRED_FIELDS = [
 ] as const;
 
 export type FormFieldKey = (typeof REQUIRED_FIELDS)[number];
+
+/** Únicos campos de datos que deben estar completos para guardar / enviar a cola. */
+export const FIELDS_REQUIRED_TO_SUBMIT = [
+  "nombres_apellidos_beneficiario",
+] as const satisfies readonly FormFieldKey[];
 
 export type FormValues = Record<FormFieldKey, string>;

@@ -1,5 +1,6 @@
 import ExcelJS from "exceljs";
 
+import { GPS_PLACEHOLDER_WHEN_NOT_CAPTURED } from "@/constants/gpsConfig";
 import { randomUuid } from "@/lib/randomUuid";
 import type { OfflineForm } from "@/services/db";
 import {
@@ -258,14 +259,21 @@ function rowToOfflineForm(
     }
   }
 
-  const lon = parseCoord(lonStr);
-  const lat = parseCoord(latStr);
-  if (lon == null || lat == null) {
+  const nombreBenef = String(
+    datos.nombres_apellidos_beneficiario ?? "",
+  ).trim();
+  if (!nombreBenef) {
     return {
-      error:
-        "Faltan LONGITUD y/o LATITUD numéricas válidas en la fila (obligatorio para importar).",
+      error: "Falta el nombre del beneficiario en la fila (obligatorio para importar).",
     };
   }
+
+  const lon = parseCoord(lonStr);
+  const lat = parseCoord(latStr);
+  const gps: OfflineForm["gps"] =
+    lon != null && lat != null
+      ? { latitud: lat, longitud: lon, precision: 5 }
+      : { ...GPS_PLACEHOLDER_WHEN_NOT_CAPTURED };
 
   const form: OfflineForm = {
     id_formulario: idFormulario,
@@ -273,7 +281,7 @@ function rowToOfflineForm(
     modo_coordenadas: "manual",
     fecha_hora: nowIso,
     fecha_actualizacion: nowIso,
-    gps: { latitud: lat, longitud: lon, precision: 5 },
+    gps,
     datos_formulario: datos,
     fotos: [],
     estado_sincronizacion: "PENDIENTE",
@@ -338,14 +346,16 @@ export function analyzeImportRow(
     }
   }
 
-  if (parseCoord(lonStr) == null) {
+  const lonTrim = lonStr.trim();
+  const latTrim = latStr.trim();
+  if (lonTrim !== "" && parseCoord(lonStr) == null) {
     mergeFieldError(
       fieldErrors,
       "longitud",
       "LONGITUD debe ser un número decimal (ej. -74.08175; también se admite coma como separador).",
     );
   }
-  if (parseCoord(latStr) == null) {
+  if (latTrim !== "" && parseCoord(latStr) == null) {
     mergeFieldError(
       fieldErrors,
       "latitud",

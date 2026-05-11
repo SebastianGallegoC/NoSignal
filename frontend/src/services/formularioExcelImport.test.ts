@@ -6,6 +6,8 @@ import {
   MATRIZ_SHEET_NAME,
 } from "@/services/matrizCaracterizacionExport";
 
+import { GPS_PLACEHOLDER_WHEN_NOT_CAPTURED } from "@/constants/gpsConfig";
+
 import {
   analyzeImportRow,
   cellsToFormValuesRaw,
@@ -105,16 +107,19 @@ describe("parsePlantillaWorkbook", () => {
     );
   });
 
-  it("rechaza fila sin coordenadas", async () => {
+  it("importa fila solo con beneficiario usando GPS placeholder si faltan coordenadas", async () => {
     const row = new Array<string | number | null>(76).fill(null);
-    row[7] = "Sin GPS";
+    row[7] = "Sin GPS en Excel";
 
     const buffer = await buildMinimalPlantillaBuffer(row);
     const { ok, errors } = await parsePlantillaWorkbook(buffer, "demo_user");
 
-    expect(ok).toHaveLength(0);
-    expect(errors.some((e) => e.row === 8)).toBe(true);
-    expect(errors[0].message).toMatch(/LONGITUD|LATITUD/i);
+    expect(errors).toHaveLength(0);
+    expect(ok).toHaveLength(1);
+    expect(ok[0].gps).toEqual({ ...GPS_PLACEHOLDER_WHEN_NOT_CAPTURED });
+    expect(ok[0].datos_formulario.nombres_apellidos_beneficiario).toBe(
+      "Sin GPS en Excel",
+    );
   });
 
   it("importa aunque los textos de la fila 7 no coincidan con la plantilla oficial", async () => {

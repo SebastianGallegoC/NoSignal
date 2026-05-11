@@ -18,11 +18,13 @@ import {
 } from "@/services/formValidation";
 import type { FormFieldKey, FormValues } from "@/types/formFields";
 import {
+  GPS_PLACEHOLDER_WHEN_NOT_CAPTURED,
   MAX_GPS_PRECISION_METERS,
   MIN_GPS_PRECISION_METERS,
 } from "@/constants/gpsConfig";
 
 type Args = {
+  /** Ubicación capturada; si es null se usa un punto placeholder para el payload. */
   gps: { latitud: number; longitud: number; precision: number } | null;
   fotos: FotoForm[];
   formId: string;
@@ -54,7 +56,7 @@ type BuildPayloadArgs = {
   originalFechaHora: string | null;
   idUsuario: string;
   authUsername: string | null;
-  gps: { latitud: number; longitud: number; precision: number };
+  gps: { latitud: number; longitud: number; precision: number } | null;
   fotos: FotoForm[];
   toSafeUserId: (raw: string) => string;
   modoCoordenadas?: "automatico" | "manual";
@@ -86,6 +88,7 @@ export const buildOfflinePayload = ({
   const now = new Date().toISOString();
   const fechaPrimerEnvio = _originalFechaHora ?? now;
   const fechaActualizacion = _originalFechaHora ? now : fechaPrimerEnvio;
+  const gpsResolved = gps ?? GPS_PLACEHOLDER_WHEN_NOT_CAPTURED;
   return {
     id_formulario: formId,
     id_usuario: toSafeUserId(idUsuario || authUsername || "sin_usuario"),
@@ -93,11 +96,11 @@ export const buildOfflinePayload = ({
     fecha_hora: fechaPrimerEnvio,
     fecha_actualizacion: fechaActualizacion,
     gps: {
-      latitud: gps.latitud,
-      longitud: gps.longitud,
+      latitud: gpsResolved.latitud,
+      longitud: gpsResolved.longitud,
       precision: Math.max(
         MIN_GPS_PRECISION_METERS,
-        Math.min(gps.precision, MAX_GPS_PRECISION_METERS),
+        Math.min(gpsResolved.precision, MAX_GPS_PRECISION_METERS),
       ),
     },
     datos_formulario: buildDatosFormulario(values, requiredFields),
@@ -143,17 +146,12 @@ export const useFormularioSubmit = ({
   const onValid = async (values: FormValues) => {
     setBanner(null);
     setSubmitFeedback("Validando formulario...");
-    if (!gps) {
-      setBanner(
-        modoCoordenadas === "manual"
-          ? "Completá latitud y longitud con valores válidos antes de enviar."
-          : "Tomá la ubicación GPS antes de enviar.",
-      );
-      setSubmitFeedback(
-        modoCoordenadas === "manual"
-          ? "No se pudo enviar: faltan coordenadas válidas."
-          : "No se pudo enviar: falta ubicación GPS.",
-      );
+    const nombreBenef = (values.nombres_apellidos_beneficiario ?? "").trim();
+    if (!nombreBenef) {
+      setBanner("Completá el nombre del beneficiario antes de enviar.");
+      setSubmitFeedback("No se pudo enviar: falta el nombre del beneficiario.");
+      setOpenSections((prev) => new Set([...prev, "beneficiario"]));
+      setFocus("nombres_apellidos_beneficiario");
       return;
     }
     if (fotos.length > 15) {
@@ -170,7 +168,7 @@ export const useFormularioSubmit = ({
       originalFechaHora: _originalFechaHora,
       idUsuario,
       authUsername,
-      gps,
+      gps: gps ?? null,
       fotos,
       toSafeUserId,
       modoCoordenadas,

@@ -5,6 +5,7 @@ import {
   buildOfflinePayload,
   getSectionsWithErrors,
 } from "@/hooks/useFormularioSubmit";
+import { GPS_PLACEHOLDER_WHEN_NOT_CAPTURED } from "@/constants/gpsConfig";
 import { REQUIRED_FIELDS, type FormValues } from "@/types/formFields";
 
 const buildEmptyValues = (): FormValues => {
@@ -27,6 +28,7 @@ describe("useFormularioSubmit helpers", () => {
   it("buildOfflinePayload limita precision GPS y sanea usuario", () => {
     const values = buildEmptyValues();
     values.nombre_actividad = "Actividad";
+    values.nombres_apellidos_beneficiario = "Beneficiario";
 
     const toSafeUserId = vi.fn((raw: string) => raw.trim().toLowerCase());
     const payload = buildOfflinePayload({
@@ -52,6 +54,7 @@ describe("useFormularioSubmit helpers", () => {
   it("buildOfflinePayload persiste modo_coordenadas manual", () => {
     const values = buildEmptyValues();
     values.nombre_actividad = "Actividad";
+    values.nombres_apellidos_beneficiario = "B";
 
     const payload = buildOfflinePayload({
       values,
@@ -71,6 +74,7 @@ describe("useFormularioSubmit helpers", () => {
 
   it("buildOfflinePayload corrige precision GPS <= 0 a mínimo válido", () => {
     const values = buildEmptyValues();
+    values.nombres_apellidos_beneficiario = "B";
     const payload = buildOfflinePayload({
       values,
       requiredFields: REQUIRED_FIELDS,
@@ -84,6 +88,27 @@ describe("useFormularioSubmit helpers", () => {
     });
 
     expect(payload.gps.precision).toBe(0.1);
+  });
+
+  it("buildOfflinePayload usa placeholder si no hay GPS", () => {
+    const values = buildEmptyValues();
+    values.nombres_apellidos_beneficiario = "Solo nombre";
+    const payload = buildOfflinePayload({
+      values,
+      requiredFields: REQUIRED_FIELDS,
+      formId: "form-sin-gps",
+      originalFechaHora: null,
+      idUsuario: "demo",
+      authUsername: null,
+      gps: null,
+      fotos: [],
+      toSafeUserId: (raw) => raw,
+    });
+    expect(payload.gps).toEqual({
+      latitud: GPS_PLACEHOLDER_WHEN_NOT_CAPTURED.latitud,
+      longitud: GPS_PLACEHOLDER_WHEN_NOT_CAPTURED.longitud,
+      precision: 5,
+    });
   });
 
   it("getSectionsWithErrors ubica secciones afectadas", () => {
@@ -101,6 +126,7 @@ describe("useFormularioSubmit helpers", () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date("2026-05-01T10:20:30.000Z"));
     const values = buildEmptyValues();
+    values.nombres_apellidos_beneficiario = "B";
     const payload = buildOfflinePayload({
       values,
       requiredFields: REQUIRED_FIELDS,
@@ -121,6 +147,7 @@ describe("useFormularioSubmit helpers", () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date("2026-06-15T18:00:00.000Z"));
     const values = buildEmptyValues();
+    values.nombres_apellidos_beneficiario = "B";
     const payload = buildOfflinePayload({
       values,
       requiredFields: REQUIRED_FIELDS,

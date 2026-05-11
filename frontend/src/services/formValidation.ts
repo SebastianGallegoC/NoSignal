@@ -42,9 +42,8 @@ function parseDateSafe(value: unknown): number | null {
 
 /**
  * Validación por campo (y mensajes de fila) para mostrar errores en UI de importación.
- * No exige completar el formulario: el envío offline solo exige GPS (y fotos
- * dentro de rango) vía `validateOfflineFormPayload`; el API acepta
- * `datos_formulario` parcial o vacío.
+ * El envío a cola solo exige nombre del beneficiario (vía `validateOfflineFormPayload`);
+ * el resto de campos puede ir vacío. Si hay fotos, deben tener visita 1–3.
  */
 export const validateFormValuesWithFieldDetails = (
   values: FormValues,
@@ -170,6 +169,18 @@ const toFormValuesFromPayload = (payload: OfflineForm): FormValues => {
 export const validateOfflineFormPayload = (form: OfflineForm): ValidationIssue[] => {
   const issues = validateFormValues(toFormValuesFromPayload(form));
 
+  if (
+    isBlank(
+      (form.datos_formulario as Record<string, unknown>)
+        .nombres_apellidos_beneficiario,
+    )
+  ) {
+    issues.push({
+      code: "beneficiario_required",
+      message: "El nombre del beneficiario es obligatorio para enviar.",
+    });
+  }
+
   const tsEnvio = parseDateSafe(form.fecha_hora);
   if (tsEnvio == null) {
     issues.push({
@@ -192,7 +203,7 @@ export const validateOfflineFormPayload = (form: OfflineForm): ValidationIssue[]
     }
   }
 
-  if (!form.gps || form.gps.precision > MAX_GPS_ACCURACY_METERS) {
+  if (form.gps.precision > MAX_GPS_ACCURACY_METERS) {
     issues.push({
       code: "gps_precision",
       message: "GPS con precisión ≤ 100 m (usá “Tomar ubicación”).",
