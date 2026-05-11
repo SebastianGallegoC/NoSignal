@@ -1,5 +1,9 @@
 import { MAX_GPS_ACCURACY_METERS } from "@/constants/gpsConfig";
 import {
+  normalizeTelefonoStoredValue,
+  TELEFONO_NO_TIENE_VALUE,
+} from "@/lib/telefonoNormalize";
+import {
   fieldLabel,
   inputKindForField,
   SI_NO_IMPORT_NORMALIZE_FIELDS,
@@ -65,12 +69,19 @@ export const validateFormValuesWithFieldDetails = (
     }
   }
 
-  if (!isBlank(values.telefono) && !PHONE_RE.test(values.telefono.trim())) {
-    fieldIssues.push({
-      field: "telefono",
-      code: "telefono_format",
-      message: "Formato de teléfono inválido (6-20 caracteres: dígitos, +, -, espacios, paréntesis).",
-    });
+  if (!isBlank(values.telefono)) {
+    const tel = normalizeTelefonoStoredValue(String(values.telefono));
+    if (
+      tel !== TELEFONO_NO_TIENE_VALUE &&
+      !PHONE_RE.test(tel.trim())
+    ) {
+      fieldIssues.push({
+        field: "telefono",
+        code: "telefono_format",
+        message:
+          "Teléfono inválido. Usá 6–20 caracteres (dígitos, +, -, espacios, paréntesis) o la opción «No tiene».",
+      });
+    }
   }
 
   if (!isBlank(values.satisfaccion_1_5)) {

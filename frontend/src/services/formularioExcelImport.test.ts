@@ -266,4 +266,16 @@ describe("parsePlantillaWorkbook", () => {
     expect(errors).toHaveLength(0);
     expect(ok[0].datos_formulario.area_arbol_disponible).toBe("No");
   });
+
+  it("normaliza teléfono «no tiene» al importar (columna ~13)", async () => {
+    const row = new Array<string | number | null>(76).fill(null);
+    row[7] = "Benef";
+    row[12] = "  sin teléfono  ";
+    row[29] = "-74.0";
+    row[33] = "4.0";
+    const buffer = await buildMinimalPlantillaBuffer(row);
+    const { ok, errors } = await parsePlantillaWorkbook(buffer, "u");
+    expect(errors).toHaveLength(0);
+    expect(ok[0].datos_formulario.telefono).toBe("No tiene");
+  });
 });

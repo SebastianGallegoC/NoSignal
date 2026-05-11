@@ -11,6 +11,7 @@ import {
   MATRIZ_ROW_CELL_SOURCES,
   MATRIZ_SHEET_NAME,
 } from "@/services/matrizCaracterizacionExport";
+import { normalizeTelefonoStoredValue } from "@/lib/telefonoNormalize";
 import {
   FECHA_FORMATO_MSG,
   joinValidationMessages,
@@ -111,6 +112,10 @@ function normalizeImportEnumerationFieldsInFormValues(out: FormValues): void {
     } else if (SI_NO_IMPORT_NORMALIZE_FIELDS.has(fk)) {
       out[fk] = normalizeSiNoImportValue(v);
     }
+  }
+  const tel = out.telefono;
+  if (typeof tel === "string" && tel.trim() !== "") {
+    out.telefono = normalizeTelefonoStoredValue(tel);
   }
 }
 
@@ -318,6 +323,8 @@ function rowToOfflineForm(
           stored = normalizeTriImportValue(val);
         } else if (SI_NO_IMPORT_NORMALIZE_FIELDS.has(src.key)) {
           stored = normalizeSiNoImportValue(val);
+        } else if (src.key === "telefono") {
+          stored = normalizeTelefonoStoredValue(val);
         }
         datos[src.key] = stored;
         break;

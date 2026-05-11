@@ -1,4 +1,4 @@
-import type { Control, UseFormRegister } from "react-hook-form";
+import { Controller, type Control, type UseFormRegister } from "react-hook-form";
 
 import {
   fieldLabel,
@@ -6,6 +6,10 @@ import {
   triOptions,
 } from "@/config/formFieldMeta";
 import { fieldSelectOptions } from "@/config/formSelectOptions";
+import {
+  normalizeTelefonoStoredValue,
+  TELEFONO_NO_TIENE_VALUE,
+} from "@/lib/telefonoNormalize";
 import type { FormFieldKey, FormValues } from "@/types/formFields";
 
 import { SearchableSelect, type SelectOption } from "./SearchableSelect";
@@ -37,6 +41,51 @@ export const FormFieldRow = ({
 }: FormFieldRowProps) => {
   const kind = inputKindForField(name);
   const label = fieldLabel(name);
+
+  if (name === "telefono") {
+    return (
+      <Controller
+        name={name}
+        control={control}
+        render={({ field }) => {
+          const { onBlur: fieldOnBlur, ref, ...fieldRest } = field;
+          return (
+            <label className="flex min-w-0 flex-col text-sm font-medium text-slate-800 md:col-span-2">
+              {label}
+              <input
+                {...fieldRest}
+                ref={ref}
+                type="tel"
+                inputMode="tel"
+                autoComplete="tel"
+                className={inputClass}
+                onBlur={(e) => {
+                  fieldOnBlur();
+                  const n = normalizeTelefonoStoredValue(e.target.value);
+                  if (n !== String(field.value ?? "")) {
+                    field.onChange(n);
+                  }
+                }}
+              />
+              <div className="mt-1.5 flex flex-wrap items-center gap-2">
+                <span className="text-xs text-slate-500">Atajo:</span>
+                <button
+                  type="button"
+                  className="rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-medium text-slate-700 transition hover:border-teal-200 hover:bg-teal-50 hover:text-teal-900"
+                  onClick={() => field.onChange(TELEFONO_NO_TIENE_VALUE)}
+                >
+                  No tiene
+                </button>
+              </div>
+              {error ? (
+                <span className="mt-1 text-xs text-red-600">{error}</span>
+              ) : null}
+            </label>
+          );
+        }}
+      />
+    );
+  }
 
   if (kind === "textarea") {
     return (
