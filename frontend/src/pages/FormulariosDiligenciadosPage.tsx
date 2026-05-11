@@ -2,6 +2,7 @@ import {
   useCallback,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from "react";
@@ -70,6 +71,11 @@ export const FormulariosDiligenciadosPage = () => {
   const [filtroHasta, setFiltroHasta] = useState("");
   const [filtroBeneficiario, setFiltroBeneficiario] = useState("");
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const selectedIdRef = useRef<string | null>(null);
+  useEffect(() => {
+    selectedIdRef.current = selectedId;
+  }, [selectedId]);
+
   const [detailSnapshot, setDetailSnapshot] =
     useState<FormularioSnapshot | null>(null);
   const [detailSource, setDetailSource] = useState<DetailSourceKind | null>(
@@ -250,7 +256,11 @@ export const FormulariosDiligenciadosPage = () => {
   const selectRow = useCallback(
     async (row: DisplayRow, opts?: { refreshOnly?: boolean }) => {
       const refreshOnly = opts?.refreshOnly === true;
+      const isStillThisRow = () =>
+        selectedIdRef.current === row.id_formulario;
+
       if (!refreshOnly) {
+        selectedIdRef.current = row.id_formulario;
         setSelectedId(row.id_formulario);
         setDetailSnapshot(null);
         setDetailSource(null);
@@ -262,6 +272,9 @@ export const FormulariosDiligenciadosPage = () => {
           precargaMap.get(row.id_formulario) ?? row.precargaSolo ?? null;
 
         const queued = await db.formularios.get(row.id_formulario);
+        if (!isStillThisRow()) {
+          return;
+        }
         if (queued) {
           setDetailPrecarga(precargaLocal);
           setDetailSnapshot({
@@ -289,6 +302,9 @@ export const FormulariosDiligenciadosPage = () => {
                 foto.serverFormId,
                 foto.serverIndex,
               );
+              if (!isStillThisRow()) {
+                return;
+              }
               fotos.push({
                 nombre_archivo: foto.nombre_archivo,
                 data,
@@ -299,6 +315,9 @@ export const FormulariosDiligenciadosPage = () => {
             } catch {
               // omitimos fotos que fallen al descargar
             }
+          }
+          if (!isStillThisRow()) {
+            return;
           }
           setDetailSnapshot({
             datos_formulario: (row.server.datos_formulario ?? {}) as Record<
@@ -317,6 +336,9 @@ export const FormulariosDiligenciadosPage = () => {
         }
 
         if (precargaLocal) {
+          if (!isStillThisRow()) {
+            return;
+          }
           setDetailPrecarga(precargaLocal);
           setDetailSnapshot(precargaToSnapshot(precargaLocal));
           setDetailSource("precarga");
@@ -328,6 +350,9 @@ export const FormulariosDiligenciadosPage = () => {
           const h = row.historial;
           let fotos = fotosConVisitaDesdeDetalle(h.fotos ?? []);
           fotos = await hydrateFotosFromServerIfNeeded(row, fotos);
+          if (!isStillThisRow()) {
+            return;
+          }
           setDetailSnapshot({
             datos_formulario: h.datos_formulario ?? {},
             gps: h.gps ?? null,
@@ -337,14 +362,35 @@ export const FormulariosDiligenciadosPage = () => {
           return;
         }
 
+        if (!isStillThisRow()) {
+          return;
+        }
         setDetailSnapshot(null);
         setDetailSource(null);
         setDetailPrecarga(null);
       } finally {
-        setDetailLoading(false);
+        if (isStillThisRow()) {
+          setDetailLoading(false);
+        }
       }
     },
     [precargaMap],
+  );
+
+  const toggleOrSelectRow = useCallback(
+    (row: DisplayRow) => {
+      if (selectedId === row.id_formulario) {
+        selectedIdRef.current = null;
+        setSelectedId(null);
+        setDetailSnapshot(null);
+        setDetailSource(null);
+        setDetailPrecarga(null);
+        setDetailLoading(false);
+        return;
+      }
+      void selectRow(row);
+    },
+    [selectedId, selectRow],
   );
 
   const precargarRow = useCallback(
@@ -966,7 +1012,7 @@ export const FormulariosDiligenciadosPage = () => {
                   <div className="flex items-stretch gap-2 p-2 sm:gap-3 sm:p-3">
                     <button
                       type="button"
-                      onClick={() => void selectRow(row)}
+                      onClick={() => toggleOrSelectRow(row)}
                       className="flex min-w-0 flex-1 items-start justify-between gap-3 rounded-xl p-2 text-left sm:p-3"
                     >
                       <div className="min-w-0 flex-1 space-y-1">
