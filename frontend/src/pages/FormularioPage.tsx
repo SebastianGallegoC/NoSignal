@@ -89,7 +89,6 @@ export const FormularioPage = () => {
   const [sincronizando, setSincronizando] = useState(false);
   const [enviando, setEnviando] = useState(false);
   const [banner, setBanner] = useState<string | null>(null);
-  const [submitFeedback, setSubmitFeedback] = useState<string | null>(null);
   const [envioModal, setEnvioModal] = useState<FormEnvioResultState | null>(
     null,
   );
@@ -192,7 +191,6 @@ export const FormularioPage = () => {
     setModoCoordenadas("automatico");
     clearFormDraft(draftUserKey);
     setBanner(null);
-    setSubmitFeedback(null);
     setVisitaFotoSeleccionada(null);
     setPreviewFoto(null);
     setOpenSections(new Set(["actividad"]));
@@ -222,11 +220,9 @@ export const FormularioPage = () => {
 
   const sincronizarAhora = async () => {
     setSincronizando(true);
-    setBanner(null);
-    setSubmitFeedback("Sincronizando formularios pendientes...");
+    setBanner("Sincronizando formularios pendientes…");
     const result = await syncPendingForms();
     await refreshPendientes();
-    setSubmitFeedback(null);
     if (
       result.skipped > 0 ||
       (result.failed > 0 && isNetworkLikeError(result.first_error ?? ""))
@@ -287,7 +283,6 @@ export const FormularioPage = () => {
     defaults,
     modoCoordenadas,
     setBanner,
-    setSubmitFeedback,
     setEnvioModal,
     setEnviando,
     setFotos,
@@ -541,12 +536,6 @@ export const FormularioPage = () => {
             >
               {enviando ? "Guardando…" : "Guardar / enviar"}
             </Button>
-            {submitFeedback ? (
-              <p className="text-xs font-medium text-slate-700">
-                {submitFeedback}
-              </p>
-            ) : null}
-            {banner ? <p className="text-xs text-slate-600">{banner}</p> : null}
           </div>
         </form>
       </div>

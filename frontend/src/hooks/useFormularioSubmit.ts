@@ -2,6 +2,7 @@ import type { Dispatch, SetStateAction } from "react";
 import type { FieldErrors, UseFormReset, UseFormSetFocus } from "react-hook-form";
 
 import type { FormEnvioResultState } from "@/components/form/FormEnvioResultModal";
+import { fieldLabel } from "@/config/formFieldMeta";
 import { FORM_SECTIONS } from "@/config/formSections";
 import { randomUuid } from "@/lib/randomUuid";
 import type { OfflineForm } from "@/services/db";
@@ -35,7 +36,6 @@ type Args = {
   defaults: FormValues;
   modoCoordenadas: "automatico" | "manual";
   setBanner: (v: string | null) => void;
-  setSubmitFeedback: (v: string | null) => void;
   setEnvioModal: (v: FormEnvioResultState | null) => void;
   setEnviando: (v: boolean) => void;
   setFotos: (v: FotoForm[]) => void;
@@ -130,7 +130,6 @@ export const useFormularioSubmit = ({
   defaults,
   modoCoordenadas,
   setBanner,
-  setSubmitFeedback,
   setEnvioModal,
   setEnviando,
   setFotos,
@@ -143,21 +142,32 @@ export const useFormularioSubmit = ({
   toSafeUserId,
   requiredFields,
 }: Args) => {
+  const showEnvioBloqueadoModal = (title: string, message: string) => {
+    setBanner(null);
+    setEnvioModal({
+      tone: "warning",
+      title,
+      message,
+    });
+  };
+
   const onValid = async (values: FormValues) => {
     setBanner(null);
-    setSubmitFeedback("Validando formulario...");
     const nombreBenef = (values.nombres_apellidos_beneficiario ?? "").trim();
     if (!nombreBenef) {
-      setBanner("Completá el nombre del beneficiario antes de enviar.");
-      setSubmitFeedback("No se pudo enviar: falta el nombre del beneficiario.");
       setOpenSections((prev) => new Set([...prev, "beneficiario"]));
       setFocus("nombres_apellidos_beneficiario");
+      showEnvioBloqueadoModal(
+        "No se puede enviar",
+        "Completá el nombre del beneficiario antes de guardar o enviar el formulario.",
+      );
       return;
     }
     if (fotos.length > 15) {
-      const message = `Máximo 15 fotos. Actual: ${fotos.length}.`;
-      setBanner(message);
-      setSubmitFeedback(message);
+      showEnvioBloqueadoModal(
+        "No se puede enviar",
+        `Máximo 15 fotos. Actualmente tenés ${fotos.length}. Quitá algunas e intentá de nuevo.`,
+      );
       return;
     }
 
@@ -178,19 +188,16 @@ export const useFormularioSubmit = ({
     if (validationIssues.length > 0) {
       const message =
         joinValidationMessages(validationIssues) ||
-        "No se pudo enviar: hay validaciones pendientes.";
-      setBanner(message);
-      setSubmitFeedback(message);
+        "Hay validaciones pendientes. Revisá los datos e intentá de nuevo.";
+      showEnvioBloqueadoModal("No se puede enviar", message);
       return;
     }
 
     setEnviando(true);
-    setSubmitFeedback("Guardando formulario...");
     try {
       await enqueueForm(payload);
       clearFormDraft(draftUserKey);
       setBanner(null);
-      setSubmitFeedback(null);
       if (!navigator.onLine) {
         setEnvioModal({
           tone: "warning",
@@ -201,7 +208,6 @@ export const useFormularioSubmit = ({
           isEdit: !!_originalFechaHora,
         });
       } else {
-        setSubmitFeedback("Enviando al servidor (puede tardar si hay muchas fotos)…");
         const result = await syncPendingForms();
         const firstErr = result.first_error?.trim() ?? "";
         const networkLikeFailure =
@@ -264,7 +270,6 @@ export const useFormularioSubmit = ({
       await refreshPendientes();
     } catch {
       setBanner(null);
-      setSubmitFeedback(null);
       setEnvioModal({
         tone: "danger",
         title: "No se pudo guardar",
@@ -282,19 +287,23 @@ export const useFormularioSubmit = ({
       const sectionsWithErrors = getSectionsWithErrors(fields);
       setOpenSections((prev) => new Set([...prev, ...sectionsWithErrors]));
     }
-    if (fields.length > 0) {
-      const first = fields[0];
-      setBanner(
-        `Faltan campos por completar o corregir (${fields.length}). Revisá el formulario.`,
-      );
-      setSubmitFeedback(
-        `No se pudo enviar: ${fields.length} campo(s) por corregir.`,
-      );
+    const lines = fields.map((f) => {
+      const e = formErrors[f];
+      const m = e?.message;
+      if (typeof m === "string" && m.trim()) {
+        return `• ${fieldLabel(f)}: ${m.trim()}`;
+      }
+      return `• ${fieldLabel(f)}`;
+    });
+    const message =
+      lines.length > 0
+        ? lines.join("\n")
+        : "Revisá los campos del formulario e intentá nuevamente.";
+    const first = fields[0];
+    if (first) {
       setFocus(first);
-      return;
     }
-    setBanner("El formulario tiene errores. Revisá los campos e intentá nuevamente.");
-    setSubmitFeedback("El formulario tiene errores.");
+    showEnvioBloqueadoModal("No se puede enviar", message);
   };
 
   return { onValid, onInvalid };
