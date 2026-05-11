@@ -49,7 +49,7 @@ function payloadForApi(form: OfflineForm): ApiFormPayload {
     fecha_hora: form.fecha_hora,
     gps: {
       ...form.gps,
-      // Compatibilidad con backend productivo antiguo (rechaza precisión > 5m con 422).
+      // Tope de precisión enviada al API (alineado con validación servidor y cliente).
       precision: Math.max(
         MIN_GPS_PRECISION_METERS,
         Math.min(form.gps.precision, LEGACY_API_MAX_GPS_ACCURACY_METERS),

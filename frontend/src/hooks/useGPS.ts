@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
+import { MAX_GPS_ACCURACY_METERS } from '@/constants/gpsConfig';
+
 export interface GPSState {
   latitud: number;
   longitud: number;
@@ -22,7 +24,6 @@ interface GPSHookState {
   limpiarUbicacion: () => void;
 }
 
-const MAX_ACCURACY_METERS = 100;
 const GPS_TIMEOUT_MS = 60000;
 
 type PermissionStateLike = 'granted' | 'denied' | 'prompt' | 'unknown';
@@ -132,10 +133,10 @@ export const useGPS = (opts?: UseGPSOptions): GPSHookState => {
 
         if (!bestPosition || precision < bestPosition.precision) {
           bestPosition = currentPosition;
-          setProgreso(`Buscando precisión ≤ ${MAX_ACCURACY_METERS}m. Mejor lectura: ${precision.toFixed(1)}m.`);
+          setProgreso(`Buscando precisión ≤ ${MAX_GPS_ACCURACY_METERS}m. Mejor lectura: ${precision.toFixed(1)}m.`);
         }
 
-        if (precision <= MAX_ACCURACY_METERS) {
+        if (precision <= MAX_GPS_ACCURACY_METERS) {
           setGps(currentPosition);
           setError(null);
           setProgreso(`Ubicación obtenida con ${precision.toFixed(1)}m de precisión.`);

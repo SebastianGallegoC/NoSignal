@@ -49,7 +49,7 @@ describe('usePrecargaWatcher (integration)', () => {
       fecha_actualizacion: '2026-05-05T14:00:00Z',
       latitud: 1.23,
       longitud: -76.5,
-      precision: 10,
+      precision: 4,
       datos_formulario: {},
       fotos: [],
     };
@@ -93,7 +93,7 @@ describe('usePrecargaWatcher (integration)', () => {
       fecha_actualizacion: '2026-05-05T14:00:00Z',
       latitud: 1.23,
       longitud: -76.5,
-      precision: 10,
+      precision: 4,
       datos_formulario: {},
       fotos: [],
     };
@@ -133,7 +133,7 @@ describe('usePrecargaWatcher (integration)', () => {
       fecha_actualizacion: '2026-05-04T13:00:00Z',
       latitud: 1.23,
       longitud: -76.5,
-      precision: 10,
+      precision: 4,
       datos_formulario: {},
       fotos: [],
     };
@@ -181,7 +181,7 @@ describe('usePrecargaWatcher (integration)', () => {
       fecha_actualizacion: '2026-05-05T14:00:00Z',
       latitud: 1.23,
       longitud: -76.5,
-      precision: 10,
+      precision: 4,
       datos_formulario: {},
       fotos: [],
     };

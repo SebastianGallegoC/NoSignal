@@ -7,7 +7,7 @@ const baseForm = (): OfflineForm => ({
   id_formulario: "f-1",
   id_usuario: "user",
   fecha_hora: "2026-05-04T12:00:00Z",
-  gps: { latitud: 1.23, longitud: -76.5, precision: 10 },
+  gps: { latitud: 1.23, longitud: -76.5, precision: 4 },
   datos_formulario: {},
   fotos: [],
   estado_sincronizacion: "PENDIENTE",
@@ -21,7 +21,7 @@ describe("validateFormPayload", () => {
 
   it("marca error cuando la precisión GPS supera el umbral", () => {
     const form = baseForm();
-    form.gps.precision = 101;
+    form.gps.precision = 6;
     const errors = validateFormPayload(form);
     expect(errors).toContain("gps_precision");
   });

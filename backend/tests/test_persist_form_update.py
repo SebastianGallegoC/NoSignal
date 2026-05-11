@@ -123,7 +123,7 @@ async def test_persist_form_creates_new_when_id_not_found(monkeypatch):
         id_formulario="f-nuevo",
         id_usuario="u-nuevo",
         fecha_hora="2026-06-01T10:00:00Z",
-        gps=GPSPayload(latitud=4.5, longitud=-74.1, precision=8.0),
+        gps=GPSPayload(latitud=4.5, longitud=-74.1, precision=4.0),
         datos_formulario={"entidad_aportante": "ACME"},
         fotos=[],
     )

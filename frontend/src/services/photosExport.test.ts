@@ -20,7 +20,7 @@ function baseForm(overrides: Partial<OfflineForm> = {}): OfflineForm {
     id_formulario: "id-1",
     id_usuario: "user-1",
     fecha_hora: "2024-06-10T15:30:00.000Z",
-    gps: { latitud: 4.5, longitud: -74.2, precision: 12 },
+    gps: { latitud: 4.5, longitud: -74.2, precision: 4 },
     datos_formulario: {
       nombres_apellidos_beneficiario: "María Pérez",
     },

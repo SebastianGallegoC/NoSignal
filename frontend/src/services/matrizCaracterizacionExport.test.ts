@@ -22,7 +22,7 @@ const minimalForm = (): OfflineForm => ({
   id_formulario: "test-id",
   id_usuario: "u1",
   fecha_hora: "2026-05-05T12:00:00.000Z",
-  gps: { latitud: 7.5, longitud: -72.25, precision: 12 },
+  gps: { latitud: 7.5, longitud: -72.25, precision: 4 },
   datos_formulario: {},
   fotos: [],
   estado_sincronizacion: "PENDIENTE",

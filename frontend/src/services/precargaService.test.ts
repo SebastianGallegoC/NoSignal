@@ -54,7 +54,7 @@ describe('precargaService', () => {
         fecha_hora: '2026-05-04T12:00:00Z',
         latitud: 1.23,
         longitud: -76.5,
-        precision: 10,
+        precision: 4,
         datos_formulario: { nombres_apellidos_beneficiario: 'Juan García' },
         fotos: [],
       };
@@ -83,7 +83,7 @@ describe('precargaService', () => {
         fecha_hora: '2026-05-04T12:00:00Z',
         latitud: 1.23,
         longitud: -76.5,
-        precision: 10,
+        precision: 4,
         datos_formulario: {},
         fotos: [],
       };
@@ -112,7 +112,7 @@ describe('precargaService', () => {
         fecha_hora: '2026-05-04T12:00:00Z',
         latitud: 1.23,
         longitud: -76.5,
-        precision: 10,
+        precision: 4,
         datos_formulario: {},
         fotos: [],
       };
@@ -169,7 +169,7 @@ describe('precargaService', () => {
         fecha_hora: '2026-05-04T12:00:00Z',
         latitud: 1.23,
         longitud: -76.5,
-        precision: 10,
+        precision: 4,
         datos_formulario: {},
         fotos: [],
       };

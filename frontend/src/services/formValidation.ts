@@ -1,8 +1,7 @@
+import { MAX_GPS_ACCURACY_METERS } from "@/constants/gpsConfig";
 import { fieldLabel, inputKindForField } from "@/config/formFieldMeta";
 import type { OfflineForm } from "@/services/db";
 import { REQUIRED_FIELDS, type FormFieldKey, type FormValues } from "@/types/formFields";
-
-const MAX_GPS_ACCURACY_METERS = 100;
 const MIN_PHOTOS = 0;
 const MAX_PHOTOS = 15;
 const TRI_ALLOWED = new Set(["Si", "No", "NR"]);
@@ -206,7 +205,7 @@ export const validateOfflineFormPayload = (form: OfflineForm): ValidationIssue[]
   if (form.gps.precision > MAX_GPS_ACCURACY_METERS) {
     issues.push({
       code: "gps_precision",
-      message: "GPS con precisión ≤ 100 m (usá “Tomar ubicación”).",
+      message: `GPS con precisión ≤ ${MAX_GPS_ACCURACY_METERS} m (usá “Tomar ubicación”).`,
     });
   }
 
