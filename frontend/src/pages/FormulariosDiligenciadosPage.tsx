@@ -132,9 +132,7 @@ export const FormulariosDiligenciadosPage = () => {
 
   const rowsFiltrados = useMemo(() => {
     const q = normalizeTextoBusqueda(filtroBeneficiario);
-    const inicio = filtroDesde
-      ? parseFiltroDiaInicio(filtroDesde)
-      : Number.NaN;
+    const inicio = filtroDesde ? parseFiltroDiaInicio(filtroDesde) : Number.NaN;
     const fin = filtroHasta ? parseFiltroDiaFin(filtroHasta) : Number.NaN;
     return rows.filter((r) => {
       if (q) {
@@ -162,7 +160,9 @@ export const FormulariosDiligenciadosPage = () => {
   const loadList = useCallback(async (): Promise<DisplayRow[]> => {
     setRemoteError(null);
 
-    const precargasLocal = await db.precargas.toArray();
+    const precargasLocal = (await db.precargas.toArray()).filter(
+      (precarga) => precarga.auto_precarga,
+    );
     const historialLocal = await db.historialFormularios.toArray();
 
     const token =
@@ -222,7 +222,9 @@ export const FormulariosDiligenciadosPage = () => {
       ),
     ]);
 
-    const precargasFresh = await db.precargas.toArray();
+    const precargasFresh = (await db.precargas.toArray()).filter(
+      (precarga) => precarga.auto_precarga,
+    );
     const historialFresh = await db.historialFormularios.toArray();
 
     setPrecargas(precargasFresh);
@@ -244,7 +246,9 @@ export const FormulariosDiligenciadosPage = () => {
     if (!selectedId) {
       return;
     }
-    const stillExists = rowsFiltrados.some((r) => r.id_formulario === selectedId);
+    const stillExists = rowsFiltrados.some(
+      (r) => r.id_formulario === selectedId,
+    );
     if (!stillExists) {
       setSelectedId(null);
       setDetailSnapshot(null);
@@ -256,8 +260,7 @@ export const FormulariosDiligenciadosPage = () => {
   const selectRow = useCallback(
     async (row: DisplayRow, opts?: { refreshOnly?: boolean }) => {
       const refreshOnly = opts?.refreshOnly === true;
-      const isStillThisRow = () =>
-        selectedIdRef.current === row.id_formulario;
+      const isStillThisRow = () => selectedIdRef.current === row.id_formulario;
 
       if (!refreshOnly) {
         selectedIdRef.current = row.id_formulario;
