@@ -8,7 +8,7 @@ class Settings(BaseSettings):
     environment: str = Field(default="development", alias="ENVIRONMENT")
     jwt_secret: str = Field(default="CHANGE_ME", alias="JWT_SECRET")
     jwt_algorithm: str = "HS256"
-    jwt_expires_minutes: int = Field(default=480, alias="JWT_EXPIRES_MINUTES")
+    jwt_expires_minutes: int = Field(default=525600, alias="JWT_EXPIRES_MINUTES")
     database_url: str = "postgresql+asyncpg://user:pass@localhost:5432/nosignal"
     upload_root: str = "uploads"
     auto_create_schema: bool = Field(
