@@ -1,3 +1,7 @@
+import "@testing-library/jest-dom/vitest";
+import { cleanup } from "@testing-library/react";
+import { afterEach } from "vitest";
+
 declare global {
   // Vitest / React: entorno de act() para pruebas.
   // eslint-disable-next-line no-var
@@ -5,3 +9,7 @@ declare global {
 }
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true;
+
+afterEach(() => {
+  cleanup();
+});
