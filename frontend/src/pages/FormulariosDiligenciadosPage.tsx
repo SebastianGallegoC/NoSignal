@@ -157,43 +157,16 @@ export const FormulariosDiligenciadosPage = () => {
     });
   }, [rows, filtroBeneficiario, filtroDesde, filtroHasta]);
 
-  const filterOfflineRows = useCallback(
-    (inputRows: DisplayRow[], precargaIds: Set<string>) =>
-      inputRows.filter(
-        (row) =>
-          row.precargaSolo ||
-          precargaIds.has(row.id_formulario) ||
-          (row.historial && row.historial.estado !== "ENVIADO"),
-      ),
-    [],
-  );
-
   const loadList = useCallback(async (): Promise<DisplayRow[]> => {
     setRemoteError(null);
 
-    const precargasLocal = (await db.precargas.toArray()).filter(
-      (precarga) => precarga.auto_precarga,
-    );
+    const precargasLocal = await db.precargas.toArray();
     const historialLocal = await db.historialFormularios.toArray();
-    const precargaIds = new Set(precargasLocal.map((p) => p.id_formulario));
 
     const token =
       typeof localStorage !== "undefined"
         ? localStorage.getItem(ACCESS_TOKEN_KEY)
         : null;
-
-    if (!online) {
-      setRemoteLoaded(!!token);
-      setPrecargas(precargasLocal);
-      const mergedOffline = mergeFormsWithPrecargas(
-        [],
-        historialLocal,
-        precargasLocal,
-      );
-      const filtered = filterOfflineRows(mergedOffline, precargaIds);
-      setRows(filtered);
-      return filtered;
-    }
 
     if (!token) {
       setRemoteLoaded(false);
@@ -228,9 +201,8 @@ export const FormulariosDiligenciadosPage = () => {
         historialLocal,
         precargasLocal,
       );
-      const filtered = filterOfflineRows(mergedOffline, precargaIds);
-      setRows(filtered);
-      return filtered;
+      setRows(mergedOffline);
+      return mergedOffline;
     }
 
     const reconciled = reconcileLocalStateWithTrustedServerList(
@@ -248,9 +220,7 @@ export const FormulariosDiligenciadosPage = () => {
       ),
     ]);
 
-    const precargasFresh = (await db.precargas.toArray()).filter(
-      (precarga) => precarga.auto_precarga,
-    );
+    const precargasFresh = await db.precargas.toArray();
     const historialFresh = await db.historialFormularios.toArray();
 
     setPrecargas(precargasFresh);
@@ -262,7 +232,7 @@ export const FormulariosDiligenciadosPage = () => {
     setRows(merged);
     setRemoteLoaded(true);
     return merged;
-  }, [filterOfflineRows, navigate, online]);
+  }, [navigate]);
 
   useEffect(() => {
     void loadList();
