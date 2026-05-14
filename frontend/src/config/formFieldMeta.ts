@@ -15,7 +15,6 @@ const TRI_FIELDS = new Set<FormFieldKey>([
   'autoriza_registros_fotograficos',
   'cumple_criterios_huerta',
   'cumple_criterios_arbol',
-  'distancia_infraestructura_adecuada',
 ]);
 
 const NUMBER_FIELDS = new Set<FormFieldKey>([
@@ -30,6 +29,7 @@ const NUMBER_FIELDS = new Set<FormFieldKey>([
   'total_especies_semillas_sembradas',
   'estrato',
   'usuario_cens',
+  'distancia_infraestructura_adecuada',
 ]);
 
 export type InputKind = 'date' | 'number' | 'select' | 'select-tri' | 'textarea' | 'text';
@@ -85,6 +85,8 @@ export const fieldLabel = (field: FormFieldKey): string =>
       zona: 'Zona(Urbana-Rural)',
       suelo_o_recipientes: 'Suelo o Recipientes',
       satisfaccion_1_5: 'Nivel de Satisfacción 1-5',
+      distancia_infraestructura_adecuada:
+        'Distancia Infraestructura Adecuada (m)',
     } as Partial<Record<FormFieldKey, string>>
   )[field] ??
   field

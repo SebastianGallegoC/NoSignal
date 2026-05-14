@@ -12,6 +12,7 @@ import {
   COORD_NUMERIC_FIELD_KEYS,
   normalizeCoordNumericCell,
 } from "@/lib/coordNumericToken";
+import { normalizeDistanciaInfraestructuraMetersCell } from "@/lib/distanciaInfraestructuraNormalize";
 import type { OfflineForm } from "@/services/db";
 import { REQUIRED_FIELDS, type FormFieldKey, type FormValues } from "@/types/formFields";
 const MIN_PHOTOS = 0;
@@ -109,7 +110,9 @@ export const validateFormValuesWithFieldDetails = (
     ) {
       const raw = COORD_NUMERIC_FIELD_KEYS.has(fk)
         ? normalizeCoordNumericCell(String(values[key]))
-        : String(values[key]).replace(/\s/g, "").replace(",", ".");
+        : fk === "distancia_infraestructura_adecuada"
+          ? normalizeDistanciaInfraestructuraMetersCell(String(values[key]))
+          : String(values[key]).replace(/\s/g, "").replace(",", ".");
       if (raw === "" || !Number.isFinite(Number(raw))) {
         fieldIssues.push({
           field: fk,

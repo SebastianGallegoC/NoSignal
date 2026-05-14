@@ -341,4 +341,18 @@ describe("parsePlantillaWorkbook", () => {
     expect(ok[0].gps.longitud).toBeCloseTo(-74.1, 5);
     expect(ok[0].gps.latitud).toBeCloseTo(4.05, 5);
   });
+
+  it("normaliza «Distancia Infraestructura Adecuada» con sufijo M/m en Excel (columna ~51)", async () => {
+    const row = new Array<string | number | null>(76).fill(null);
+    row[7] = "Benef distancia";
+    row[29] = "-74.0";
+    row[33] = "4.0";
+    row[50] = "  40 M  ";
+
+    const buffer = await buildMinimalPlantillaBuffer(row);
+    const { ok, errors } = await parsePlantillaWorkbook(buffer, "u");
+
+    expect(errors).toHaveLength(0);
+    expect(ok[0].datos_formulario.distancia_infraestructura_adecuada).toBe("40");
+  });
 });

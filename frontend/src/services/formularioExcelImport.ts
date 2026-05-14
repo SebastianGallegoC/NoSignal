@@ -15,6 +15,7 @@ import {
   COORD_NUMERIC_FIELD_KEYS,
   normalizeCoordNumericCell,
 } from "@/lib/coordNumericToken";
+import { normalizeDistanciaInfraestructuraMetersCell } from "@/lib/distanciaInfraestructuraNormalize";
 import { normalizeTelefonoStoredValue } from "@/lib/telefonoNormalize";
 import {
   FECHA_FORMATO_MSG,
@@ -131,6 +132,15 @@ function normalizeCoordFieldsInFormValues(out: FormValues): void {
     }
     out[key] = normalizeCoordNumericCell(v);
   }
+}
+
+function normalizeDistanciaInfraestructuraInFormValues(out: FormValues): void {
+  const v = out.distancia_infraestructura_adecuada;
+  if (typeof v !== "string") {
+    return;
+  }
+  out.distancia_infraestructura_adecuada =
+    normalizeDistanciaInfraestructuraMetersCell(v);
 }
 
 function isValidYmd(ymd: string): boolean {
@@ -369,6 +379,8 @@ function rowToOfflineForm(
         let stored = val;
         if (COORD_NUMERIC_FIELD_KEYS.has(src.key)) {
           stored = normalizeCoordNumericCell(val);
+        } else if (src.key === "distancia_infraestructura_adecuada") {
+          stored = normalizeDistanciaInfraestructuraMetersCell(val);
         } else if (inputKindForField(src.key) === "select-tri") {
           stored = normalizeTriImportValue(val);
         } else if (SI_NO_IMPORT_NORMALIZE_FIELDS.has(src.key)) {
@@ -466,6 +478,7 @@ function cellsToFormValuesNormalized(cells: string[]): FormValues {
   }
   normalizeImportEnumerationFieldsInFormValues(out);
   normalizeCoordFieldsInFormValues(out);
+  normalizeDistanciaInfraestructuraInFormValues(out);
   return out;
 }
 
