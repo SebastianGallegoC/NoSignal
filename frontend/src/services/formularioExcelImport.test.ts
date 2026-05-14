@@ -10,6 +10,7 @@ import { GPS_PLACEHOLDER_WHEN_NOT_CAPTURED } from "@/constants/gpsConfig";
 
 import {
   analyzeImportRow,
+  buildOfflineFormFromImportCells,
   cellsToFormValuesRaw,
   formValuesToCells,
   normalizeSiNoImportValue,
@@ -362,6 +363,50 @@ describe("parsePlantillaWorkbook", () => {
     expect(ok[0].gps.latitud).toBeCloseTo(4.60971, 5);
     expect(Number(ok[0].datos_formulario.longitud)).toBeCloseTo(-74.08175, 5);
     expect(Number(ok[0].datos_formulario.latitud)).toBeCloseTo(4.60971, 5);
+  });
+
+  it("LONGITUD decimal y solo GMS en Y: completa latitud en vista previa y al confirmar celdas", async () => {
+    const row = new Array<string | number | null>(76).fill(null);
+    row[7] = "Mix coords";
+    row[29] = "-74.08175";
+    row[30] = "8";
+    row[31] = "19";
+    row[32] = "11";
+
+    const buffer = await buildMinimalPlantillaBuffer(row);
+    const { rows, errors } = await previewPlantillaWorkbook(buffer, "u");
+
+    expect(errors).toHaveLength(0);
+    expect(rows[0].isValid).toBe(true);
+    expect(rows[0].displayValues.latitud).toBe(
+      (8 + 19 / 60 + 11 / 3600).toFixed(6),
+    );
+
+    const cells = formValuesToCells(rows[0].displayValues, rows[0].idRaw);
+    const { form, error } = buildOfflineFormFromImportCells(cells, "u");
+    expect(error).toBeUndefined();
+    expect(form?.gps.latitud).toBeCloseTo(8 + 19 / 60 + 11 / 3600, 5);
+    expect(Number(form?.datos_formulario.latitud)).toBeCloseTo(
+      8 + 19 / 60 + 11 / 3600,
+      5,
+    );
+  });
+
+  it("LATITUD decimal y solo GMS en X: completa longitud en vista previa", async () => {
+    const row = new Array<string | number | null>(76).fill(null);
+    row[7] = "Mix coords 2";
+    row[26] = "73";
+    row[27] = "17";
+    row[28] = "47";
+    row[33] = "4.60971";
+
+    const buffer = await buildMinimalPlantillaBuffer(row);
+    const { rows, errors } = await previewPlantillaWorkbook(buffer, "u");
+
+    expect(errors).toHaveLength(0);
+    expect(rows[0].isValid).toBe(true);
+    const lonMag = 73 + 17 / 60 + 47 / 3600;
+    expect(rows[0].displayValues.longitud).toBe((-lonMag).toFixed(6));
   });
 
   it("normaliza «Distancia Infraestructura Adecuada» con sufijo M/m en Excel (columna ~51)", async () => {

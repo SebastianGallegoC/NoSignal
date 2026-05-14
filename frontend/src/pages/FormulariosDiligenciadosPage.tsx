@@ -61,6 +61,7 @@ import { FiltersPanel } from "@/pages/formulariosDiligenciados/FiltersPanel";
 import { StatusBanners } from "@/pages/formulariosDiligenciados/StatusBanners";
 import { FormularioRespuestaReadOnly } from "@/components/form/FormularioRespuestaReadOnly";
 import { useFormExports } from "@/pages/formulariosDiligenciados/useFormExports";
+import { isBulkDeleteAllPasswordValid } from "@/pages/formulariosDiligenciados/bulkDeleteAllFormularios";
 
 // Helpers moved to pages/formulariosDiligenciados/helpers.ts
 
@@ -122,6 +123,13 @@ export const FormulariosDiligenciadosPage = () => {
   const [modalEliminarTodasPrecargas, setModalEliminarTodasPrecargas] =
     useState(false);
   const [eliminandoTodasPrecargas, setEliminandoTodasPrecargas] =
+    useState(false);
+  const [modalEliminarTodosFormularios, setModalEliminarTodosFormularios] =
+    useState(false);
+  const [bulkDeletePasswordError, setBulkDeletePasswordError] = useState<
+    string | null
+  >(null);
+  const [eliminandoTodosFormularios, setEliminandoTodosFormularios] =
     useState(false);
 
   const precargaMap = useMemo(() => {
@@ -834,6 +842,110 @@ export const FormulariosDiligenciadosPage = () => {
     setPendingDeleteRow(null);
   }, [eliminandoId]);
 
+  const hayFormulariosEnServidor = useMemo(
+    () => rowsMostrados.some((r) => r.onServer),
+    [rowsMostrados],
+  );
+
+  const solicitarEliminarTodosFormularios = useCallback(() => {
+    setEliminarError(null);
+    setBulkDeletePasswordError(null);
+    if (!navigator.onLine) {
+      setEliminarError(
+        "Solo podés eliminar formularios con conexión a internet.",
+      );
+      return;
+    }
+    if (rowsMostrados.length === 0) {
+      return;
+    }
+    const token =
+      typeof localStorage !== "undefined"
+        ? localStorage.getItem(ACCESS_TOKEN_KEY)
+        : null;
+    if (hayFormulariosEnServidor && !token) {
+      setEliminarError(
+        "Iniciá sesión para poder borrar los formularios que están en el servidor.",
+      );
+      return;
+    }
+    setModalEliminarTodosFormularios(true);
+  }, [hayFormulariosEnServidor, rowsMostrados.length]);
+
+  const cancelarEliminarTodosFormularios = useCallback(() => {
+    if (eliminandoTodosFormularios) {
+      return;
+    }
+    setBulkDeletePasswordError(null);
+    setModalEliminarTodosFormularios(false);
+  }, [eliminandoTodosFormularios]);
+
+  const ejecutarEliminarTodosFormularios = useCallback(
+    async (password: string) => {
+      setEliminarError(null);
+      setBulkDeletePasswordError(null);
+      const pass = password.trim();
+      if (!isBulkDeleteAllPasswordValid(pass)) {
+        setBulkDeletePasswordError("Contraseña incorrecta.");
+        return;
+      }
+      if (!navigator.onLine) {
+        setEliminarError(
+          "Perdiste la conexión. Volvé a conectarte para eliminar.",
+        );
+        return;
+      }
+      const token =
+        typeof localStorage !== "undefined"
+          ? localStorage.getItem(ACCESS_TOKEN_KEY)
+          : null;
+      const snapshot = [...rowsMostrados];
+      const requiereToken = snapshot.some((r) => r.onServer);
+      if (requiereToken && !token) {
+        setBulkDeletePasswordError(
+          "No hay sesión activa para borrar en el servidor.",
+        );
+        return;
+      }
+      setEliminandoTodosFormularios(true);
+      try {
+        for (const row of snapshot) {
+          if (row.onServer && token) {
+            try {
+              await deleteFormFromApi(row.id_formulario);
+            } catch (e) {
+              setEliminarError(
+                e instanceof Error
+                  ? e.message
+                  : "No se pudo borrar un formulario en el servidor. Reintentá con «Recargar».",
+              );
+              await loadList();
+              return;
+            }
+          }
+          await eliminarFormularioDeDispositivo(row.id_formulario);
+        }
+        setSelectedId(null);
+        setDetailSnapshot(null);
+        setDetailPrecarga(null);
+        setDetailSource(null);
+        setDetailLoading(false);
+        setModalEliminarTodosFormularios(false);
+        await loadList();
+      } catch (e) {
+        setEliminarError(
+          e instanceof Error
+            ? e.message
+            : "No se pudo completar el borrado masivo.",
+        );
+        await loadList();
+      } finally {
+        setEliminandoTodosFormularios(false);
+      }
+    },
+    [loadList, rowsMostrados],
+  );
+
   const deleteModalDescription: ReactNode = useMemo(() => {
     if (!pendingDeleteRow) {
       return null;
@@ -895,6 +1007,34 @@ export const FormulariosDiligenciadosPage = () => {
       setModalEliminarTodasPrecargas(false);
     }
   }, [online, modalEliminarTodasPrecargas]);
+
+  useEffect(() => {
+    if (!online && modalEliminarTodosFormularios) {
+      setModalEliminarTodosFormularios(false);
+      setBulkDeletePasswordError(null);
+    }
+  }, [online, modalEliminarTodosFormularios]);
+
+  const bulkDeleteModalDescription: ReactNode = useMemo(
+    () => (
+      <>
+        <p>
+          Se van a eliminar <strong>todos</strong> los formularios de esta lista
+          en este dispositivo
+          {hayFormulariosEnServidor
+            ? " y, si iniciaste sesión, también en el servidor"
+            : ""}
+          . Las fotos asociadas en servidor se borran con cada formulario. Esta
+          acción no se puede deshacer.
+        </p>
+        <p className="mt-2 text-sm text-slate-700">
+          Ingresá la contraseña de confirmación indicada por el equipo para
+          continuar.
+        </p>
+      </>
+    ),
+    [hayFormulariosEnServidor],
+  );
 
   return (
     <div className="min-h-screen bg-[radial-gradient(circle_at_top,_#e2f2ee_0,_#f6f7f5_45%,_#f6f7f5_100%)] px-3 py-6 text-slate-900 sm:px-4 sm:py-10">
@@ -1012,6 +1152,34 @@ export const FormulariosDiligenciadosPage = () => {
               {descargandoTodasFotos
                 ? "Descargando fotos (todos)…"
                 : "Descargar Fotos de todos"}
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => solicitarEliminarTodosFormularios()}
+              disabled={
+                !online ||
+                rowsMostrados.length === 0 ||
+                !!pendingDeleteRow ||
+                eliminandoTodosFormularios ||
+                (hayFormulariosEnServidor &&
+                  (typeof localStorage === "undefined" ||
+                    !localStorage.getItem(ACCESS_TOKEN_KEY)))
+              }
+              title={
+                !online
+                  ? "Requiere conexión a internet"
+                  : hayFormulariosEnServidor &&
+                      (typeof localStorage === "undefined" ||
+                        !localStorage.getItem(ACCESS_TOKEN_KEY))
+                    ? "Iniciá sesión para borrar formularios del servidor"
+                    : undefined
+              }
+              className="w-full border-rose-300 text-rose-900 hover:bg-rose-50 sm:w-auto"
+            >
+              {eliminandoTodosFormularios
+                ? "Eliminando…"
+                : "Eliminar todos los formularios"}
             </Button>
             <Link
               to="/inicio"
@@ -1421,6 +1589,19 @@ export const FormulariosDiligenciadosPage = () => {
         confirming={
           !!pendingDeleteRow && eliminandoId === pendingDeleteRow.id_formulario
         }
+      />
+
+      <ConfirmDeleteFormModal
+        open={modalEliminarTodosFormularios}
+        title="¿Eliminar todos los formularios?"
+        description={bulkDeleteModalDescription}
+        passwordLabel="Contraseña de confirmación"
+        passwordPlaceholder="Contraseña indicada por el equipo"
+        passwordError={bulkDeletePasswordError}
+        confirmLabel="Eliminar todo"
+        onCancel={cancelarEliminarTodosFormularios}
+        onConfirm={(password) => void ejecutarEliminarTodosFormularios(password)}
+        confirming={eliminandoTodosFormularios}
       />
     </div>
   );

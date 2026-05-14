@@ -331,27 +331,45 @@ function decimalFromDmsTriplet(deg: string, min: string, sec: string): number | 
   return d + m / 60 + secN / 3600;
 }
 
-/**
- * Colombia: longitud oeste (negativa) a partir de magnitudes X en GMS; latitud norte (positiva).
- */
-function gpsFromDatosDms(datos: Record<string, unknown>): {
-  longitud: number;
-  latitud: number;
-} | null {
+function longitudeFromDmsIfComplete(datos: Record<string, unknown>): number | null {
   const lonMag = decimalFromDmsTriplet(
     String(datos.x_grados ?? ""),
     String(datos.x_minutos ?? ""),
     String(datos.x_segundos ?? ""),
   );
+  if (lonMag == null) {
+    return null;
+  }
+  return -Math.abs(lonMag);
+}
+
+function latitudeFromDmsIfComplete(datos: Record<string, unknown>): number | null {
   const latDec = decimalFromDmsTriplet(
     String(datos.y_grados ?? ""),
     String(datos.y_minutos ?? ""),
     String(datos.y_segundos ?? ""),
   );
-  if (lonMag == null || latDec == null) {
+  if (latDec == null) {
     return null;
   }
-  return { longitud: -Math.abs(lonMag), latitud: Math.abs(latDec) };
+  return Math.abs(latDec);
+}
+
+/** Decimal en celdas LONGITUD/LATITUD; si falta un eje y el GMS de ese eje está completo, lo completa. */
+function mergeLonLatWithDms(
+  lonStr: string,
+  latStr: string,
+  datos: Record<string, unknown>,
+): { lon: number | null; lat: number | null } {
+  let lon = parseCoord(lonStr);
+  let lat = parseCoord(latStr);
+  if (lon == null) {
+    lon = longitudeFromDmsIfComplete(datos);
+  }
+  if (lat == null) {
+    lat = latitudeFromDmsIfComplete(datos);
+  }
+  return { lon, lat };
 }
 
 /**
@@ -414,18 +432,7 @@ function rowToOfflineForm(
     };
   }
 
-  let lon = parseCoord(lonStr);
-  let lat = parseCoord(latStr);
-  const lonTrim = lonStr.trim();
-  const latTrim = latStr.trim();
-  const hasValidDecimalPair = lon != null && lat != null;
-  if (!hasValidDecimalPair && lonTrim === "" && latTrim === "") {
-    const fromDms = gpsFromDatosDms(datos);
-    if (fromDms != null) {
-      lon = fromDms.longitud;
-      lat = fromDms.latitud;
-    }
-  }
+  const { lon, lat } = mergeLonLatWithDms(lonStr, latStr, datos);
   const gps: OfflineForm["gps"] =
     lon != null && lat != null
       ? { latitud: lat, longitud: lon, precision: 5 }
@@ -493,7 +500,7 @@ export function analyzeImportRow(
   idUsuario: string,
   nowIso: string,
 ): ImportPreviewRow {
-  const displayValues = cellsToFormValuesNormalized(cells);
+  let displayValues = cellsToFormValuesNormalized(cells);
   const idRaw = (cells[0] ?? "").trim();
   const fieldErrors: ImportPreviewFieldErrors = {};
   const rowMessages: string[] = [];
@@ -512,14 +519,28 @@ export function analyzeImportRow(
 
   const lonTrim = lonStr.trim();
   const latTrim = latStr.trim();
-  if (lonTrim !== "" && parseCoord(lonStr) == null) {
+  const datosForDms = displayValues as unknown as Record<string, unknown>;
+  const { lon: mergedLon, lat: mergedLat } = mergeLonLatWithDms(
+    lonStr,
+    latStr,
+    datosForDms,
+  );
+  if (mergedLon != null && mergedLat != null) {
+    displayValues = {
+      ...displayValues,
+      longitud: mergedLon.toFixed(6),
+      latitud: mergedLat.toFixed(6),
+    };
+  }
+
+  if (lonTrim !== "" && parseCoord(lonStr) == null && mergedLon == null) {
     mergeFieldError(
       fieldErrors,
       "longitud",
       "LONGITUD debe ser un número decimal (ej. -74.08175; también se admite coma como separador).",
     );
   }
-  if (latTrim !== "" && parseCoord(latStr) == null) {
+  if (latTrim !== "" && parseCoord(latStr) == null && mergedLat == null) {
     mergeFieldError(
       fieldErrors,
       "latitud",
@@ -542,8 +563,8 @@ export function analyzeImportRow(
     }
   }
 
-  const normalized = cellsToFormValuesNormalized(cells);
-  const { fieldIssues, rowIssues } = validateFormValuesWithFieldDetails(normalized);
+  const { fieldIssues, rowIssues } =
+    validateFormValuesWithFieldDetails(displayValues);
   for (const fi of fieldIssues) {
     mergeFieldError(fieldErrors, fi.field, fi.message);
   }
