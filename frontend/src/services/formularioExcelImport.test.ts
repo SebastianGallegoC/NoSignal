@@ -122,6 +122,8 @@ describe("parsePlantillaWorkbook", () => {
       longitud: -74.08175,
       precision: 5,
     });
+    expect(ok[0].datos_formulario.longitud).toBe("-74.081750");
+    expect(ok[0].datos_formulario.latitud).toBe("4.609710");
     expect(ok[0].datos_formulario.nombres_apellidos_beneficiario).toBe(
       "María Pérez",
     );
@@ -305,6 +307,8 @@ describe("parsePlantillaWorkbook", () => {
     const latDec = 8 + 19 / 60 + 11 / 3600;
     expect(ok[0].gps.longitud).toBeCloseTo(-lonMag, 5);
     expect(ok[0].gps.latitud).toBeCloseTo(latDec, 5);
+    expect(Number(ok[0].datos_formulario.longitud)).toBeCloseTo(-lonMag, 5);
+    expect(Number(ok[0].datos_formulario.latitud)).toBeCloseTo(latDec, 5);
   });
 
   it("previewPlantillaWorkbook acepta fila GMS con símbolos (vista previa válida)", async () => {
@@ -340,6 +344,24 @@ describe("parsePlantillaWorkbook", () => {
     expect(errors).toHaveLength(0);
     expect(ok[0].gps.longitud).toBeCloseTo(-74.1, 5);
     expect(ok[0].gps.latitud).toBeCloseTo(4.05, 5);
+    expect(ok[0].datos_formulario.longitud).toBe("-74.100000");
+    expect(ok[0].datos_formulario.latitud).toBe("4.050000");
+  });
+
+  it("LATITUD/LONGITUD con prefijo ° o guion Unicode se importan bien", async () => {
+    const row = new Array<string | number | null>(76).fill(null);
+    row[7] = "Coord raras";
+    row[29] = "\u221274,08175°";
+    row[33] = "°4,60971";
+
+    const buffer = await buildMinimalPlantillaBuffer(row);
+    const { ok, errors } = await parsePlantillaWorkbook(buffer, "u");
+
+    expect(errors).toHaveLength(0);
+    expect(ok[0].gps.longitud).toBeCloseTo(-74.08175, 5);
+    expect(ok[0].gps.latitud).toBeCloseTo(4.60971, 5);
+    expect(Number(ok[0].datos_formulario.longitud)).toBeCloseTo(-74.08175, 5);
+    expect(Number(ok[0].datos_formulario.latitud)).toBeCloseTo(4.60971, 5);
   });
 
   it("normaliza «Distancia Infraestructura Adecuada» con sufijo M/m en Excel (columna ~51)", async () => {

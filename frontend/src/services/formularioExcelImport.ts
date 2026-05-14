@@ -431,6 +431,11 @@ function rowToOfflineForm(
       ? { latitud: lat, longitud: lon, precision: 5 }
       : { ...GPS_PLACEHOLDER_WHEN_NOT_CAPTURED };
 
+  if (lon != null && lat != null) {
+    datos.longitud = lon.toFixed(6);
+    datos.latitud = lat.toFixed(6);
+  }
+
   const form: OfflineForm = {
     id_formulario: idFormulario,
     id_usuario: idUsuario,
