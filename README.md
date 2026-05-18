@@ -97,6 +97,30 @@ AUTO_CREATE_SCHEMA=true
 
 Comprobación rápida del esquema: `GET https://<tu-api>/health` incluye `schema_forms_fecha_actualizacion` (debe ser `true`).
 
+## Backups y continuidad de datos
+
+Los datos persisten en volúmenes Docker (`nosignal_db`, `nosignal_uploads`). Reiniciar contenedores **no** borra esos volúmenes; sí los borran operaciones como `docker compose down -v` o `docker volume rm`.
+
+**Scripts** (desde la raíz del repo, con `.env` cargado):
+
+```bash
+chmod +x scripts/backup-nosignal.sh scripts/backup-uploads.sh scripts/backup-automatic.sh scripts/restore-db.sh
+sh scripts/backup-nosignal.sh    # PostgreSQL → backups/db-nosignal-*.sql.gz
+sh scripts/backup-uploads.sh    # /app/uploads → backups/uploads-nosignal-*.tar.gz
+# Semanal + máx. 5 por tipo (domingo 12:00 vía cron — ver scripts/README-backups.md):
+# sh scripts/backup-automatic.sh
+```
+
+Restauración de BD (destructiva; requiere `--confirm`):
+
+```bash
+sh scripts/restore-db.sh backups/db-nosignal-YYYYMMDD-HHMM.sql.gz --confirm
+```
+
+Detalle, cron, retención y checklist de verificación: [`scripts/README-backups.md`](scripts/README-backups.md). Sin Docker podés validar la retención con `sh scripts/test-backup-retention.sh`.
+
+La carpeta `backups/` está en `.gitignore`: **no subas dumps al repositorio**; copiá los archivos a otro disco o almacenamiento externo.
+
 ## Calidad y pruebas
 Frontend:
 ```bash

@@ -29,5 +29,8 @@ frontend/.env.*.local
 # --- Raíz (Docker Compose / secretos) ---
 .env
 
+# --- Backups locales (pg_dump / uploads); no versionar dumps ---
+/backups/
+
 # --- Traefik / ACME ---
 letsencrypt/acme.json
