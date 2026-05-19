@@ -1,4 +1,6 @@
 import ExcelJS from "exceljs";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { GPS_PLACEHOLDER_WHEN_NOT_CAPTURED } from "@/constants/gpsConfig";
@@ -217,6 +219,24 @@ describe("buildMatrizCaracterizacionWorkbook", () => {
   afterEach(() => {
     vi.unstubAllGlobals();
     vi.restoreAllMocks();
+  });
+
+  it("al cargar PLANTILLA.xlsx quita validaciones de lista huérfanas (hoja DOMINIOS)", async () => {
+    const templateBuffer = readFileSync(
+      join(process.cwd(), "public", "PLANTILLA.xlsx"),
+    );
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      arrayBuffer: async () => templateBuffer,
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    const f = minimalForm();
+    f.datos_formulario = { entidad_aportante: "Test" };
+    const wb = await buildMatrizCaracterizacionWorkbook(f);
+    const ws = wb.getWorksheet("F-PSA-08");
+    expect(ws).toBeTruthy();
+    expect(Object.keys(ws!.dataValidations?.model ?? {})).toHaveLength(0);
   });
 
   it("usa PLANTILLA.xlsx por defecto para construir el libro", async () => {

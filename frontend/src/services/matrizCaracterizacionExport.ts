@@ -371,6 +371,17 @@ export function matrizCaracterizacionBulkFilename(date = new Date()): string {
   return `Formularios_diligenciados_${y}-${m}-${day}.xlsx`;
 }
 
+/**
+ * La plantilla F-PSA-08 suele traer listas (validación de datos) que apuntan a la hoja
+ * DOMINIOS. Si esa hoja no está en el libro, Excel muestra «No válido: La entrada debe
+ * estar en el rango especificado» aunque el texto de la celda sea correcto.
+ */
+export function stripWorksheetDataValidations(ws: ExcelJS.Worksheet): void {
+  if (ws.dataValidations?.model) {
+    ws.dataValidations.model = {};
+  }
+}
+
 async function loadTemplateWorkbook(): Promise<ExcelJS.Workbook | null> {
   const templateUrl = import.meta.env.VITE_MATRIZ_TEMPLATE_URL ??
     "/PLANTILLA.xlsx";
@@ -387,6 +398,9 @@ async function loadTemplateWorkbook(): Promise<ExcelJS.Workbook | null> {
     const buf = await res.arrayBuffer();
     const wb = new ExcelJS.Workbook();
     await wb.xlsx.load(buf);
+    for (const sheet of wb.worksheets) {
+      stripWorksheetDataValidations(sheet);
+    }
     return wb;
   } catch (e) {
     console.warn("matriz: no se pudo cargar plantilla, usando builder interno", e);
