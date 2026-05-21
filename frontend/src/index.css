@@ -65,13 +65,38 @@
     text-align: left;
   }
 
-  /* Barra de acciones (p. ej. Formularios diligenciados): envuelve sin desbordar */
+  /* Barra de acciones en tarjetas expandidas */
   .page-actions-bar {
-    @apply flex min-w-0 max-w-full flex-wrap items-center justify-end gap-2 overflow-x-clip;
+    @apply flex min-w-0 max-w-full flex-wrap items-center gap-2 overflow-x-clip;
   }
 
   .page-actions-bar > * {
     min-width: 0;
     max-width: 100%;
+  }
+
+  /* Toolbar del encabezado (Formularios diligenciados) */
+  .page-toolbar {
+    @apply flex w-full min-w-0 max-w-full flex-col gap-2.5 overflow-x-clip;
+  }
+
+  .page-toolbar-icons {
+    @apply flex shrink-0 items-center justify-end gap-1.5;
+  }
+
+  .page-toolbar-actions {
+    @apply grid min-w-0 grid-cols-1 gap-2 sm:grid-cols-2;
+  }
+
+  .page-toolbar-actions > .toolbar-full-row {
+    @apply sm:col-span-2;
+  }
+
+  .page-toolbar-actions .toolbar-btn {
+    @apply h-auto min-h-9 w-full justify-center whitespace-normal px-3 py-2 text-center text-xs leading-snug sm:text-sm;
+  }
+
+  .btn-icon-square {
+    @apply inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full p-0;
   }
 }

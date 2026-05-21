@@ -6,6 +6,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
+import { ArrowLeft, RefreshCw } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 
 import { ConfirmDeleteFormModal } from "@/components/ConfirmDeleteFormModal";
@@ -1086,96 +1087,120 @@ export const FormulariosDiligenciadosPage = () => {
               </p>
             ) : null}
           </div>
-          <div className="page-actions-bar w-full shrink-0 lg:max-w-[55%] xl:max-w-[60%]">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => window.location.reload()}
-              className="h-auto min-w-0 whitespace-normal sm:shrink-0"
-            >
-              Recargar
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => {
-                if (!navigator.onLine) {
-                  return;
+          <div className="page-toolbar w-full shrink-0 lg:max-w-md xl:max-w-lg">
+            <div className="page-toolbar-icons">
+              <Button
+                type="button"
+                variant="outline"
+                asChild
+                className="btn-icon-square"
+              >
+                <Link
+                  to="/inicio"
+                  aria-label="Volver al inicio"
+                  title="Volver al inicio"
+                >
+                  <ArrowLeft className="h-4 w-4" aria-hidden />
+                </Link>
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => window.location.reload()}
+                className="btn-icon-square"
+                aria-label="Recargar página"
+                title="Recargar"
+              >
+                <RefreshCw className="h-4 w-4" aria-hidden />
+              </Button>
+            </div>
+            <div className="page-toolbar-actions">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  if (!navigator.onLine) {
+                    return;
+                  }
+                  setPrecargaError(null);
+                  setModalEliminarTodasPrecargas(true);
+                }}
+                disabled={
+                  !online ||
+                  precargas.length === 0 ||
+                  eliminandoTodasPrecargas ||
+                  eliminandoPrecargaId !== null
                 }
-                setPrecargaError(null);
-                setModalEliminarTodasPrecargas(true);
-              }}
-              disabled={
-                !online ||
-                precargas.length === 0 ||
-                eliminandoTodasPrecargas ||
-                eliminandoPrecargaId !== null
-              }
-              title={!online ? "Requiere conexión a internet" : undefined}
-              className="h-auto min-w-0 whitespace-normal border-amber-200 text-amber-950 hover:bg-amber-50 sm:shrink-0"
-            >
-              {eliminandoTodasPrecargas
-                ? "Quitando precargas…"
-                : precargas.length === 0
-                  ? "Quitar todas las precargas"
-                  : `Quitar todas las precargas (${precargas.length})`}
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => void descargarExcelDeTodos()}
-              disabled={descargandoTodosExcel || !online}
-              className="h-auto min-w-0 whitespace-normal sm:shrink-0"
-            >
-              {descargandoTodosExcel
-                ? "Descargando Excel (todos)…"
-                : "Descargar Excel de todos"}
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => void descargarFotosDeTodos()}
-              disabled={descargandoTodasFotos || !online}
-              className="h-auto min-w-0 whitespace-normal sm:shrink-0"
-            >
-              {descargandoTodasFotos
-                ? "Descargando fotos (todos)…"
-                : "Descargar Fotos de todos"}
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => solicitarEliminarTodosFormularios()}
-              disabled={
-                !online ||
-                rowsMostrados.length === 0 ||
-                !!pendingDeleteRow ||
-                eliminandoTodosFormularios ||
-                (hayFormulariosEnServidor &&
-                  (typeof localStorage === "undefined" ||
-                    !localStorage.getItem(ACCESS_TOKEN_KEY)))
-              }
-              title={
-                !online
-                  ? "Requiere conexión a internet"
-                  : hayFormulariosEnServidor &&
-                      (typeof localStorage === "undefined" ||
-                        !localStorage.getItem(ACCESS_TOKEN_KEY))
-                    ? "Iniciá sesión para borrar formularios del servidor"
-                    : undefined
-              }
-              className="h-auto min-w-0 whitespace-normal border-rose-300 text-rose-900 hover:bg-rose-50 sm:shrink-0"
-            >
-              {eliminandoTodosFormularios
-                ? "Eliminando…"
-                : "Eliminar todos los formularios"}
-            </Button>
-            <Link
-              to="/inicio"
-              className="inline-flex h-auto min-w-0 max-w-full items-center justify-center whitespace-normal rounded-xl border border-slate-200 bg-white px-3 py-2 text-center text-sm shadow-sm sm:shrink-0"
-            >
-              Volver
-            </Link>
+                title={!online ? "Requiere conexión a internet" : undefined}
+                className="toolbar-btn toolbar-full-row border-amber-200 text-amber-950 hover:bg-amber-50"
+              >
+                {eliminandoTodasPrecargas
+                  ? "Quitando precargas…"
+                  : precargas.length === 0
+                    ? "Quitar todas las precargas"
+                    : `Quitar todas las precargas (${precargas.length})`}
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => void descargarExcelDeTodos()}
+                disabled={descargandoTodosExcel || !online}
+                className="toolbar-btn"
+                title={
+                  !online
+                    ? "Requiere conexión a internet"
+                    : "Descargar Excel de todos los formularios"
+                }
+              >
+                {descargandoTodosExcel
+                  ? "Descargando Excel…"
+                  : "Excel (todos)"}
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => void descargarFotosDeTodos()}
+                disabled={descargandoTodasFotos || !online}
+                className="toolbar-btn"
+                title={
+                  !online
+                    ? "Requiere conexión a internet"
+                    : "Descargar fotos de todos los formularios"
+                }
+              >
+                {descargandoTodasFotos
+                  ? "Descargando fotos…"
+                  : "Fotos (todos)"}
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => solicitarEliminarTodosFormularios()}
+                disabled={
+                  !online ||
+                  rowsMostrados.length === 0 ||
+                  !!pendingDeleteRow ||
+                  eliminandoTodosFormularios ||
+                  (hayFormulariosEnServidor &&
+                    (typeof localStorage === "undefined" ||
+                      !localStorage.getItem(ACCESS_TOKEN_KEY)))
+                }
+                title={
+                  !online
+                    ? "Requiere conexión a internet"
+                    : hayFormulariosEnServidor &&
+                        (typeof localStorage === "undefined" ||
+                          !localStorage.getItem(ACCESS_TOKEN_KEY))
+                      ? "Iniciá sesión para borrar formularios del servidor"
+                      : undefined
+                }
+                className="toolbar-btn toolbar-full-row border-rose-300 text-rose-900 hover:bg-rose-50"
+              >
+                {eliminandoTodosFormularios
+                  ? "Eliminando…"
+                  : "Eliminar todos los formularios"}
+              </Button>
+            </div>
           </div>
         </header>
 
