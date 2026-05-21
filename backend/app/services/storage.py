@@ -123,13 +123,12 @@ def media_type_for_image(path: Path) -> str:
 
 
 def save_photos(
-    id_usuario: str,
     id_formulario: str,
     fotos: list[PhotoPayload],
     fecha_hora: datetime,
 ) -> list[dict[str, Any]]:
     date_path = fecha_hora.strftime("%Y/%m/%d")
-    base_path = os.path.join(settings.upload_root, date_path, id_usuario, id_formulario)
+    base_path = os.path.join(settings.upload_root, date_path, id_formulario)
     os.makedirs(base_path, exist_ok=True)
 
     saved_entries: list[dict[str, Any]] = []

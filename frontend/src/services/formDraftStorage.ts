@@ -15,7 +15,6 @@ export type FormDraftV1 = {
   formId: string;
   /** Fecha original del formulario al editar uno existente (no regenerar al reenviar). */
   originalFechaHora?: string | null;
-  idUsuario: string;
   modoCoordenadas?: 'automatico' | 'manual';
   formValues: FormValues;
   fotos: FotoForm[];
@@ -37,7 +36,7 @@ export function loadFormDraft(username: string): FormDraftV1 | null {
       return null;
     }
     const o = parsed as Record<string, unknown>;
-    if (o.v !== 1 || typeof o.formId !== 'string' || typeof o.idUsuario !== 'string') {
+    if (o.v !== 1 || typeof o.formId !== 'string') {
       return null;
     }
     if (!o.formValues || typeof o.formValues !== 'object') {
@@ -51,7 +50,6 @@ export function loadFormDraft(username: string): FormDraftV1 | null {
         typeof o.originalFechaHora === 'string' && o.originalFechaHora.trim() !== ''
           ? o.originalFechaHora
           : null,
-      idUsuario: o.idUsuario,
       modoCoordenadas: o.modoCoordenadas === 'manual' ? 'manual' : 'automatico',
       formValues: o.formValues as FormValues,
       fotos: Array.isArray(o.fotos) ? (o.fotos as FormDraftV1['fotos']) : [],
@@ -89,11 +87,10 @@ export function clearFormDraft(username: string): void {
 export function shouldPersistFormDraft(
   values: FormValues,
   emptyDefaults: FormValues,
-  idUsuario: string,
   fotosCount: number,
   hasGps: boolean,
 ): boolean {
-  if (idUsuario.trim() || fotosCount > 0 || hasGps) {
+  if (fotosCount > 0 || hasGps) {
     return true;
   }
   for (const k of REQUIRED_FIELDS) {

@@ -14,7 +14,6 @@ export type ModoCoordenadasForm = 'automatico' | 'manual';
 
 export interface OfflineForm {
   id_formulario: string;
-  id_usuario: string;
   /** Cómo se obtuvo la ubicación al guardar (para reabrir en el mismo modo). */
   modo_coordenadas?: ModoCoordenadasForm;
   /** Fecha/hora del primer guardado (no cambia al reeditar el mismo formulario). */
@@ -38,7 +37,6 @@ export type EstadoHistorial = 'PENDIENTE' | 'ERROR' | 'ENVIADO';
 
 export interface HistorialForm {
   id_formulario: string;
-  id_usuario: string;
   modo_coordenadas?: ModoCoordenadasForm;
   fecha_hora: string;
   estado: EstadoHistorial;

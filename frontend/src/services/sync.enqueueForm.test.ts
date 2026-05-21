@@ -30,7 +30,6 @@ import { enqueueForm } from "./sync";
 
 const baseForm = (): OfflineForm => ({
   id_formulario: "f-1",
-  id_usuario: "user",
   fecha_hora: "2026-05-04T12:00:00Z",
   fecha_actualizacion: "2026-05-10T15:00:00Z",
   gps: { latitud: 1.23, longitud: -76.5, precision: 5 },

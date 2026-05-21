@@ -12,6 +12,16 @@ const buildEmptyValues = (): FormValues => {
   return Object.fromEntries(REQUIRED_FIELDS.map((field) => [field, ""])) as FormValues;
 };
 
+const basePayloadArgs = (overrides: Partial<Parameters<typeof buildOfflinePayload>[0]> = {}) => ({
+  values: buildEmptyValues(),
+  requiredFields: REQUIRED_FIELDS,
+  formId: "form-123",
+  originalFechaHora: null,
+  gps: { latitud: 4.1, longitud: -74.1, precision: 9.9 } as const,
+  fotos: [] as { nombre_archivo: string; data: string }[],
+  ...overrides,
+});
+
 describe("useFormularioSubmit helpers", () => {
   it("buildDatosFormulario incluye solo campos requeridos", () => {
     const values = buildEmptyValues();
@@ -25,27 +35,20 @@ describe("useFormularioSubmit helpers", () => {
     expect(Object.keys(data)).toHaveLength(REQUIRED_FIELDS.length);
   });
 
-  it("buildOfflinePayload limita precision GPS y sanea usuario", () => {
+  it("buildOfflinePayload limita precision GPS", () => {
     const values = buildEmptyValues();
     values.nombre_actividad = "Actividad";
     values.nombres_apellidos_beneficiario = "Beneficiario";
 
-    const toSafeUserId = vi.fn((raw: string) => raw.trim().toLowerCase());
-    const payload = buildOfflinePayload({
-      values,
-      requiredFields: REQUIRED_FIELDS,
-      formId: "form-123",
-      originalFechaHora: null,
-      idUsuario: "",
-      authUsername: "  Usuario Prueba  ",
-      gps: { latitud: 4.1, longitud: -74.1, precision: 9.9 },
-      fotos: [{ nombre_archivo: "f1.jpg", data: "data:image/jpg;base64,AA==" }],
-      toSafeUserId,
-    });
+    const payload = buildOfflinePayload(
+      basePayloadArgs({
+        values,
+        fotos: [{ nombre_archivo: "f1.jpg", data: "data:image/jpg;base64,AA==" }],
+      }),
+    );
 
-    expect(toSafeUserId).toHaveBeenCalledWith("  Usuario Prueba  ");
     expect(payload.id_formulario).toBe("form-123");
-    expect(payload.id_usuario).toBe("usuario prueba");
+    expect(payload).not.toHaveProperty("id_usuario");
     expect(payload.gps.precision).toBe(5);
     expect(payload.estado_sincronizacion).toBe("PENDIENTE");
     expect(payload.modo_coordenadas).toBe("automatico");
@@ -57,18 +60,14 @@ describe("useFormularioSubmit helpers", () => {
     values.latitud = "4.6097";
     values.longitud = "-74.08";
 
-    const payload = buildOfflinePayload({
-      values,
-      requiredFields: REQUIRED_FIELDS,
-      formId: "form-decimals",
-      originalFechaHora: null,
-      idUsuario: "demo",
-      authUsername: null,
-      gps: { latitud: 4.6097123456, longitud: -74.081751234, precision: 1 },
-      fotos: [],
-      toSafeUserId: (raw) => raw,
-      modoCoordenadas: "manual",
-    });
+    const payload = buildOfflinePayload(
+      basePayloadArgs({
+        values,
+        formId: "form-decimals",
+        gps: { latitud: 4.6097123456, longitud: -74.081751234, precision: 1 },
+        modoCoordenadas: "manual",
+      }),
+    );
 
     expect(payload.datos_formulario.latitud).toBe("4.6097");
     expect(payload.datos_formulario.longitud).toBe("-74.08");
@@ -82,18 +81,14 @@ describe("useFormularioSubmit helpers", () => {
     values.latitud = "4.6097123456";
     values.longitud = "-74.081751234";
 
-    const payload = buildOfflinePayload({
-      values,
-      requiredFields: REQUIRED_FIELDS,
-      formId: "form-gps-6",
-      originalFechaHora: null,
-      idUsuario: "demo",
-      authUsername: null,
-      gps: { latitud: 4.6097123456, longitud: -74.081751234, precision: 1 },
-      fotos: [],
-      toSafeUserId: (raw) => raw,
-      modoCoordenadas: "automatico",
-    });
+    const payload = buildOfflinePayload(
+      basePayloadArgs({
+        values,
+        formId: "form-gps-6",
+        gps: { latitud: 4.6097123456, longitud: -74.081751234, precision: 1 },
+        modoCoordenadas: "automatico",
+      }),
+    );
 
     expect(payload.datos_formulario.latitud).toBe("4.609712");
     expect(payload.datos_formulario.longitud).toBe("-74.081751");
@@ -106,18 +101,14 @@ describe("useFormularioSubmit helpers", () => {
     values.nombre_actividad = "Actividad";
     values.nombres_apellidos_beneficiario = "B";
 
-    const payload = buildOfflinePayload({
-      values,
-      requiredFields: REQUIRED_FIELDS,
-      formId: "form-manual",
-      originalFechaHora: null,
-      idUsuario: "demo",
-      authUsername: null,
-      gps: { latitud: 4.1, longitud: -74.1, precision: 1 },
-      fotos: [],
-      toSafeUserId: (raw) => raw,
-      modoCoordenadas: "manual",
-    });
+    const payload = buildOfflinePayload(
+      basePayloadArgs({
+        values,
+        formId: "form-manual",
+        gps: { latitud: 4.1, longitud: -74.1, precision: 1 },
+        modoCoordenadas: "manual",
+      }),
+    );
 
     expect(payload.modo_coordenadas).toBe("manual");
   });
@@ -125,17 +116,13 @@ describe("useFormularioSubmit helpers", () => {
   it("buildOfflinePayload corrige precision GPS <= 0 a mínimo válido", () => {
     const values = buildEmptyValues();
     values.nombres_apellidos_beneficiario = "B";
-    const payload = buildOfflinePayload({
-      values,
-      requiredFields: REQUIRED_FIELDS,
-      formId: "form-precision-0",
-      originalFechaHora: null,
-      idUsuario: "demo",
-      authUsername: null,
-      gps: { latitud: 4.1, longitud: -74.1, precision: 0 },
-      fotos: [],
-      toSafeUserId: (raw) => raw,
-    });
+    const payload = buildOfflinePayload(
+      basePayloadArgs({
+        values,
+        formId: "form-precision-0",
+        gps: { latitud: 4.1, longitud: -74.1, precision: 0 },
+      }),
+    );
 
     expect(payload.gps.precision).toBe(0.1);
   });
@@ -143,17 +130,13 @@ describe("useFormularioSubmit helpers", () => {
   it("buildOfflinePayload usa placeholder si no hay GPS", () => {
     const values = buildEmptyValues();
     values.nombres_apellidos_beneficiario = "Solo nombre";
-    const payload = buildOfflinePayload({
-      values,
-      requiredFields: REQUIRED_FIELDS,
-      formId: "form-sin-gps",
-      originalFechaHora: null,
-      idUsuario: "demo",
-      authUsername: null,
-      gps: null,
-      fotos: [],
-      toSafeUserId: (raw) => raw,
-    });
+    const payload = buildOfflinePayload(
+      basePayloadArgs({
+        values,
+        formId: "form-sin-gps",
+        gps: null,
+      }),
+    );
     expect(payload.gps).toEqual({
       latitud: GPS_PLACEHOLDER_WHEN_NOT_CAPTURED.latitud,
       longitud: GPS_PLACEHOLDER_WHEN_NOT_CAPTURED.longitud,
@@ -177,17 +160,13 @@ describe("useFormularioSubmit helpers", () => {
     vi.setSystemTime(new Date("2026-05-01T10:20:30.000Z"));
     const values = buildEmptyValues();
     values.nombres_apellidos_beneficiario = "B";
-    const payload = buildOfflinePayload({
-      values,
-      requiredFields: REQUIRED_FIELDS,
-      formId: "form-nuevo",
-      originalFechaHora: null,
-      idUsuario: "demo",
-      authUsername: null,
-      gps: { latitud: 4.1, longitud: -74.1, precision: 1 },
-      fotos: [],
-      toSafeUserId: (raw) => raw,
-    });
+    const payload = buildOfflinePayload(
+      basePayloadArgs({
+        values,
+        formId: "form-nuevo",
+        gps: { latitud: 4.1, longitud: -74.1, precision: 1 },
+      }),
+    );
     expect(payload.fecha_hora).toBe("2026-05-01T10:20:30.000Z");
     expect(payload.fecha_actualizacion).toBe("2026-05-01T10:20:30.000Z");
     vi.useRealTimers();
@@ -198,17 +177,14 @@ describe("useFormularioSubmit helpers", () => {
     vi.setSystemTime(new Date("2026-06-15T18:00:00.000Z"));
     const values = buildEmptyValues();
     values.nombres_apellidos_beneficiario = "B";
-    const payload = buildOfflinePayload({
-      values,
-      requiredFields: REQUIRED_FIELDS,
-      formId: "form-existente",
-      originalFechaHora: "2026-01-10T08:00:00.000Z",
-      idUsuario: "demo",
-      authUsername: null,
-      gps: { latitud: 4.1, longitud: -74.1, precision: 1 },
-      fotos: [],
-      toSafeUserId: (raw) => raw,
-    });
+    const payload = buildOfflinePayload(
+      basePayloadArgs({
+        values,
+        formId: "form-existente",
+        originalFechaHora: "2026-01-10T08:00:00.000Z",
+        gps: { latitud: 4.1, longitud: -74.1, precision: 1 },
+      }),
+    );
     expect(payload.fecha_hora).toBe("2026-01-10T08:00:00.000Z");
     expect(payload.fecha_actualizacion).toBe("2026-06-15T18:00:00.000Z");
     vi.useRealTimers();

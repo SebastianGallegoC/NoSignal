@@ -12,7 +12,6 @@ import {
 const mocks = vi.hoisted(() => {
   const makeForm = (): FormReadItem => ({
     id_formulario: "f-bulk-test-1",
-    id_usuario: "u1",
     fecha_hora: "2020-01-15T12:00:00.000Z",
     fecha_actualizacion: "2020-01-15T12:00:00.000Z",
     latitud: 4.5,

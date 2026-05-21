@@ -23,7 +23,6 @@ describe("formValidation — envío mínimo", () => {
     }
     const form: OfflineForm = {
       id_formulario: "x",
-      id_usuario: "u",
       fecha_hora: new Date().toISOString(),
       gps: { latitud: 4.6, longitud: -74.08, precision: 4 },
       datos_formulario: datos,
@@ -42,7 +41,6 @@ describe("formValidation — envío mínimo", () => {
     datos.nombres_apellidos_beneficiario = "Ana Pérez";
     const form: OfflineForm = {
       id_formulario: "x",
-      id_usuario: "u",
       fecha_hora: new Date().toISOString(),
       gps: { latitud: 4.6, longitud: -74.08, precision: 4 },
       datos_formulario: datos,
@@ -61,7 +59,6 @@ describe("formValidation — envío mínimo", () => {
     datos.nombres_apellidos_beneficiario = "Ana Pérez";
     const form: OfflineForm = {
       id_formulario: "x",
-      id_usuario: "u",
       fecha_hora: new Date().toISOString(),
       gps: { latitud: 4.6, longitud: -74.08, precision: 4 },
       datos_formulario: datos,
@@ -80,7 +77,6 @@ describe("formValidation — envío mínimo", () => {
     datos.nombres_apellidos_beneficiario = "Ana Pérez";
     const form: OfflineForm = {
       id_formulario: "x",
-      id_usuario: "u",
       fecha_hora: "2026-05-10T12:00:00.000Z",
       fecha_actualizacion: "2026-05-01T12:00:00.000Z",
       gps: { latitud: 4.6, longitud: -74.08, precision: 4 },

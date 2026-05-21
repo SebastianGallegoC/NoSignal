@@ -44,7 +44,6 @@ describe('usePrecargaWatcher (integration)', () => {
   it('fetchFormFromApi se puede llamar para validar versiones', async () => {
     const mockForm = {
       id_formulario: 'form-1',
-      id_usuario: 'user-1',
       fecha_hora: '2026-05-04T12:00:00Z',
       fecha_actualizacion: '2026-05-05T14:00:00Z',
       latitud: 1.23,
@@ -88,7 +87,6 @@ describe('usePrecargaWatcher (integration)', () => {
 
     const mockServerForm = {
       id_formulario: 'form-1',
-      id_usuario: 'user-1',
       fecha_hora: '2026-05-04T12:00:00Z',
       fecha_actualizacion: '2026-05-05T14:00:00Z',
       latitud: 1.23,
@@ -128,7 +126,6 @@ describe('usePrecargaWatcher (integration)', () => {
 
     const mockServerForm = {
       id_formulario: 'form-1',
-      id_usuario: 'user-1',
       fecha_hora: '2026-05-04T12:00:00Z',
       fecha_actualizacion: '2026-05-04T13:00:00Z',
       latitud: 1.23,
@@ -176,7 +173,6 @@ describe('usePrecargaWatcher (integration)', () => {
 
     const mockServerForm = {
       id_formulario: 'form-1',
-      id_usuario: 'user-1',
       fecha_hora: '2026-05-04T12:00:00Z',
       fecha_actualizacion: '2026-05-05T14:00:00Z',
       latitud: 1.23,

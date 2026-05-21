@@ -462,7 +462,6 @@ export async function buildMatrizCaracterizacionWorkbookBulk(
   const wb = (await loadTemplateWorkbook()) ??
     (await buildMatrizCaracterizacionWorkbookFromScratch(forms[0] ?? {
       id_formulario: "tmp",
-      id_usuario: "sin_usuario",
       fecha_hora: new Date().toISOString(),
       gps: { latitud: 0, longitud: 0, precision: 1 },
       datos_formulario: {},

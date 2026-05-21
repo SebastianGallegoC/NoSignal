@@ -34,8 +34,6 @@ type Args = {
   fotos: FotoForm[];
   formId: string;
   originalFechaHora: string | null;
-  idUsuario: string;
-  authUsername: string | null;
   draftUserKey: string;
   modoCoordenadas: "automatico" | "manual";
   setBanner: (v: string | null) => void;
@@ -44,7 +42,6 @@ type Args = {
   refreshPendientes: () => Promise<void>;
   setOpenSections: Dispatch<SetStateAction<Set<string>>>;
   setFocus: UseFormSetFocus<FormValues>;
-  toSafeUserId: (raw: string) => string;
   requiredFields: readonly FormFieldKey[];
 };
 
@@ -53,11 +50,8 @@ type BuildPayloadArgs = {
   requiredFields: readonly FormFieldKey[];
   formId: string;
   originalFechaHora: string | null;
-  idUsuario: string;
-  authUsername: string | null;
   gps: { latitud: number; longitud: number; precision: number } | null;
   fotos: FotoForm[];
-  toSafeUserId: (raw: string) => string;
   modoCoordenadas?: "automatico" | "manual";
 };
 
@@ -111,11 +105,8 @@ export const buildOfflinePayload = ({
   requiredFields,
   formId,
   originalFechaHora: _originalFechaHora,
-  idUsuario,
-  authUsername,
   gps,
   fotos,
-  toSafeUserId,
   modoCoordenadas = "automatico",
 }: BuildPayloadArgs): OfflineForm => {
   const now = new Date().toISOString();
@@ -124,7 +115,6 @@ export const buildOfflinePayload = ({
   const gpsResolved = gps ?? GPS_PLACEHOLDER_WHEN_NOT_CAPTURED;
   return {
     id_formulario: formId,
-    id_usuario: toSafeUserId(idUsuario || authUsername || "sin_usuario"),
     modo_coordenadas: modoCoordenadas === "manual" ? "manual" : "automatico",
     fecha_hora: fechaPrimerEnvio,
     fecha_actualizacion: fechaActualizacion,
@@ -160,8 +150,6 @@ export const useFormularioSubmit = ({
   fotos,
   formId,
   originalFechaHora: _originalFechaHora,
-  idUsuario,
-  authUsername,
   draftUserKey,
   modoCoordenadas,
   setBanner,
@@ -170,7 +158,6 @@ export const useFormularioSubmit = ({
   refreshPendientes,
   setOpenSections,
   setFocus,
-  toSafeUserId,
   requiredFields,
 }: Args) => {
   const showEnvioBloqueadoModal = (title: string, message: string) => {
@@ -207,11 +194,8 @@ export const useFormularioSubmit = ({
       requiredFields,
       formId,
       originalFechaHora: _originalFechaHora,
-      idUsuario,
-      authUsername,
       gps: gps ?? null,
       fotos,
-      toSafeUserId,
       modoCoordenadas,
     });
 

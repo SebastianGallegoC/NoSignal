@@ -63,7 +63,6 @@ def _mapping_to_form_read_item(row) -> FormReadItem | None:
     fotos_list = fotos_json_for_api_list(row["fotos"])
     return FormReadItem(
         id_formulario=row["id_formulario"],
-        id_usuario=row["id_usuario"],
         fecha_hora=fecha_iso,
         fecha_actualizacion=fecha_actualizacion_iso,
         latitud=lat,
@@ -77,7 +76,6 @@ def _mapping_to_form_read_item(row) -> FormReadItem | None:
 async def get_form_for_read_by_id(session: AsyncSession, form_id: str) -> FormReadItem | None:
     cols = (
         FormRecord.id_formulario,
-        FormRecord.id_usuario,
         FormRecord.fecha_hora,
         FormRecord.datos_formulario,
         FormRecord.fotos,
@@ -96,7 +94,6 @@ async def get_form_for_read_by_id(session: AsyncSession, form_id: str) -> FormRe
 async def list_forms_for_read(session: AsyncSession, limit: int) -> list[FormReadItem]:
     cols = (
         FormRecord.id_formulario,
-        FormRecord.id_usuario,
         FormRecord.fecha_hora,
         FormRecord.datos_formulario,
         FormRecord.fotos,

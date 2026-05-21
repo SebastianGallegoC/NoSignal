@@ -336,7 +336,6 @@ function mergeLonLatWithDms(
  */
 function rowToOfflineForm(
   cells: string[],
-  idUsuario: string,
   nowIso: string,
 ): { form?: OfflineForm; error?: string } {
   const idFormulario = randomUuid();
@@ -405,7 +404,6 @@ function rowToOfflineForm(
 
   const form: OfflineForm = {
     id_formulario: idFormulario,
-    id_usuario: idUsuario,
     modo_coordenadas: "manual",
     fecha_hora: nowIso,
     fecha_actualizacion: nowIso,
@@ -426,14 +424,9 @@ function rowToOfflineForm(
 /** Construye un `OfflineForm` desde celdas ya validadas (p. ej. tras editar la vista previa). */
 export function buildOfflineFormFromImportCells(
   cells: string[],
-  idUsuario: string,
   nowIso?: string,
 ): { form?: OfflineForm; error?: string } {
-  return rowToOfflineForm(
-    cells,
-    idUsuario.trim(),
-    nowIso ?? new Date().toISOString(),
-  );
+  return rowToOfflineForm(cells, nowIso ?? new Date().toISOString());
 }
 
 /** Valores para validar: igual que la fila en bruto, con fechas normalizadas a YYYY-MM-DD cuando el Excel es válido. */
@@ -457,7 +450,6 @@ function cellsToFormValuesNormalized(cells: string[]): FormValues {
 export function analyzeImportRow(
   cells: string[],
   sheetRow: number,
-  idUsuario: string,
   nowIso: string,
 ): ImportPreviewRow {
   let displayValues = cellsToFormValuesNormalized(cells);
@@ -531,7 +523,7 @@ export function analyzeImportRow(
     rowMessages.push(ri.message);
   }
 
-  const { form, error } = rowToOfflineForm(cells, idUsuario.trim(), nowIso);
+  const { form, error } = rowToOfflineForm(cells, nowIso);
   const hasGranular =
     Object.keys(fieldErrors).length > 0 || rowMessages.length > 0;
   let isValid = Boolean(form) && !hasGranular;
@@ -572,15 +564,7 @@ async function loadPlantillaSheet(
  */
 export async function previewPlantillaWorkbook(
   buffer: ArrayBuffer,
-  idUsuario: string,
 ): Promise<PlantillaPreviewResult> {
-  if (!idUsuario.trim()) {
-    return {
-      rows: [],
-      errors: [{ row: 0, message: "Falta usuario para asociar los formularios." }],
-    };
-  }
-
   const loaded = await loadPlantillaSheet(buffer);
   if ("error" in loaded) {
     return { rows: [], errors: [loaded.error] };
@@ -604,7 +588,7 @@ export async function previewPlantillaWorkbook(
       break;
     }
 
-    rows.push(analyzeImportRow(cells, rowNum, idUsuario.trim(), nowIso));
+    rows.push(analyzeImportRow(cells, rowNum, nowIso));
     rowNum += 1;
   }
 
@@ -617,17 +601,9 @@ export async function previewPlantillaWorkbook(
  */
 export async function parsePlantillaWorkbook(
   buffer: ArrayBuffer,
-  idUsuario: string,
 ): Promise<PlantillaImportResult> {
   const ok: OfflineForm[] = [];
   const errors: ImportRowError[] = [];
-
-  if (!idUsuario.trim()) {
-    return {
-      ok: [],
-      errors: [{ row: 0, message: "Falta usuario para asociar los formularios." }],
-    };
-  }
 
   const loaded = await loadPlantillaSheet(buffer);
   if ("error" in loaded) {
@@ -651,7 +627,7 @@ export async function parsePlantillaWorkbook(
       break;
     }
 
-    const { form, error } = rowToOfflineForm(cells, idUsuario.trim(), nowIso);
+    const { form, error } = rowToOfflineForm(cells, nowIso);
     if (form) {
       ok.push(form);
     } else if (error) {

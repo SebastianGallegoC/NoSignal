@@ -15,7 +15,6 @@ import { FormularioOverviewPanel } from "@/components/form/FormularioOverviewPan
 import { FormFieldRow } from "@/components/form/FormFieldRow";
 import { Button } from "@/components/ui/button";
 import { FORM_SECTIONS } from "@/config/formSections";
-import { USUARIOS_FORMULARIO } from "@/config/usuariosFormulario";
 import { useConnectivityStatus } from "@/hooks/useConnectivityStatus";
 import { useGPS } from "@/hooks/useGPS";
 import { useFormularioSubmit } from "@/hooks/useFormularioSubmit";
@@ -27,7 +26,6 @@ import {
 import { isNetworkLikeError, syncPendingForms } from "@/services/sync";
 import type { FotoForm } from "@/services/db";
 import { randomUuid } from "@/lib/randomUuid";
-import { normalizeUserId } from "@/lib/userIdNormalization";
 import { useAuthStore } from "@/store/useAuthStore";
 import { REQUIRED_FIELDS, type FormValues } from "@/types/formFields";
 import { buildExternalMapUrl, buildMapUrl } from "@/pages/formulario/mapUtils";
@@ -70,9 +68,6 @@ export const FormularioPage = () => {
   } = useGPS({
     restoredPosition: loadedDraft?.gps ?? null,
   });
-  const [idUsuario, setIdUsuario] = useState(
-    () => loadedDraft?.idUsuario ?? "",
-  );
   const [fotos, setFotos] = useState<FotoForm[]>(
     () => loadedDraft?.fotos ?? [],
   );
@@ -123,11 +118,10 @@ export const FormularioPage = () => {
       shouldPersistFormDraft(
         formValues,
         defaults,
-        idUsuario,
         fotos.length,
         gps !== null,
       ),
-    [formValues, defaults, idUsuario, fotos.length, gps],
+    [formValues, defaults, fotos.length, gps],
   );
 
   const gpsFormulario = useMemo(() => {
@@ -150,7 +144,6 @@ export const FormularioPage = () => {
     draftUserKey,
     defaults,
     formValues,
-    idUsuario,
     fotos,
     formId,
     originalFechaHora,
@@ -184,7 +177,6 @@ export const FormularioPage = () => {
     stopCamera();
     limpiarUbicacion();
     reset(defaults);
-    setIdUsuario("");
     setFotos([]);
     setFormId(randomUuid());
     setOriginalFechaHora(null);
@@ -280,9 +272,7 @@ export const FormularioPage = () => {
     gps: gpsFormulario,
     fotos,
     formId,
-    idUsuario,
     originalFechaHora,
-    authUsername,
     draftUserKey,
     modoCoordenadas,
     setBanner,
@@ -291,7 +281,6 @@ export const FormularioPage = () => {
     refreshPendientes,
     setOpenSections,
     setFocus,
-    toSafeUserId: normalizeUserId,
     requiredFields: REQUIRED_FIELDS,
   });
   const coordenadasSection = useMemo(
@@ -450,27 +439,6 @@ export const FormularioPage = () => {
               </div>
             </details>
           ) : null}
-
-          <div className="rounded-2xl border border-slate-200 bg-white/90 p-4 shadow-sm">
-            <h2 className="text-sm font-semibold text-slate-900">
-              Usuario del registro
-            </h2>
-            <label className="mt-3 flex flex-col text-sm font-medium text-slate-800">
-              Selección
-              <select
-                className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600"
-                value={idUsuario}
-                onChange={(e) => setIdUsuario(e.target.value)}
-              >
-                <option value=""></option>
-                {USUARIOS_FORMULARIO.map((u) => (
-                  <option key={u.value} value={u.value}>
-                    {u.label}
-                  </option>
-                ))}
-              </select>
-            </label>
-          </div>
 
           <FormularioFotosSection
             fotos={fotos}

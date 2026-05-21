@@ -9,7 +9,6 @@ class FormRecord(Base):
     __tablename__ = "forms"
 
     id_formulario = Column(String, primary_key=True, index=True)
-    id_usuario = Column(String, nullable=False)
     fecha_hora = Column(DateTime(timezone=True), nullable=False)
     fecha_actualizacion = Column(DateTime(timezone=True), nullable=False)
     gps = Column(Geometry(geometry_type="POINT", srid=4326), nullable=False)

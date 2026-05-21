@@ -79,8 +79,6 @@ export const useFormExports = ({
 
         await downloadMatrizCaracterizacionXlsx({
           id_formulario: row.id_formulario,
-          id_usuario:
-            row.server?.id_usuario ?? row.historial?.id_usuario ?? 'sin_usuario',
           fecha_hora:
             row.server?.fecha_hora ??
             row.historial?.fecha_envio ??
@@ -142,8 +140,6 @@ export const useFormExports = ({
 
         await downloadPhotosZip({
           id_formulario: row.id_formulario,
-          id_usuario:
-            row.server?.id_usuario ?? row.historial?.id_usuario ?? 'sin_usuario',
           fecha_hora:
             row.server?.fecha_hora ??
             row.historial?.fecha_envio ??
@@ -195,11 +191,6 @@ export const useFormExports = ({
         );
         return {
           id_formulario: row.id_formulario,
-          id_usuario:
-            queued?.id_usuario ??
-            row.server?.id_usuario ??
-            row.historial?.id_usuario ??
-            'sin_usuario',
           fecha_hora:
             queued?.fecha_hora ??
             row.server?.fecha_hora ??
@@ -252,11 +243,6 @@ export const useFormExports = ({
         fotos = await hydrateFotosFromServerIfNeeded(row, fotos);
         exportables.push({
           id_formulario: row.id_formulario,
-          id_usuario:
-            queued?.id_usuario ??
-            row.server?.id_usuario ??
-            row.historial?.id_usuario ??
-            'sin_usuario',
           fecha_hora:
             queued?.fecha_hora ??
             row.server?.fecha_hora ??

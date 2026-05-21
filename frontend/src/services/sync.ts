@@ -94,7 +94,6 @@ export const enqueueForm = async (form: OfflineForm): Promise<void> => {
     earliestIso(existingHistorial?.fecha_envio, form.fecha_hora) ?? form.fecha_hora;
   await db.historialFormularios.put({
     id_formulario: form.id_formulario,
-    id_usuario: form.id_usuario,
     modo_coordenadas: form.modo_coordenadas,
     fecha_hora: form.fecha_hora,
     estado: 'PENDIENTE',
@@ -132,7 +131,6 @@ export const countErrorForms = async (): Promise<number> => {
 
 export interface SyncErrorItem {
   id_formulario: string;
-  id_usuario: string;
   errores_sync: number;
   fecha_intento?: string;
   ultimo_error?: string;
@@ -152,7 +150,6 @@ export const listSyncErrors = async (limit = 5): Promise<SyncErrorItem[]> => {
     .reverse()
     .map((row) => ({
       id_formulario: row.id_formulario,
-      id_usuario: row.id_usuario,
       errores_sync: row.errores_sync ?? 0,
       fecha_intento: row.fecha_intento,
       ultimo_error: row.ultimo_error,
@@ -233,7 +230,6 @@ export const syncPendingForms = async (): Promise<SyncRunResult> => {
         if (response.status === 422) {
           console.error('sync 422 payload_rejected', {
             id_formulario: form.id_formulario,
-            id_usuario: form.id_usuario,
             gps_precision: form.gps?.precision,
             fotos_count: Array.isArray(form.fotos) ? form.fotos.length : -1,
             detail,
@@ -300,7 +296,6 @@ export const syncPendingForms = async (): Promise<SyncRunResult> => {
       }
       console.error('sync attempt failed', {
         id_formulario: form.id_formulario,
-        id_usuario: form.id_usuario,
         message,
       });
       await db.formularios.update(form.id_formulario, {

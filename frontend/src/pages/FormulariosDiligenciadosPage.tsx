@@ -710,17 +710,6 @@ export const FormulariosDiligenciadosPage = () => {
           row.historial?.fecha_envio ??
           row.historial?.fecha_hora ??
           null,
-        idUsuario: (() => {
-          const u = row.server?.id_usuario ?? row.historial?.id_usuario;
-          if (u) {
-            return u;
-          }
-          const raw = row.precargaSolo?.datos_formulario?.usuario_cens;
-          if (typeof raw === "string" && raw.trim() !== "") {
-            return raw.trim();
-          }
-          return "";
-        })(),
         modoCoordenadas:
           (detailPrecarga?.modo_coordenadas ??
             row.historial?.modo_coordenadas) === "manual"

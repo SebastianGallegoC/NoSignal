@@ -152,7 +152,6 @@ describe("useFormExports", () => {
     const row = buildRow({
       server: {
         id_formulario: "form-1",
-        id_usuario: "user",
         fecha_hora: "2026-01-01T10:00:00.000Z",
         fecha_actualizacion: "2026-01-01T10:00:00.000Z",
         latitud: 1,
@@ -210,7 +209,6 @@ describe("useFormExports", () => {
     const row = buildRow({
       server: {
         id_formulario: "form-1",
-        id_usuario: "user",
         fecha_hora: "2026-01-01T10:00:00.000Z",
         fecha_actualizacion: "2026-01-01T10:00:00.000Z",
         latitud: 1,
@@ -221,7 +219,6 @@ describe("useFormExports", () => {
       },
       historial: {
         id_formulario: "form-1",
-        id_usuario: "user",
         fecha_hora: "2026-01-01T10:00:00.000Z",
         estado: "ENVIADO",
         datos_formulario: { fecha_inicio: "2020-01-01" },
@@ -274,7 +271,6 @@ describe("useFormExports", () => {
     const row = buildRow({
       server: {
         id_formulario: "form-1",
-        id_usuario: "user",
         fecha_hora: "2026-01-01T10:00:00.000Z",
         fecha_actualizacion: "2026-01-01T10:00:00.000Z",
         latitud: 1,
@@ -288,7 +284,6 @@ describe("useFormExports", () => {
     dbMocks.bulkGet.mockResolvedValueOnce([
       {
         id_formulario: "form-1",
-        id_usuario: "user",
         fecha_hora: "2026-06-01T10:00:00.000Z",
         gps: { latitud: 5, longitud: -75, precision: 4 },
         datos_formulario: { fecha_inicio: "2026-12-20" },
@@ -386,7 +381,6 @@ describe("useFormExports", () => {
       id_formulario: "exp-1",
       server: {
         id_formulario: "exp-1",
-        id_usuario: "usr-1",
         fecha_hora: "2026-02-01T12:00:00.000Z",
         fecha_actualizacion: "2026-02-01T12:00:00.000Z",
         latitud: 1,
@@ -465,7 +459,6 @@ describe("useFormExports", () => {
       id_formulario: "foto-1",
       server: {
         id_formulario: "foto-1",
-        id_usuario: "u",
         fecha_hora: "2026-01-01T10:00:00.000Z",
         fecha_actualizacion: "2026-01-01T10:00:00.000Z",
         latitud: 1,
@@ -531,7 +524,6 @@ describe("useFormExports", () => {
       id_formulario: "bulk-f",
       server: {
         id_formulario: "bulk-f",
-        id_usuario: "u",
         fecha_hora: "2026-03-01T10:00:00.000Z",
         fecha_actualizacion: "2026-03-01T10:00:00.000Z",
         latitud: 3,

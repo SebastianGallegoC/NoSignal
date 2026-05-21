@@ -41,7 +41,6 @@ class PhotoPayload(BaseModel):
 
 class FormPayload(BaseModel):
     id_formulario: str
-    id_usuario: str = Field(default="sin_usuario", max_length=64)
     fecha_hora: str = Field(
         ...,
         description="Momento del primer registro / envío inicial (en actualizaciones debe conservarse).",
@@ -63,20 +62,6 @@ class FormPayload(BaseModel):
             s = value.strip()
             return s if s else None
         return None
-
-    @field_validator("id_usuario")
-    @classmethod
-    def validate_id_usuario(cls, value: str) -> str:
-        """Nombres legibles (espacios, Unicode); se excluyen solo caracteres peligrosos para rutas."""
-        v = value.strip() if value is not None else ""
-        if not v:
-            return "sin_usuario"
-        forbidden = '\\/\0<>:"|?*'
-        if any(c in forbidden for c in v):
-            raise ValueError("invalid_id_usuario")
-        if v in (".", ".."):
-            raise ValueError("invalid_id_usuario")
-        return v
 
     @field_validator("fotos")
     @classmethod

@@ -3,7 +3,6 @@ import {
   LEGACY_API_MAX_GPS_ACCURACY_METERS,
   MIN_GPS_PRECISION_METERS,
 } from '@/constants/gpsConfig';
-import { normalizeUserId } from '@/lib/userIdNormalization';
 import {
   agentSessionLog,
   beneficiaryFieldProbe,
@@ -15,7 +14,6 @@ import type { OfflineForm } from './db';
 const API_BASE = import.meta.env.VITE_API_URL ?? '';
 type ApiFormPayload = {
   id_formulario: string;
-  id_usuario: string;
   fecha_hora: string;
   fecha_actualizacion?: string;
   gps: {
@@ -45,7 +43,6 @@ function payloadForApi(form: OfflineForm): ApiFormPayload {
   const fechaAct = form.fecha_actualizacion?.trim() || form.fecha_hora;
   const out: ApiFormPayload = {
     id_formulario: form.id_formulario,
-    id_usuario: normalizeUserId(form.id_usuario),
     fecha_hora: form.fecha_hora,
     gps: {
       ...form.gps,
@@ -119,7 +116,6 @@ export const loginApi = async (username: string, password: string): Promise<Logi
 /** Respuesta de `GET /api/v1/forms/` (datos en servidor; fotos = rutas de archivo). */
 export interface FormReadItem {
   id_formulario: string;
-  id_usuario: string;
   fecha_hora: string;
   fecha_actualizacion: string;
   latitud: number;

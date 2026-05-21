@@ -17,7 +17,6 @@ describe('precargaService', () => {
     it('guarda coordenadas GPS correctamente', async () => {
       const mockForm = {
         id_formulario: 'form-1',
-        id_usuario: 'user-1',
         fecha_hora: '2026-05-04T12:00:00Z',
         latitud: 4.5678,
         longitud: -74.1234,
@@ -50,7 +49,6 @@ describe('precargaService', () => {
     it('preserva datos del formulario en precarga', async () => {
       const mockForm = {
         id_formulario: 'form-1',
-        id_usuario: 'user-1',
         fecha_hora: '2026-05-04T12:00:00Z',
         latitud: 1.23,
         longitud: -76.5,
@@ -79,7 +77,6 @@ describe('precargaService', () => {
     it('marca auto_precarga como true al guardar', async () => {
       const mockForm = {
         id_formulario: 'form-1',
-        id_usuario: 'user-1',
         fecha_hora: '2026-05-04T12:00:00Z',
         latitud: 1.23,
         longitud: -76.5,
@@ -108,7 +105,6 @@ describe('precargaService', () => {
     it('copia modo_coordenadas manual desde historial local', async () => {
       const mockForm = {
         id_formulario: 'form-1',
-        id_usuario: 'user-1',
         fecha_hora: '2026-05-04T12:00:00Z',
         latitud: 1.23,
         longitud: -76.5,
@@ -126,7 +122,6 @@ describe('precargaService', () => {
       mockDb.historialFormularios = {
         get: vi.fn().mockResolvedValue({
           id_formulario: 'form-1',
-          id_usuario: 'u',
           estado: 'ENVIADO',
           fecha_hora: '2026-05-04T12:00:00Z',
           modo_coordenadas: 'manual',
@@ -165,7 +160,6 @@ describe('precargaService', () => {
     it('crea nueva precarga si no existe', async () => {
       const mockForm = {
         id_formulario: 'form-1',
-        id_usuario: 'user-1',
         fecha_hora: '2026-05-04T12:00:00Z',
         latitud: 1.23,
         longitud: -76.5,

@@ -11,7 +11,6 @@ type Args = {
   draftUserKey: string;
   defaults: FormValues;
   formValues: FormValues;
-  idUsuario: string;
   fotos: FotoForm[];
   formId: string;
   originalFechaHora: string | null;
@@ -24,7 +23,6 @@ export const useFormDraftPersistence = ({
   draftUserKey,
   defaults,
   formValues,
-  idUsuario,
   fotos,
   formId,
   originalFechaHora,
@@ -36,8 +34,6 @@ export const useFormDraftPersistence = ({
   draftUserKeyRef.current = draftUserKey;
   const defaultsRef = useRef(defaults);
   defaultsRef.current = defaults;
-  const idUsuarioRef = useRef(idUsuario);
-  idUsuarioRef.current = idUsuario;
   const fotosRef = useRef(fotos);
   fotosRef.current = fotos;
   const formIdRef = useRef(formId);
@@ -53,13 +49,12 @@ export const useFormDraftPersistence = ({
     const userKey = draftUserKeyRef.current;
     const values = getValues();
     const def = defaultsRef.current;
-    const idU = idUsuarioRef.current;
     const f = fotosRef.current;
     const fid = formIdRef.current;
     const fFecha = originalFechaHoraRef.current;
     const g = gpsRef.current;
     const modo = modoCoordenadasRef.current;
-    if (!shouldPersistFormDraft(values, def, idU, f.length, g !== null)) {
+    if (!shouldPersistFormDraft(values, def, f.length, g !== null)) {
       clearFormDraft(userKey);
       return;
     }
@@ -68,7 +63,6 @@ export const useFormDraftPersistence = ({
       savedAt: new Date().toISOString(),
       formId: fid,
       originalFechaHora: fFecha,
-      idUsuario: idU,
       modoCoordenadas: modo,
       formValues: values,
       fotos: f,
@@ -86,7 +80,7 @@ export const useFormDraftPersistence = ({
 
   useEffect(() => {
     const userKey = draftUserKey;
-    if (!shouldPersistFormDraft(formValues, defaults, idUsuario, fotos.length, gps !== null)) {
+    if (!shouldPersistFormDraft(formValues, defaults, fotos.length, gps !== null)) {
       clearFormDraft(userKey);
       return;
     }
@@ -98,7 +92,6 @@ export const useFormDraftPersistence = ({
     formValues,
     defaults,
     draftUserKey,
-    idUsuario,
     fotos,
     formId,
     gps,

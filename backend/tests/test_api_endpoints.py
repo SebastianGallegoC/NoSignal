@@ -84,7 +84,6 @@ def test_create_form_returns_queued(monkeypatch):
     client = TestClient(app)
     payload = {
         "id_formulario": "f-123",
-        "id_usuario": "u-1",
         "fecha_hora": "2026-05-04T12:00:00Z",
         "gps": {"latitud": 1.123, "longitud": -76.55, "precision": float(MAX_GPS_ACCURACY_METERS)},
         "datos_formulario": {"entidad_aportante": "X"},
@@ -106,7 +105,7 @@ def test_get_form_photo_returns_binary(monkeypatch, tmp_path: Path):
     image_path.write_bytes(b"fake-jpeg-binary")
 
     async def fake_get_paths(_session, _form_id):
-        return ["uploads/2026/05/04/u1/f1/foto_1.jpg"]
+        return ["uploads/2026/05/04/f1/foto_1.jpg"]
 
     monkeypatch.setattr(forms_mod, "get_form_fotos_paths_by_id", fake_get_paths)
     monkeypatch.setattr(forms_mod, "validated_photo_path", lambda _stored: image_path)
@@ -146,7 +145,6 @@ def test_get_form_by_id_ok(monkeypatch):
             return None
         return {
             "id_formulario": "f-123",
-            "id_usuario": "u-1",
             "fecha_hora": "2026-05-04T12:00:00Z",
             "fecha_actualizacion": "2026-05-04T12:30:00Z",
             "latitud": 1.123,
@@ -162,7 +160,7 @@ def test_get_form_by_id_ok(monkeypatch):
     assert resp.status_code == 200
     body = resp.json()
     assert body["id_formulario"] == "f-123"
-    assert body["id_usuario"] == "u-1"
+    assert "id_usuario" not in body
     app.dependency_overrides.clear()
 
 

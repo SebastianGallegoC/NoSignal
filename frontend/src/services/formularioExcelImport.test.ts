@@ -113,11 +113,10 @@ describe("parsePlantillaWorkbook", () => {
     row[26] = "4.60971";
 
     const buffer = await buildMinimalPlantillaBuffer(row);
-    const { ok, errors } = await parsePlantillaWorkbook(buffer, "demo_user");
+    const { ok, errors } = await parsePlantillaWorkbook(buffer);
 
     expect(errors).toHaveLength(0);
     expect(ok).toHaveLength(1);
-    expect(ok[0].id_usuario).toBe("demo_user");
     expect(ok[0].fotos).toEqual([]);
     expect(ok[0].gps).toEqual({
       latitud: 4.60971,
@@ -143,7 +142,7 @@ describe("parsePlantillaWorkbook", () => {
     row[27] = "-74.0";
     row[26] = "4.0";
     const buffer = await buildMinimalPlantillaBuffer(row);
-    const { ok, errors } = await parsePlantillaWorkbook(buffer, "u");
+    const { ok, errors } = await parsePlantillaWorkbook(buffer);
 
     expect(errors).toHaveLength(0);
     expect(ok).toHaveLength(1);
@@ -158,7 +157,7 @@ describe("parsePlantillaWorkbook", () => {
     row[7] = "Sin GPS en Excel";
 
     const buffer = await buildMinimalPlantillaBuffer(row);
-    const { ok, errors } = await parsePlantillaWorkbook(buffer, "demo_user");
+    const { ok, errors } = await parsePlantillaWorkbook(buffer);
 
     expect(errors).toHaveLength(0);
     expect(ok).toHaveLength(1);
@@ -192,22 +191,12 @@ describe("parsePlantillaWorkbook", () => {
       u8.byteOffset + u8.byteLength,
     );
 
-    const { ok, errors } = await parsePlantillaWorkbook(buffer, "u");
+    const { ok, errors } = await parsePlantillaWorkbook(buffer);
     expect(errors).toHaveLength(0);
     expect(ok).toHaveLength(1);
     expect(ok[0].datos_formulario.nombres_apellidos_beneficiario).toBe(
       "María Pérez",
     );
-  });
-
-  it("rechaza id_usuario vacío", async () => {
-    const row = new Array<string | number | null>(MATRIZ_COLUMN_COUNT).fill(null);
-    row[27] = "-74";
-    row[26] = "4";
-    const buffer = await buildMinimalPlantillaBuffer(row);
-    const { ok, errors } = await parsePlantillaWorkbook(buffer, "  ");
-    expect(ok).toHaveLength(0);
-    expect(errors[0].row).toBe(0);
   });
 
   it("analyzeImportRow marca fecha inválida y coordenadas válidas", () => {
@@ -217,7 +206,7 @@ describe("parsePlantillaWorkbook", () => {
     row[27] = "-74.0";
     row[26] = "4.0";
     const cells = row.map((v) => (v == null ? "" : String(v)));
-    const preview = analyzeImportRow(cells, 8, "u1", new Date().toISOString());
+    const preview = analyzeImportRow(cells, 8, new Date().toISOString());
     expect(preview.isValid).toBe(false);
     expect(preview.fieldErrors.fecha_inicio).toBeDefined();
   });
@@ -228,7 +217,7 @@ describe("parsePlantillaWorkbook", () => {
     row[27] = "-74.05";
     row[26] = "4.05";
     const buffer = await buildMinimalPlantillaBuffer(row);
-    const { rows, errors } = await previewPlantillaWorkbook(buffer, "u2");
+    const { rows, errors } = await previewPlantillaWorkbook(buffer);
     expect(errors).toHaveLength(0);
     expect(rows).toHaveLength(1);
     expect(rows[0].sheetRow).toBe(8);
@@ -242,7 +231,7 @@ describe("parsePlantillaWorkbook", () => {
     row[27] = "-74.0";
     row[26] = "4.0";
     const buffer = await buildMinimalPlantillaBuffer(row);
-    const { ok, errors } = await parsePlantillaWorkbook(buffer, "u");
+    const { ok, errors } = await parsePlantillaWorkbook(buffer);
     expect(errors).toHaveLength(0);
     expect(ok[0].datos_formulario.mujer_cabeza_hogar).toBe("Si");
   });
@@ -254,7 +243,7 @@ describe("parsePlantillaWorkbook", () => {
     row[27] = "-74.0";
     row[26] = "4.0";
     const cells = row.map((v) => (v == null ? "" : String(v)));
-    const preview = analyzeImportRow(cells, 8, "u1", new Date().toISOString());
+    const preview = analyzeImportRow(cells, 8, new Date().toISOString());
     expect(preview.isValid).toBe(true);
     expect(preview.displayValues.mujer_cabeza_hogar).toBe("No");
   });
@@ -266,7 +255,7 @@ describe("parsePlantillaWorkbook", () => {
     row[27] = "-74.0";
     row[26] = "4.0";
     const buffer = await buildMinimalPlantillaBuffer(row);
-    const { ok, errors } = await parsePlantillaWorkbook(buffer, "u");
+    const { ok, errors } = await parsePlantillaWorkbook(buffer);
     expect(errors).toHaveLength(0);
     expect(ok[0].datos_formulario.area_arbol_disponible).toBe("No");
   });
@@ -278,7 +267,7 @@ describe("parsePlantillaWorkbook", () => {
     row[27] = "-74.0";
     row[26] = "4.0";
     const buffer = await buildMinimalPlantillaBuffer(row);
-    const { ok, errors } = await parsePlantillaWorkbook(buffer, "u");
+    const { ok, errors } = await parsePlantillaWorkbook(buffer);
     expect(errors).toHaveLength(0);
     expect(ok[0].datos_formulario.telefono).toBe("No tiene");
   });
@@ -291,7 +280,7 @@ describe("parsePlantillaWorkbook", () => {
     row[28] = "2650";
 
     const buffer = await buildMinimalPlantillaBuffer(row);
-    const { ok, errors } = await parsePlantillaWorkbook(buffer, "u");
+    const { ok, errors } = await parsePlantillaWorkbook(buffer);
 
     expect(errors).toHaveLength(0);
     expect(ok).toHaveLength(1);
@@ -307,7 +296,7 @@ describe("parsePlantillaWorkbook", () => {
     row[26] = "4,05″";
 
     const buffer = await buildMinimalPlantillaBuffer(row);
-    const { ok, errors } = await parsePlantillaWorkbook(buffer, "u");
+    const { ok, errors } = await parsePlantillaWorkbook(buffer);
 
     expect(errors).toHaveLength(0);
     expect(ok[0].gps.longitud).toBeCloseTo(-74.1, 5);
@@ -323,7 +312,7 @@ describe("parsePlantillaWorkbook", () => {
     row[26] = "°4,60971";
 
     const buffer = await buildMinimalPlantillaBuffer(row);
-    const { ok, errors } = await parsePlantillaWorkbook(buffer, "u");
+    const { ok, errors } = await parsePlantillaWorkbook(buffer);
 
     expect(errors).toHaveLength(0);
     expect(ok[0].gps.longitud).toBeCloseTo(-74.08175, 5);
@@ -338,7 +327,7 @@ describe("parsePlantillaWorkbook", () => {
     row[27] = "-74.08175";
 
     const buffer = await buildMinimalPlantillaBuffer(row);
-    const { rows, errors } = await previewPlantillaWorkbook(buffer, "u");
+    const { rows, errors } = await previewPlantillaWorkbook(buffer);
 
     expect(errors).toHaveLength(0);
     expect(rows[0].isValid).toBe(true);
@@ -346,7 +335,7 @@ describe("parsePlantillaWorkbook", () => {
     expect(rows[0].displayValues.latitud).toBe("");
 
     const cells = formValuesToCells(rows[0].displayValues, rows[0].idRaw);
-    const { form, error } = buildOfflineFormFromImportCells(cells, "u");
+    const { form, error } = buildOfflineFormFromImportCells(cells);
     expect(error).toBeUndefined();
     expect(form?.gps).toEqual(GPS_PLACEHOLDER_WHEN_NOT_CAPTURED);
     expect(form?.datos_formulario.longitud).toBe("-74.081750");
@@ -359,7 +348,7 @@ describe("parsePlantillaWorkbook", () => {
     row[26] = "4.60971";
 
     const buffer = await buildMinimalPlantillaBuffer(row);
-    const { rows, errors } = await previewPlantillaWorkbook(buffer, "u");
+    const { rows, errors } = await previewPlantillaWorkbook(buffer);
 
     expect(errors).toHaveLength(0);
     expect(rows[0].isValid).toBe(true);
@@ -375,7 +364,7 @@ describe("parsePlantillaWorkbook", () => {
     row[45] = "  40 M  ";
 
     const buffer = await buildMinimalPlantillaBuffer(row);
-    const { ok, errors } = await parsePlantillaWorkbook(buffer, "u");
+    const { ok, errors } = await parsePlantillaWorkbook(buffer);
 
     expect(errors).toHaveLength(0);
     expect(ok[0].datos_formulario.distancia_infraestructura_adecuada).toBe("40");

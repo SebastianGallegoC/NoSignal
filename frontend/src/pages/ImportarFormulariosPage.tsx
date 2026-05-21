@@ -79,11 +79,10 @@ export const ImportarFormulariosPage = () => {
         setMessage("Elegí un archivo .xlsx.");
         return;
       }
-      const idUsuario = toSafeUserId(authUsername ?? "");
       setBusy(true);
       try {
         const buffer = await file.arrayBuffer();
-        const { rows, errors } = await previewPlantillaWorkbook(buffer, idUsuario);
+        const { rows, errors } = await previewPlantillaWorkbook(buffer);
         setFileLabel(file.name);
         setPreviewErrors(errors);
         setPreviewRows(rows);
@@ -106,12 +105,11 @@ export const ImportarFormulariosPage = () => {
         setBusy(false);
       }
     },
-    [authUsername],
+    [],
   );
 
   const handlePreviewRowPatch = useCallback(
     (sheetRow: number, patch: ImportPreviewRowPatch) => {
-      const idUsuario = toSafeUserId(authUsername ?? "");
       setPreviewRows((prev) => {
         if (!prev) {
           return prev;
@@ -123,23 +121,17 @@ export const ImportarFormulariosPage = () => {
           const idRaw = patch.idRaw ?? r.idRaw;
           const displayValues = { ...r.displayValues, ...patch.displayValues };
           const cells = formValuesToCells(displayValues, idRaw);
-          return analyzeImportRow(
-            cells,
-            sheetRow,
-            idUsuario,
-            new Date().toISOString(),
-          );
+          return analyzeImportRow(cells, sheetRow, new Date().toISOString());
         });
       });
     },
-    [authUsername],
+    [],
   );
 
   const onConfirmImport = useCallback(async () => {
     if (!previewRows || previewRows.length === 0) {
       return;
     }
-    const idUsuario = toSafeUserId(authUsername ?? "");
     setBusyImport(true);
     try {
       let n = 0;
@@ -151,7 +143,6 @@ export const ImportarFormulariosPage = () => {
         const cells = formValuesToCells(r.displayValues, r.idRaw);
         const { form, error } = buildOfflineFormFromImportCells(
           cells,
-          idUsuario,
           new Date().toISOString(),
         );
         if (form) {

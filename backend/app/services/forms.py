@@ -38,13 +38,11 @@ async def persist_form(session: AsyncSession, payload: FormPayload) -> FormRecor
         if payload.fotos:
             safe_delete_stored_photos(old_paths)
             new_paths = save_photos(
-                payload.id_usuario,
                 payload.id_formulario,
                 payload.fotos,
                 fecha_hora,
             )
             existing.fotos = new_paths
-        existing.id_usuario = payload.id_usuario
         existing.fecha_actualizacion = fecha_act
         existing.gps = gps_point
         existing.datos_formulario = dict(payload.datos_formulario)
@@ -53,14 +51,13 @@ async def persist_form(session: AsyncSession, payload: FormPayload) -> FormRecor
         return existing
 
     fotos = (
-        save_photos(payload.id_usuario, payload.id_formulario, payload.fotos, fecha_hora)
+        save_photos(payload.id_formulario, payload.fotos, fecha_hora)
         if payload.fotos
         else []
     )
 
     record = FormRecord(
         id_formulario=payload.id_formulario,
-        id_usuario=payload.id_usuario,
         fecha_hora=fecha_hora,
         fecha_actualizacion=fecha_act,
         gps=gps_point,

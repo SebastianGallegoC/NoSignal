@@ -22,7 +22,6 @@ describe("formHistory — beneficiario", () => {
       onServer: true,
       server: {
         id_formulario: "a",
-        id_usuario: "u",
         fecha_hora: "2026-01-01T00:00:00Z",
         fecha_actualizacion: "2026-01-01T00:00:00Z",
         latitud: 0,
@@ -33,7 +32,6 @@ describe("formHistory — beneficiario", () => {
       },
       historial: {
         id_formulario: "a",
-        id_usuario: "u",
         fecha_hora: "2026-01-01T00:00:00Z",
         estado: "ENVIADO",
         datos_formulario: {
@@ -50,7 +48,6 @@ describe("formHistory — beneficiario", () => {
       onServer: true,
       server: {
         id_formulario: "a",
-        id_usuario: "u",
         fecha_hora: "2026-01-01T00:00:00Z",
         fecha_actualizacion: "2026-01-01T00:00:00Z",
         latitud: 0,
@@ -61,7 +58,6 @@ describe("formHistory — beneficiario", () => {
       },
       historial: {
         id_formulario: "a",
-        id_usuario: "u",
         fecha_hora: "2026-01-01T00:00:00Z",
         estado: "ENVIADO",
         datos_formulario: { fecha_inicio: "2020-01-01" },
@@ -76,7 +72,6 @@ describe("formHistory — beneficiario", () => {
       onServer: true,
       server: {
         id_formulario: "gps-1",
-        id_usuario: "u",
         fecha_hora: "2026-01-01T00:00:00Z",
         fecha_actualizacion: "2026-01-01T00:00:00Z",
         latitud: 4.6,
@@ -87,7 +82,6 @@ describe("formHistory — beneficiario", () => {
       },
       historial: {
         id_formulario: "gps-1",
-        id_usuario: "u",
         fecha_hora: "2026-01-01T00:00:00Z",
         estado: "ENVIADO",
         gps: { latitud: 1, longitud: 2, precision: 1 },
@@ -106,7 +100,6 @@ describe("formHistory — beneficiario", () => {
       onServer: true,
       server: {
         id_formulario: "q-1",
-        id_usuario: "u",
         fecha_hora: "2026-01-01T00:00:00Z",
         fecha_actualizacion: "2026-01-01T00:00:00Z",
         latitud: 0,
@@ -118,7 +111,6 @@ describe("formHistory — beneficiario", () => {
     };
     const queued = {
       id_formulario: "q-1",
-      id_usuario: "u",
       fecha_hora: "2026-02-01T00:00:00Z",
       gps: { latitud: 3, longitud: -70, precision: 2 },
       datos_formulario: { fecha_inicio: "2026-12-15" },
@@ -137,7 +129,6 @@ describe("formHistory — beneficiario", () => {
       onServer: true,
       server: {
         id_formulario: "b",
-        id_usuario: "u",
         fecha_hora: "2026-01-01T00:00:00Z",
         fecha_actualizacion: "2026-01-01T00:00:00Z",
         latitud: 0,
@@ -190,7 +181,6 @@ describe("formHistory — beneficiario", () => {
       onServer: false,
       historial: {
         id_formulario: "p2",
-        id_usuario: "u",
         fecha_hora: "2026-01-01T00:00:00Z",
         estado: "ENVIADO",
         datos_formulario: {
@@ -228,7 +218,6 @@ describe("formHistory — beneficiario", () => {
     };
     const historialPendienteSinPrecarga: HistorialForm = {
       id_formulario: "solo-h",
-      id_usuario: "u",
       fecha_hora: "2026-01-01T00:00:00Z",
       estado: "PENDIENTE",
       datos_formulario: {},
@@ -249,7 +238,6 @@ describe("formHistory — beneficiario", () => {
   it("filterDisplayRowsWithPrecarga oculta ENVIADO sin precarga (sin listado servidor)", () => {
     const historialEnviado: HistorialForm = {
       id_formulario: "solo-env",
-      id_usuario: "u",
       fecha_hora: "2026-01-01T00:00:00Z",
       estado: "ENVIADO",
       datos_formulario: {},
@@ -262,20 +250,17 @@ describe("formHistory — beneficiario", () => {
   it("reconcileLocalStateWithTrustedServerList quita ENVIADO que ya no está en servidor", () => {
     const borradoEnOtroEquipo: HistorialForm = {
       id_formulario: "gone",
-      id_usuario: "u",
       fecha_hora: "2026-01-01T00:00:00Z",
       estado: "ENVIADO",
     };
     const pendiente: HistorialForm = {
       id_formulario: "local-only",
-      id_usuario: "u",
       fecha_hora: "2026-01-02T00:00:00Z",
       estado: "PENDIENTE",
     };
     const server = [
       {
         id_formulario: "still",
-        id_usuario: "u",
         fecha_hora: "2026-01-03T00:00:00Z",
         fecha_actualizacion: "2026-01-03T00:00:00Z",
         latitud: 0,
@@ -306,14 +291,12 @@ describe("formHistory — beneficiario", () => {
   it("reconcileLocalStateWithTrustedServerList conserva ENVIADO que sigue en servidor", () => {
     const h: HistorialForm = {
       id_formulario: "x",
-      id_usuario: "u",
       fecha_hora: "2026-01-01T00:00:00Z",
       estado: "ENVIADO",
     };
     const server = [
       {
         id_formulario: "x",
-        id_usuario: "u",
         fecha_hora: "2026-01-01T00:00:00Z",
         fecha_actualizacion: "2026-01-01T00:00:00Z",
         latitud: 0,
@@ -333,7 +316,6 @@ describe("formHistory — beneficiario", () => {
     const server = [
       {
         id_formulario: "still",
-        id_usuario: "u",
         fecha_hora: "2026-01-03T00:00:00Z",
         fecha_actualizacion: "2026-01-03T00:00:00Z",
         latitud: 0,
@@ -356,7 +338,6 @@ describe("formHistory — beneficiario", () => {
   it("reconcileLocalStateWithTrustedServerList conserva precarga si historial PENDIENTE (id aún no en listado)", () => {
     const pendiente: HistorialForm = {
       id_formulario: "solo-local",
-      id_usuario: "u",
       fecha_hora: "2026-01-02T00:00:00Z",
       estado: "PENDIENTE",
     };
@@ -378,7 +359,6 @@ describe("formHistory — beneficiario", () => {
   it("reconcileLocalStateWithTrustedServerList conserva precarga si historial ERROR (reintento pendiente)", () => {
     const err: HistorialForm = {
       id_formulario: "sync-error",
-      id_usuario: "u",
       fecha_hora: "2026-01-02T00:00:00Z",
       estado: "ERROR",
     };
@@ -395,7 +375,6 @@ describe("formHistory — beneficiario", () => {
   it("mergeFormsWithPrecargas no duplica si el id ya está en historial", () => {
     const h: HistorialForm = {
       id_formulario: "a",
-      id_usuario: "u",
       fecha_hora: "2026-01-01T00:00:00Z",
       estado: "ENVIADO",
     };
@@ -414,7 +393,6 @@ describe("formHistory — beneficiario", () => {
 function itemServidor(id: string): FormReadItem {
   return {
     id_formulario: id,
-    id_usuario: "u",
     fecha_hora: "2026-01-01T00:00:00Z",
     fecha_actualizacion: "2026-01-01T00:00:00Z",
     latitud: 0,
@@ -435,7 +413,6 @@ describe("formHistory — listado según conectividad (Formularios diligenciados
       server: itemServidor("s2"),
       historial: {
         id_formulario: "s2",
-        id_usuario: "u",
         fecha_hora: "2026-01-01T00:00:00Z",
         estado: "ENVIADO",
         datos_formulario: {},
@@ -446,7 +423,6 @@ describe("formHistory — listado según conectividad (Formularios diligenciados
       onServer: false,
       historial: {
         id_formulario: "cola",
-        id_usuario: "u",
         fecha_hora: "2026-01-02T00:00:00Z",
         estado: "PENDIENTE",
         datos_formulario: {},
