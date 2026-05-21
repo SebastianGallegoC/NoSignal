@@ -21,17 +21,8 @@ export const FORM_SECTIONS: readonly FormSectionDef[] = [
   },
   {
     id: 'coordenadas',
-    title: 'Coordenadas (grados / minutos / segundos)',
-    fields: [
-      'x_grados',
-      'x_minutos',
-      'x_segundos',
-      'longitud',
-      'y_grados',
-      'y_minutos',
-      'y_segundos',
-      'latitud',
-    ],
+    title: 'Coordenadas (grados decimales WGS84)',
+    fields: ['latitud', 'longitud', 'metros_sobre_nivel_mar'],
   },
   {
     id: 'beneficiario',

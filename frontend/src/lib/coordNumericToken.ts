@@ -1,15 +1,10 @@
 import type { FormFieldKey } from "@/types/formFields";
 
-/** Campos numéricos de coordenadas (GMS o decimal) que suelen traer ° ′ ″ en Excel. */
+/** Campos numéricos WGS84 (grados decimales y altitud) en formulario e importación Excel. */
 export const COORD_NUMERIC_FIELD_KEYS = new Set<FormFieldKey>([
-  "x_grados",
-  "x_minutos",
-  "x_segundos",
-  "y_grados",
-  "y_minutos",
-  "y_segundos",
-  "longitud",
   "latitud",
+  "longitud",
+  "metros_sobre_nivel_mar",
 ]);
 
 /**

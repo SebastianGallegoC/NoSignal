@@ -233,7 +233,7 @@ export const ImportarFormulariosPage = () => {
             </a>
             : hoja <strong>F-PSA-08</strong>, fila 7 reservada a títulos (no hace
             falta que coincidan con la plantilla), datos desde la fila 8 en el
-            mismo orden de columnas (1–76) que la plantilla.
+            mismo orden de columnas (1–71) que la plantilla.
           </p>
           <ul className="mt-3 list-inside list-disc text-sm text-slate-600">
             <li>

@@ -395,15 +395,9 @@ export const FormularioPage = () => {
           modoCoordenadas={modoCoordenadas}
           onChangeModoCoordenadas={(m) => {
             if (m === "manual") {
-              // limpiar campos y habilitar edición
-              setValue("longitud", "");
               setValue("latitud", "");
-              setValue("x_grados", "");
-              setValue("x_minutos", "");
-              setValue("x_segundos", "");
-              setValue("y_grados", "");
-              setValue("y_minutos", "");
-              setValue("y_segundos", "");
+              setValue("longitud", "");
+              setValue("metros_sobre_nivel_mar", "");
             }
             setModoCoordenadas(m);
           }}

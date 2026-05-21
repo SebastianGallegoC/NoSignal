@@ -128,15 +128,7 @@ export const FormFieldRow = ({
 
   const isPositiveInt = name === "estrato" || name === "usuario_cens";
   const isSatisfaccion = name === "satisfaccion_1_5";
-  const isGpsDerivedField =
-    name === "x_grados" ||
-    name === "x_minutos" ||
-    name === "x_segundos" ||
-    name === "y_grados" ||
-    name === "y_minutos" ||
-    name === "y_segundos" ||
-    name === "latitud" ||
-    name === "longitud";
+  const isGpsDerivedField = name === "latitud" || name === "longitud";
   const isReadOnly = isGpsDerivedField && !editableGpsFields;
   const gpsReadOnlyClass = isReadOnly ? " bg-slate-100 text-slate-600" : "";
 

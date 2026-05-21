@@ -89,6 +89,19 @@ export const validateFormValuesWithFieldDetails = (
     }
   }
 
+  if (!isBlank(values.metros_sobre_nivel_mar)) {
+    const msnm = Number(
+      normalizeCoordNumericCell(String(values.metros_sobre_nivel_mar)),
+    );
+    if (!Number.isFinite(msnm) || msnm < -500 || msnm > 9000) {
+      fieldIssues.push({
+        field: "metros_sobre_nivel_mar",
+        code: "metros_sobre_nivel_mar_range",
+        message: "Metros sobre el nivel del mar deben estar entre -500 y 9000.",
+      });
+    }
+  }
+
   if (!isBlank(values.satisfaccion_1_5)) {
     const score = Number(values.satisfaccion_1_5);
     if (!Number.isFinite(score) || score < 1 || score > 5) {

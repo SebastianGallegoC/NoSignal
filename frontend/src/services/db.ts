@@ -1,5 +1,7 @@
 import Dexie, { type Table } from 'dexie';
 
+import { stripGmsKeysFromDatos } from '@/lib/stripGmsFromDatos';
+
 export type SyncStatus = 'PENDIENTE' | 'SINCRONIZANDO' | 'ERROR';
 export type VisitaNumero = 1 | 2 | 3;
 export type FotoForm = {
@@ -116,6 +118,25 @@ export class NoSignalDB extends Dexie {
       precargas: '&id_formulario, fecha_precarga',
       formulariosOcultos: '&id_formulario',
       sesionLocal: 'id',
+    });
+    this.version(8).stores({
+      formularios: '&id_formulario, estado_sincronizacion, fecha_hora',
+      historialFormularios: '&id_formulario, estado, fecha_hora',
+      precargas: '&id_formulario, fecha_precarga',
+      formulariosOcultos: '&id_formulario',
+      sesionLocal: 'id',
+    }).upgrade(async (tx) => {
+      await tx.table<OfflineForm>('formularios').toCollection().modify((f) => {
+        f.datos_formulario = stripGmsKeysFromDatos(f.datos_formulario);
+      });
+      await tx.table<HistorialForm>('historialFormularios').toCollection().modify((h) => {
+        if (h.datos_formulario) {
+          h.datos_formulario = stripGmsKeysFromDatos(h.datos_formulario);
+        }
+      });
+      await tx.table<PrecargaForm>('precargas').toCollection().modify((p) => {
+        p.datos_formulario = stripGmsKeysFromDatos(p.datos_formulario);
+      });
     });
   }
 }

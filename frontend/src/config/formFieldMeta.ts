@@ -27,6 +27,7 @@ const NUMBER_FIELDS = new Set<FormFieldKey>([
   'satisfaccion_1_5',
   'superficie_total_intervenida_m2',
   'total_especies_semillas_sembradas',
+  'metros_sobre_nivel_mar',
   'estrato',
   'usuario_cens',
   'distancia_infraestructura_adecuada',
@@ -51,14 +52,9 @@ export const inputKindForField = (field: FormFieldKey): InputKind => {
     return 'number';
   }
   if (
-    field === 'x_grados' ||
-    field === 'x_minutos' ||
-    field === 'x_segundos' ||
-    field === 'y_grados' ||
-    field === 'y_minutos' ||
-    field === 'y_segundos' ||
     field === 'latitud' ||
-    field === 'longitud'
+    field === 'longitud' ||
+    field === 'metros_sobre_nivel_mar'
   ) {
     return 'number';
   }
@@ -87,6 +83,7 @@ export const fieldLabel = (field: FormFieldKey): string =>
       satisfaccion_1_5: 'Nivel de Satisfacción 1-5',
       distancia_infraestructura_adecuada:
         'Distancia Infraestructura Adecuada (m)',
+      metros_sobre_nivel_mar: 'Metros sobre el nivel del mar',
     } as Partial<Record<FormFieldKey, string>>
   )[field] ??
   field

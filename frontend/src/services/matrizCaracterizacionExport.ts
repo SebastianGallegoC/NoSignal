@@ -1,14 +1,17 @@
 import { Workbook, type Worksheet } from "exceljs";
 
 import { GPS_PLACEHOLDER_WHEN_NOT_CAPTURED } from "@/constants/gpsConfig";
-import { normalizeCoordNumericCell } from "@/lib/coordNumericToken";
+import {
+  COORD_NUMERIC_FIELD_KEYS,
+  normalizeCoordNumericCell,
+} from "@/lib/coordNumericToken";
 import type { OfflineForm } from "@/services/db";
 import type { FormFieldKey } from "@/types/formFields";
 
-const GMS_X_KEYS = ["x_grados", "x_minutos", "x_segundos"] as const;
-const GMS_Y_KEYS = ["y_grados", "y_minutos", "y_segundos"] as const;
+/** Número de columnas de datos en la plantilla F-PSA-08 (fila 7 = encabezados). */
+export const MATRIZ_COLUMN_COUNT = 71;
 
-/** Hoja y columnas alineadas con `MATRIZ DE CARACTERIZACIÓN.xlsx` → pestaña F-PSA-08, fila 7. */
+/** Hoja y columnas alineadas con `PLANTILLA.xlsx` → pestaña F-PSA-08, fila 7. */
 export const MATRIZ_SHEET_NAME = "F-PSA-08";
 
 export const MATRIZ_F_PSA_HEADERS: readonly string[] = [
@@ -38,14 +41,9 @@ export const MATRIZ_F_PSA_HEADERS: readonly string[] = [
   "NOMBRE DEL PREDIO",
   "RESIDENCIA",
   "TENENCIA DEL PREDIO",
-  "X°",
-  "X'",
-  'X"',
-  "LONGITUD",
-  "Y°",
-  "Y'",
-  'Y"',
   "LATITUD",
+  "LONGITUD",
+  "METROS SOBRE EL NIVEL DEL MAR",
   "Nº PERSONAS DEL NÚCLEO FAMILIAR",
   "NÚMERO DE MENORES DE EDAD",
   "NÚMERO DE ADULTOS MAYORES",
@@ -87,11 +85,11 @@ export const MATRIZ_F_PSA_HEADERS: readonly string[] = [
   "TIPO DE COBERTURA",
   "CERCANIA RONDA HÍDRICA",
   "SUPERFICIE TOTAL INTERVENIDA M2",
-  "TOTAL DE ESPECIES O SEMILLAS SEMBRADAS",
+  "TOTAL DE ESECIES O SEMILLAS SEMBRADAS",
 ] as const;
 
-if (MATRIZ_F_PSA_HEADERS.length !== 76) {
-  throw new Error("matriz: se esperan 76 columnas");
+if (MATRIZ_F_PSA_HEADERS.length !== MATRIZ_COLUMN_COUNT) {
+  throw new Error(`matriz: se esperan ${MATRIZ_COLUMN_COUNT} columnas`);
 }
 
 function strFromDatos(
@@ -120,50 +118,12 @@ export function isGpsPlaceholderForExport(gps: OfflineForm["gps"]): boolean {
   );
 }
 
-function isGmsAxisEmpty(
-  datos: Record<string, unknown>,
-  axis: "x" | "y",
-): boolean {
-  const keys = axis === "x" ? GMS_X_KEYS : GMS_Y_KEYS;
-  return keys.every((k) => {
-    const t = coordTokenFromDatos(datos, k);
-    return t === "" || t === "0";
-  });
-}
-
-/** Valor de celda para grados/minutos/segundos y decimales; vacío si no hay dato. */
+/** Valor de celda para coordenadas decimales o altitud en exportación. */
 export function coordFieldForMatrizExport(
   datos: Record<string, unknown>,
   key: FormFieldKey,
 ): string {
-  const token = coordTokenFromDatos(datos, key);
-  if (token === "") {
-    return "";
-  }
-  if (
-    key === "x_grados" ||
-    key === "x_minutos" ||
-    key === "x_segundos"
-  ) {
-    if (isGmsAxisEmpty(datos, "x")) {
-      return "";
-    }
-  }
-  if (
-    key === "y_grados" ||
-    key === "y_minutos" ||
-    key === "y_segundos"
-  ) {
-    if (isGmsAxisEmpty(datos, "y")) {
-      return "";
-    }
-  }
-  if (key === "x_minutos" || key === "x_segundos" || key === "y_minutos" || key === "y_segundos") {
-    if (token === "0") {
-      return "";
-    }
-  }
-  return token;
+  return coordTokenFromDatos(datos, key);
 }
 
 function decimalCoordForMatrizExport(
@@ -185,7 +145,7 @@ function decimalCoordForMatrizExport(
   return Number.isFinite(gpsVal) ? String(gpsVal) : "";
 }
 
-/** Origen de cada celda de la fila 8 (76 columnas), alineado con la matriz F-PSA-08. */
+/** Origen de cada celda de la fila 8 (71 columnas), alineado con la matriz F-PSA-08. */
 export type MatrizRowCellSource =
   | { kind: "id_formulario" }
   | { kind: "field"; key: FormFieldKey }
@@ -220,14 +180,9 @@ export const MATRIZ_ROW_CELL_SOURCES: readonly MatrizRowCellSource[] = [
   { kind: "field", key: "nombre_predio" },
   { kind: "field", key: "residencia" },
   { kind: "field", key: "tenencia_predio" },
-  { kind: "field", key: "x_grados" },
-  { kind: "field", key: "x_minutos" },
-  { kind: "field", key: "x_segundos" },
-  { kind: "lon" },
-  { kind: "field", key: "y_grados" },
-  { kind: "field", key: "y_minutos" },
-  { kind: "field", key: "y_segundos" },
   { kind: "lat" },
+  { kind: "lon" },
+  { kind: "field", key: "metros_sobre_nivel_mar" },
   { kind: "field", key: "numero_personas_nucleo_familiar" },
   { kind: "field", key: "numero_menores_edad" },
   { kind: "field", key: "numero_adultos_mayores" },
@@ -272,8 +227,10 @@ export const MATRIZ_ROW_CELL_SOURCES: readonly MatrizRowCellSource[] = [
   { kind: "field", key: "total_especies_semillas_sembradas" },
 ] as const;
 
-if (MATRIZ_ROW_CELL_SOURCES.length !== 76) {
-  throw new Error("matriz: MATRIZ_ROW_CELL_SOURCES debe tener 76 entradas");
+if (MATRIZ_ROW_CELL_SOURCES.length !== MATRIZ_COLUMN_COUNT) {
+  throw new Error(
+    `matriz: MATRIZ_ROW_CELL_SOURCES debe tener ${MATRIZ_COLUMN_COUNT} entradas`,
+  );
 }
 
 /** Si parece ISO 8601, devuelve DD/MM/AAAA; si no, el texto original. */
@@ -301,7 +258,7 @@ export function formatFechaMatriz(raw: string): string {
   return `${day}/${month}/${year}`;
 }
 
-/** Una fila de datos (columnas 1–76) para la matriz F-PSA-08. */
+/** Una fila de datos (columnas 1–71) para la matriz F-PSA-08. */
 export function buildMatrizCaracterizacionRow(form: OfflineForm): string[] {
   const d = form.datos_formulario as Record<string, unknown>;
   const g = (k: FormFieldKey) => strFromDatos(d, k);
@@ -313,16 +270,7 @@ export function buildMatrizCaracterizacionRow(form: OfflineForm): string[] {
       case "id_formulario":
         return form.id_formulario;
       case "field":
-        if (
-          src.key === "x_grados" ||
-          src.key === "x_minutos" ||
-          src.key === "x_segundos" ||
-          src.key === "y_grados" ||
-          src.key === "y_minutos" ||
-          src.key === "y_segundos" ||
-          src.key === "longitud" ||
-          src.key === "latitud"
-        ) {
+        if (COORD_NUMERIC_FIELD_KEYS.has(src.key)) {
           return coordFieldForMatrizExport(d, src.key);
         }
         return g(src.key);

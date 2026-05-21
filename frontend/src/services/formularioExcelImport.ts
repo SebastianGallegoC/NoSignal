@@ -8,6 +8,7 @@ import { GPS_PLACEHOLDER_WHEN_NOT_CAPTURED } from "@/constants/gpsConfig";
 import { randomUuid } from "@/lib/randomUuid";
 import type { OfflineForm } from "@/services/db";
 import {
+  MATRIZ_COLUMN_COUNT,
   MATRIZ_ROW_CELL_SOURCES,
   MATRIZ_SHEET_NAME,
 } from "@/services/matrizCaracterizacionExport";
@@ -194,9 +195,9 @@ export function cellsToFormValuesRaw(cells: string[]): FormValues {
   return out;
 }
 
-/** Reconstruye las 76 celdas de fila a partir de valores editados en la vista previa. */
+/** Reconstruye las celdas de fila a partir de valores editados en la vista previa. */
 export function formValuesToCells(displayValues: FormValues, idRaw: string): string[] {
-  const cells = new Array<string>(76).fill("");
+  const cells = new Array<string>(MATRIZ_COLUMN_COUNT).fill("");
   for (let i = 0; i < MATRIZ_ROW_CELL_SOURCES.length; i++) {
     const src = MATRIZ_ROW_CELL_SOURCES[i];
     switch (src.kind) {
@@ -266,7 +267,7 @@ function cellValueToImportString(cell: Cell): string {
 
 function readDataRowStrings(row: Row): string[] {
   const out: string[] = [];
-  for (let c = 1; c <= 76; c++) {
+  for (let c = 1; c <= MATRIZ_COLUMN_COUNT; c++) {
     out.push(cellValueToImportString(row.getCell(c)));
   }
   return out;
@@ -612,7 +613,7 @@ export async function previewPlantillaWorkbook(
 
 /**
  * Lee un .xlsx alineado a la plantilla: hoja F-PSA-08 (o la primera hoja), fila 7 reservada a
- * encabezados (no se validan los textos), datos desde la fila 8 por posición de columna (1–76).
+ * encabezados (no se validan los textos), datos desde la fila 8 por posición de columna (1–71).
  */
 export async function parsePlantillaWorkbook(
   buffer: ArrayBuffer,
