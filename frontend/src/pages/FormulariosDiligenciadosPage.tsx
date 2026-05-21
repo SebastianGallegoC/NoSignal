@@ -1026,10 +1026,10 @@ export const FormulariosDiligenciadosPage = () => {
   );
 
   return (
-    <div className="min-h-screen bg-[radial-gradient(circle_at_top,_#e2f2ee_0,_#f6f7f5_45%,_#f6f7f5_100%)] px-3 py-6 text-slate-900 sm:px-4 sm:py-10">
-      <div className="mx-auto w-full max-w-5xl">
-        <header className="mb-4 flex flex-col gap-2 sm:mb-6 sm:gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div>
+    <div className="min-h-screen overflow-x-clip bg-[radial-gradient(circle_at_top,_#e2f2ee_0,_#f6f7f5_45%,_#f6f7f5_100%)] px-3 py-6 text-slate-900 sm:px-4 sm:py-10">
+      <div className="mx-auto w-full min-w-0 max-w-5xl overflow-x-clip">
+        <header className="mb-4 flex min-w-0 flex-col gap-3 overflow-x-clip sm:mb-6 lg:flex-row lg:items-start lg:justify-between">
+          <div className="min-w-0 flex-1">
             <p className="text-xs font-semibold uppercase tracking-[0.35em] text-teal-700">
               NoSignal
             </p>
@@ -1086,12 +1086,12 @@ export const FormulariosDiligenciadosPage = () => {
               </p>
             ) : null}
           </div>
-          <div className="flex w-full flex-wrap items-center justify-end gap-2 sm:w-auto sm:flex-nowrap">
+          <div className="page-actions-bar w-full shrink-0 lg:max-w-[55%] xl:max-w-[60%]">
             <Button
               type="button"
               variant="outline"
               onClick={() => window.location.reload()}
-              className="w-full sm:w-auto"
+              className="h-auto min-w-0 whitespace-normal sm:shrink-0"
             >
               Recargar
             </Button>
@@ -1112,7 +1112,7 @@ export const FormulariosDiligenciadosPage = () => {
                 eliminandoPrecargaId !== null
               }
               title={!online ? "Requiere conexión a internet" : undefined}
-              className="w-full border-amber-200 text-amber-950 hover:bg-amber-50 sm:w-auto"
+              className="h-auto min-w-0 whitespace-normal border-amber-200 text-amber-950 hover:bg-amber-50 sm:shrink-0"
             >
               {eliminandoTodasPrecargas
                 ? "Quitando precargas…"
@@ -1125,7 +1125,7 @@ export const FormulariosDiligenciadosPage = () => {
               variant="outline"
               onClick={() => void descargarExcelDeTodos()}
               disabled={descargandoTodosExcel || !online}
-              className="w-full sm:w-auto"
+              className="h-auto min-w-0 whitespace-normal sm:shrink-0"
             >
               {descargandoTodosExcel
                 ? "Descargando Excel (todos)…"
@@ -1136,7 +1136,7 @@ export const FormulariosDiligenciadosPage = () => {
               variant="outline"
               onClick={() => void descargarFotosDeTodos()}
               disabled={descargandoTodasFotos || !online}
-              className="w-full sm:w-auto"
+              className="h-auto min-w-0 whitespace-normal sm:shrink-0"
             >
               {descargandoTodasFotos
                 ? "Descargando fotos (todos)…"
@@ -1164,7 +1164,7 @@ export const FormulariosDiligenciadosPage = () => {
                     ? "Iniciá sesión para borrar formularios del servidor"
                     : undefined
               }
-              className="w-full border-rose-300 text-rose-900 hover:bg-rose-50 sm:w-auto"
+              className="h-auto min-w-0 whitespace-normal border-rose-300 text-rose-900 hover:bg-rose-50 sm:shrink-0"
             >
               {eliminandoTodosFormularios
                 ? "Eliminando…"
@@ -1172,7 +1172,7 @@ export const FormulariosDiligenciadosPage = () => {
             </Button>
             <Link
               to="/inicio"
-              className="inline-flex w-full items-center justify-center rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm shadow-sm sm:w-auto"
+              className="inline-flex h-auto min-w-0 max-w-full items-center justify-center whitespace-normal rounded-xl border border-slate-200 bg-white px-3 py-2 text-center text-sm shadow-sm sm:shrink-0"
             >
               Volver
             </Link>
@@ -1256,17 +1256,17 @@ export const FormulariosDiligenciadosPage = () => {
               return (
                 <article
                   key={row.id_formulario}
-                  className={`overflow-hidden rounded-xl border bg-white/90 shadow-sm transition-shadow sm:rounded-2xl ${
+                  className={`min-w-0 overflow-x-clip rounded-xl border bg-white/90 shadow-sm transition-shadow sm:rounded-2xl ${
                     isOpen
                       ? "border-teal-400 ring-2 ring-teal-200"
                       : "border-slate-200 hover:border-slate-300"
                   }`}
                 >
-                  <div className="flex items-stretch gap-1.5 p-1.5 sm:gap-3 sm:p-3">
+                  <div className="flex min-w-0 items-stretch gap-1.5 overflow-x-clip p-1.5 sm:gap-3 sm:p-3">
                     <button
                       type="button"
                       onClick={() => toggleOrSelectRow(row)}
-                      className="flex min-w-0 flex-1 items-start justify-between gap-2 rounded-lg p-1.5 text-left sm:gap-3 sm:rounded-xl sm:p-3"
+                      className="flex min-w-0 flex-1 items-start justify-between gap-2 overflow-x-clip rounded-lg p-1.5 text-left sm:gap-3 sm:rounded-xl sm:p-3"
                     >
                       <div className="min-w-0 flex-1 space-y-0.5 sm:space-y-1">
                         <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
@@ -1374,7 +1374,7 @@ export const FormulariosDiligenciadosPage = () => {
                           <FormularioRespuestaReadOnly
                             snapshot={detailSnapshot}
                           />
-                          <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
+                          <div className="page-actions-bar justify-start">
                             {(() => {
                               const fotosDetalle =
                                 detailPrecarga?.fotos ??
@@ -1398,6 +1398,7 @@ export const FormulariosDiligenciadosPage = () => {
                                       disabled={
                                         precargaLoadingId === row.id_formulario
                                       }
+                                      className="h-auto min-w-0 whitespace-normal"
                                     >
                                       {precargaMap.has(row.id_formulario)
                                         ? "Actualizar precarga"
@@ -1419,7 +1420,7 @@ export const FormulariosDiligenciadosPage = () => {
                                         eliminandoPrecargaId ===
                                           row.id_formulario
                                       }
-                                      className="shrink-0 border-rose-200 text-rose-800 hover:bg-rose-50"
+                                      className="h-auto min-w-0 whitespace-normal border-rose-200 text-rose-800 hover:bg-rose-50"
                                     >
                                       {eliminandoPrecargaId ===
                                       row.id_formulario
@@ -1434,6 +1435,7 @@ export const FormulariosDiligenciadosPage = () => {
                                     onClick={() => {
                                       void usarComoBase(row);
                                     }}
+                                    className="h-auto min-w-0 whitespace-normal"
                                   >
                                     Editar este formulario
                                   </Button>
@@ -1447,6 +1449,7 @@ export const FormulariosDiligenciadosPage = () => {
                                       detailLoading ||
                                       descargandoExcelId === row.id_formulario
                                     }
+                                    className="h-auto min-w-0 whitespace-normal"
                                   >
                                     {descargandoExcelId === row.id_formulario
                                       ? "Descargando Excel…"
@@ -1462,6 +1465,7 @@ export const FormulariosDiligenciadosPage = () => {
                                       !canDownloadPhotos ||
                                       descargandoFotosId === row.id_formulario
                                     }
+                                    className="h-auto min-w-0 whitespace-normal"
                                   >
                                     {descargandoFotosId === row.id_formulario
                                       ? "Descargando fotos…"

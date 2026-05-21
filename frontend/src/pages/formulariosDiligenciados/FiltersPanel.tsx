@@ -24,7 +24,7 @@ export const FiltersPanel = ({
   hasActiveFilters,
 }: FiltersPanelProps) => {
   return (
-    <div className="mb-4 rounded-2xl border border-slate-200 bg-white/95 p-4 shadow-sm">
+    <div className="mb-4 min-w-0 overflow-x-clip rounded-2xl border border-slate-200 bg-white/95 p-4 shadow-sm">
       <h2 className="text-sm font-semibold text-slate-900">Filtros</h2>
 
       <div>
@@ -45,23 +45,23 @@ export const FiltersPanel = ({
         <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-600">
           Fecha de envío / del formulario
         </h3>
-        <div className="mt-3 flex flex-wrap items-end gap-3">
-          <label className="flex flex-col text-xs font-medium text-slate-700">
+        <div className="mt-3 grid min-w-0 grid-cols-1 gap-3 sm:flex sm:flex-wrap sm:items-end">
+          <label className="flex min-w-0 max-w-full flex-col text-xs font-medium text-slate-700 sm:min-w-[10rem] sm:flex-1">
             Desde
             <input
               type="date"
               value={filtroDesde}
               onChange={(e) => onChangeDesde(e.target.value)}
-              className="mt-1 rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-sm text-slate-900"
+              className="form-date-input mt-1 block w-full min-w-0 max-w-full rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-sm text-slate-900"
             />
           </label>
-          <label className="flex flex-col text-xs font-medium text-slate-700">
+          <label className="flex min-w-0 max-w-full flex-col text-xs font-medium text-slate-700 sm:min-w-[10rem] sm:flex-1">
             Hasta
             <input
               type="date"
               value={filtroHasta}
               onChange={(e) => onChangeHasta(e.target.value)}
-              className="mt-1 rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-sm text-slate-900"
+              className="form-date-input mt-1 block w-full min-w-0 max-w-full rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-sm text-slate-900"
             />
           </label>
           <button

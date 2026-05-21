@@ -401,7 +401,7 @@ export const FormularioPage = () => {
         ) : null}
 
         <form
-          className="flex flex-col gap-4"
+          className="flex min-w-0 flex-col gap-4 overflow-x-clip"
           onSubmit={handleSubmit(onValid, onInvalid)}
         >
           {coordenadasSection ? (
@@ -420,12 +420,12 @@ export const FormularioPage = () => {
                   return next;
                 });
               }}
-              className="group rounded-2xl border border-slate-200 bg-white/90 p-4 shadow-sm"
+              className="group min-w-0 overflow-x-clip rounded-2xl border border-slate-200 bg-white/90 p-4 shadow-sm"
             >
               <summary className="cursor-pointer text-sm font-semibold text-slate-900">
                 {coordenadasSection.title}
               </summary>
-              <div className="mt-4 grid gap-4 md:grid-cols-2">
+              <div className="form-fields-grid">
                 {coordenadasSection.fields.map((field) => (
                   <FormFieldRow
                     key={field}
@@ -478,12 +478,12 @@ export const FormularioPage = () => {
                   return next;
                 });
               }}
-              className="group rounded-2xl border border-slate-200 bg-white/90 p-4 shadow-sm"
+              className="group min-w-0 overflow-x-clip rounded-2xl border border-slate-200 bg-white/90 p-4 shadow-sm"
             >
               <summary className="cursor-pointer text-sm font-semibold text-slate-900">
                 {section.title}
               </summary>
-              <div className="mt-4 grid gap-4 md:grid-cols-2">
+              <div className="form-fields-grid">
                 {section.fields.map((field) => (
                   <FormFieldRow
                     key={field}

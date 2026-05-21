@@ -135,7 +135,7 @@ export const ImportPreviewRowCard = ({
               <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-600">
                 {section.title}
               </h3>
-              <div className="mt-3 grid gap-4 md:grid-cols-2">
+              <div className="form-fields-grid mt-3">
                 {section.fields.map((field) => {
                   const fk = field as FormFieldKey;
                   const kind = inputKindForField(fk);

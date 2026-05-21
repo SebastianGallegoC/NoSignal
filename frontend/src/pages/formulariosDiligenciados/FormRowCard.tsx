@@ -78,17 +78,17 @@ export const FormRowCard = ({
 
   return (
     <article
-      className={`overflow-hidden rounded-xl border bg-white/90 shadow-sm transition-shadow sm:rounded-2xl ${
+      className={`min-w-0 overflow-x-clip rounded-xl border bg-white/90 shadow-sm transition-shadow sm:rounded-2xl ${
         isOpen
           ? "border-teal-400 ring-2 ring-teal-200"
           : "border-slate-200 hover:border-slate-300"
       }`}
     >
-      <div className="flex items-stretch gap-1.5 p-1.5 sm:gap-3 sm:p-3">
+      <div className="flex min-w-0 items-stretch gap-1.5 overflow-x-clip p-1.5 sm:gap-3 sm:p-3">
         <button
           type="button"
           onClick={() => onSelectRow(row)}
-          className="flex min-w-0 flex-1 items-start justify-between gap-2 rounded-lg p-1.5 text-left sm:gap-3 sm:rounded-xl sm:p-3"
+          className="flex min-w-0 flex-1 items-start justify-between gap-2 overflow-x-clip rounded-lg p-1.5 text-left sm:gap-3 sm:rounded-xl sm:p-3"
         >
           <div className="min-w-0 flex-1 space-y-0.5 sm:space-y-1">
             <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
@@ -189,7 +189,7 @@ export const FormRowCard = ({
                 </span>
               </div>
               <FormularioRespuestaReadOnly snapshot={detailSnapshot} />
-              <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
+              <div className="page-actions-bar justify-start">
                 {(() => {
                   const fotosDetalle =
                     detailPrecarga?.fotos ?? detailSnapshot.fotos ?? [];
@@ -206,6 +206,7 @@ export const FormRowCard = ({
                           variant="outline"
                           onClick={() => void onPrecargarRow(row)}
                           disabled={precargaLoadingId === row.id_formulario}
+                          className="h-auto min-w-0 whitespace-normal"
                         >
                           {precargado
                             ? "Actualizar precarga"
@@ -221,7 +222,7 @@ export const FormRowCard = ({
                             precargaLoadingId === row.id_formulario ||
                             eliminandoPrecargaId === row.id_formulario
                           }
-                          className="shrink-0 border-rose-200 text-rose-800 hover:bg-rose-50"
+                          className="h-auto min-w-0 whitespace-normal border-rose-200 text-rose-800 hover:bg-rose-50"
                         >
                           {eliminandoPrecargaId === row.id_formulario
                             ? "Eliminando…"
@@ -233,6 +234,7 @@ export const FormRowCard = ({
                       <Button
                         type="button"
                         onClick={() => void onUsarComoBase(row)}
+                        className="h-auto min-w-0 whitespace-normal"
                       >
                         Editar este formulario
                       </Button>
@@ -244,6 +246,7 @@ export const FormRowCard = ({
                           detailLoading ||
                           descargandoExcelId === row.id_formulario
                         }
+                        className="h-auto min-w-0 whitespace-normal"
                       >
                         {descargandoExcelId === row.id_formulario
                           ? "Descargando Excel…"
@@ -257,6 +260,7 @@ export const FormRowCard = ({
                           !canDownloadPhotos ||
                           descargandoFotosId === row.id_formulario
                         }
+                        className="h-auto min-w-0 whitespace-normal"
                       >
                         {descargandoFotosId === row.id_formulario
                           ? "Descargando fotos…"

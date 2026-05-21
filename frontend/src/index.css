@@ -38,3 +38,40 @@
     margin: 0;
   }
 }
+
+@layer components {
+  /* Grids de formulario: los hijos (p. ej. input type=date) no desbordan en móvil */
+  .form-fields-grid {
+    @apply grid min-w-0 grid-cols-1 gap-4 overflow-x-clip md:grid-cols-2;
+  }
+
+  .form-fields-grid > * {
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  /* WebKit/Safari: el control nativo de fecha suele tener ancho mínimo grande */
+  .form-date-input {
+    display: block;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+  }
+
+  .form-date-input::-webkit-date-and-time-value {
+    min-width: 0;
+    max-width: 100%;
+    text-align: left;
+  }
+
+  /* Barra de acciones (p. ej. Formularios diligenciados): envuelve sin desbordar */
+  .page-actions-bar {
+    @apply flex min-w-0 max-w-full flex-wrap items-center justify-end gap-2 overflow-x-clip;
+  }
+
+  .page-actions-bar > * {
+    min-width: 0;
+    max-width: 100%;
+  }
+}

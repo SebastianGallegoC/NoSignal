@@ -101,7 +101,7 @@ const SearchableSelectInner = ({
   const inputRing = invalid || error ? inputErrorClass : '';
 
   return (
-    <label className="flex min-w-0 flex-col text-sm font-medium text-slate-800 md:col-span-2">
+    <label className="flex min-w-0 max-w-full flex-col text-sm font-medium text-slate-800 md:col-span-2">
       {label}
       <div className={`relative mt-1 ${open ? "z-[5000]" : "z-0"}`}>
         <input

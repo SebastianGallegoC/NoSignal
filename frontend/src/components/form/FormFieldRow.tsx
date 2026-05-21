@@ -15,7 +15,9 @@ import type { FormFieldKey, FormValues } from "@/types/formFields";
 import { SearchableSelect, type SelectOption } from "./SearchableSelect";
 
 const inputClass =
-  "mt-1 w-full min-w-0 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm [overflow-wrap:anywhere] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600";
+  "mt-1 block w-full min-w-0 max-w-full box-border rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm [overflow-wrap:anywhere] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600";
+
+const dateInputClass = `${inputClass} form-date-input`;
 
 const SELECT_FALLBACK: SelectOption[] = [{ value: "", label: "" }];
 
@@ -133,12 +135,14 @@ export const FormFieldRow = ({
   const isReadOnly = isGpsDerivedField && !editableGpsFields;
   const gpsReadOnlyClass = isReadOnly ? " bg-slate-100 text-slate-600" : "";
   const inputType = isManualCoordField ? "text" : type;
+  const fieldInputClass =
+    inputType === "date" ? dateInputClass : inputClass;
 
   return (
-    <label className="flex min-w-0 flex-col text-sm font-medium text-slate-800">
+    <label className="flex min-w-0 max-w-full flex-col text-sm font-medium text-slate-800">
       {label}
       <input
-        className={`${inputClass}${gpsReadOnlyClass}`}
+        className={`${fieldInputClass}${gpsReadOnlyClass}`}
         type={inputType}
         inputMode={isManualCoordField ? "decimal" : undefined}
         min={isPositiveInt || isSatisfaccion ? 1 : undefined}
