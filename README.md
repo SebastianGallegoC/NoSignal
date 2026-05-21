@@ -97,6 +97,8 @@ AUTO_CREATE_SCHEMA=true
 
 Comprobación rápida del esquema: `GET https://<tu-api>/health` incluye `schema_forms_fecha_actualizacion` (debe ser `true`).
 
+Si `alembic upgrade head` falla en `20260519_0001` con `operator does not exist: json - unknown`, actualizá el repo (la migración castea `datos_formulario` a `jsonb` para quitar claves GMS) y reconstruí el backend antes de reintentar.
+
 ## Backups y continuidad de datos
 
 Los datos persisten en volúmenes Docker (`nosignal_db`, `nosignal_uploads`). Reiniciar contenedores **no** borra esos volúmenes; sí los borran operaciones como `docker compose down -v` o `docker volume rm`.

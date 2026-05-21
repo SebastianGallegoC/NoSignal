@@ -14,6 +14,7 @@ down_revision = "20260505_0001"
 branch_labels = None
 depends_on = None
 
+# El operador `-` para quitar claves solo existe en jsonb; en prod la columna es `json`.
 GMS_KEYS_SQL = (
     " - 'x_grados' - 'x_minutos' - 'x_segundos'"
     " - 'y_grados' - 'y_minutos' - 'y_segundos'"
@@ -22,7 +23,9 @@ GMS_KEYS_SQL = (
 
 def upgrade() -> None:
     op.execute(
-        f"UPDATE forms SET datos_formulario = datos_formulario{GMS_KEYS_SQL}"
+        "UPDATE forms SET datos_formulario = ("
+        f"datos_formulario::jsonb{GMS_KEYS_SQL}"
+        ")::json"
     )
 
 

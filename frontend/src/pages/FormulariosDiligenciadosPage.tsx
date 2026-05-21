@@ -1090,7 +1090,7 @@ export const FormulariosDiligenciadosPage = () => {
           <div className="page-toolbar w-full shrink-0 lg:max-w-md xl:max-w-lg">
             <div className="page-toolbar-icons">
               <Button variant="outline" size="sm" asChild>
-                <Link to="/inicio">Volver</Link>
+                <Link to="/inicio">Regresar</Link>
               </Button>
               <Button
                 type="button"
