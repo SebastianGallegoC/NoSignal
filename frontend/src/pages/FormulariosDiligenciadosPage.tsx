@@ -1090,28 +1090,29 @@ export const FormulariosDiligenciadosPage = () => {
           <div className="page-toolbar w-full shrink-0 lg:max-w-md xl:max-w-lg">
             <div className="page-toolbar-icons">
               <Button
-                type="button"
                 variant="outline"
+                size="icon"
                 asChild
-                className="btn-icon-square"
+                className="text-slate-800"
               >
                 <Link
                   to="/inicio"
                   aria-label="Volver al inicio"
                   title="Volver al inicio"
                 >
-                  <ArrowLeft className="h-4 w-4" aria-hidden />
+                  <ArrowLeft size={16} strokeWidth={2} aria-hidden />
                 </Link>
               </Button>
               <Button
                 type="button"
                 variant="outline"
+                size="icon"
                 onClick={() => window.location.reload()}
-                className="btn-icon-square"
+                className="text-slate-800"
                 aria-label="Recargar página"
                 title="Recargar"
               >
-                <RefreshCw className="h-4 w-4" aria-hidden />
+                <RefreshCw size={16} strokeWidth={2} aria-hidden />
               </Button>
             </div>
             <div className="page-toolbar-actions">

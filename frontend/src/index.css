@@ -95,8 +95,4 @@
   .page-toolbar-actions .toolbar-btn {
     @apply h-auto min-h-9 w-full justify-center whitespace-normal px-3 py-2 text-center text-xs leading-snug sm:text-sm;
   }
-
-  .btn-icon-square {
-    @apply inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full p-0;
-  }
 }
