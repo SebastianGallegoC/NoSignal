@@ -19,7 +19,7 @@ import type { FormFieldKey, FormValues } from "@/types/formFields";
 import { SearchableSelect, type SelectOption } from "./SearchableSelect";
 
 const inputClass =
-  "mt-1 block w-full min-w-0 max-w-full box-border rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm [overflow-wrap:anywhere] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600";
+  "mt-1 block w-full min-w-0 max-w-full box-border rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm [overflow-wrap:anywhere] form-control-focus";
 
 const dateInputClass = `${inputClass} form-date-input`;
 

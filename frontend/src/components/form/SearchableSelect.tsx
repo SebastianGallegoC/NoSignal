@@ -7,7 +7,7 @@ import type { FormFieldKey, FormValues } from '@/types/formFields';
 export type SelectOption = { value: string; label: string };
 
 const inputClass =
-  'mt-1 w-full min-w-0 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm [overflow-wrap:anywhere] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600';
+  'mt-1 w-full min-w-0 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm [overflow-wrap:anywhere] form-control-focus';
 
 const inputWithChevronClass = `${inputClass} pr-9 appearance-none`;
 
@@ -70,6 +70,8 @@ type InnerProps = {
   invalid?: boolean;
 };
 
+const LISTBOX_MAX_HEIGHT_PX = 208;
+
 const SearchableSelectInner = ({
   binding,
   options,
@@ -79,6 +81,8 @@ const SearchableSelectInner = ({
   invalid,
 }: InnerProps) => {
   const [open, setOpen] = useState(false);
+  const [dropUp, setDropUp] = useState(false);
+  const anchorRef = useRef<HTMLDivElement>(null);
   const fieldValue = String(binding.value ?? '');
   const [text, setText] = useState(() => labelForValue(fieldValue, options));
 
@@ -87,6 +91,20 @@ const SearchableSelectInner = ({
   }, [fieldValue, options]);
 
   const filtered = useMemo(() => filterOptions(options, text), [options, text]);
+
+  const updateDropDirection = () => {
+    const el = anchorRef.current;
+    if (!el) {
+      return;
+    }
+    const rect = el.getBoundingClientRect();
+    const spaceBelow = window.innerHeight - rect.bottom;
+    const spaceAbove = rect.top;
+    setDropUp(
+      spaceBelow < LISTBOX_MAX_HEIGHT_PX + 12 &&
+      spaceAbove > spaceBelow,
+    );
+  };
 
   const commitOrRevert = () => {
     const resolved = resolveOption(text, options);
@@ -103,7 +121,10 @@ const SearchableSelectInner = ({
   return (
     <label className="flex min-w-0 max-w-full flex-col text-sm font-medium text-slate-800 md:col-span-2">
       {label}
-      <div className={`relative mt-1 ${open ? "z-[5000]" : "z-0"}`}>
+      <div
+        ref={anchorRef}
+        className={`relative mt-1 ${open ? "z-[5000]" : "z-0"}`}
+      >
         <input
           ref={binding.inputRef}
           name={binding.name}
@@ -117,8 +138,12 @@ const SearchableSelectInner = ({
           onChange={(e) => {
             setText(e.target.value);
             setOpen(true);
+            updateDropDirection();
           }}
-          onFocus={() => setOpen(true)}
+          onFocus={() => {
+            updateDropDirection();
+            setOpen(true);
+          }}
           onBlur={() => {
             binding.onBlur();
             setOpen(false);
@@ -152,7 +177,9 @@ const SearchableSelectInner = ({
           <ul
             id={listId}
             role="listbox"
-            className="absolute z-10 mt-1 max-h-52 w-full overflow-auto rounded-xl border border-slate-200 bg-white py-1 shadow-lg"
+            className={`absolute z-[5001] max-h-52 w-full overflow-auto rounded-xl border border-slate-200 bg-white py-1 shadow-lg ${
+              dropUp ? "bottom-full mb-1" : "top-full mt-1"
+            }`}
           >
             {filtered.map((o) => (
               <li

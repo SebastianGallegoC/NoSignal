@@ -40,14 +40,28 @@
 }
 
 @layer components {
-  /* Grids de formulario: los hijos (p. ej. input type=date) no desbordan en móvil */
+  /* Grids de formulario: min-w-0 evita desborde horizontal; overflow visible para listas de select */
   .form-fields-grid {
-    @apply grid min-w-0 grid-cols-1 gap-4 overflow-x-clip md:grid-cols-2;
+    @apply grid min-w-0 grid-cols-1 gap-4 overflow-visible md:grid-cols-2;
   }
 
   .form-fields-grid > * {
     min-width: 0;
     max-width: 100%;
+  }
+
+  /* Anillo de foco interior: no se corta con overflow en tarjetas/secciones */
+  .form-control-focus {
+    @apply focus-visible:outline-none focus-visible:border-teal-600 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-teal-600/35;
+  }
+
+  /* Secciones <details> del formulario: permiten desplegar combobox hacia abajo/arriba */
+  .form-section-panel {
+    @apply min-w-0 overflow-visible rounded-2xl border border-slate-200 bg-white/90 p-4 pb-5 shadow-sm;
+  }
+
+  .form-section-panel .form-fields-grid {
+    @apply pb-1;
   }
 
   /* WebKit/Safari: el control nativo de fecha suele tener ancho mínimo grande */

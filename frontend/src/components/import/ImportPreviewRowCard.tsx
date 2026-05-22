@@ -17,7 +17,7 @@ const TRIO_OPTIONS_LIST: SelectOption[] = triOptions.map((o) => ({
 }));
 
 const inputBase =
-  "mt-1 w-full min-w-0 rounded-xl border bg-white px-3 py-2 text-sm text-slate-900 shadow-sm [overflow-wrap:anywhere] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600";
+  "mt-1 w-full min-w-0 rounded-xl border bg-white px-3 py-2 text-sm text-slate-900 shadow-sm [overflow-wrap:anywhere] form-control-focus";
 
 type PreviewFieldProps = {
   label: string;
@@ -102,7 +102,7 @@ export const ImportPreviewRowCard = ({
           )}
         </span>
       </summary>
-      <div className="border-t border-slate-100 px-4 pb-4 pt-2">
+      <div className="overflow-visible border-t border-slate-100 px-4 pb-4 pt-2">
         {rowMessages.length > 0 ? (
           <ul className="mb-3 list-inside list-disc rounded-lg bg-red-50 px-3 py-2 text-sm text-red-800">
             {rowMessages.map((m, i) => (
@@ -134,7 +134,7 @@ export const ImportPreviewRowCard = ({
           {FORM_SECTIONS.map((section) => (
             <section
               key={section.id}
-              className="rounded-xl border border-slate-100 bg-slate-50/50 p-3"
+              className="overflow-visible rounded-xl border border-slate-100 bg-slate-50/50 p-3"
             >
               <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-600">
                 {section.title}

@@ -401,7 +401,7 @@ export const FormularioPage = () => {
         ) : null}
 
         <form
-          className="flex min-w-0 flex-col gap-4 overflow-x-clip"
+          className="flex min-w-0 flex-col gap-4"
           onSubmit={handleSubmit(onValid, onInvalid)}
         >
           {coordenadasSection ? (
@@ -420,7 +420,7 @@ export const FormularioPage = () => {
                   return next;
                 });
               }}
-              className="group min-w-0 overflow-x-clip rounded-2xl border border-slate-200 bg-white/90 p-4 shadow-sm"
+              className="form-section-panel group"
             >
               <summary className="cursor-pointer text-sm font-semibold text-slate-900">
                 {coordenadasSection.title}
@@ -478,7 +478,7 @@ export const FormularioPage = () => {
                   return next;
                 });
               }}
-              className="group min-w-0 overflow-x-clip rounded-2xl border border-slate-200 bg-white/90 p-4 shadow-sm"
+              className="form-section-panel group"
             >
               <summary className="cursor-pointer text-sm font-semibold text-slate-900">
                 {section.title}
