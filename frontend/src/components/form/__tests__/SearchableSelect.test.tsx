@@ -127,7 +127,7 @@ describe("SearchableSelect", () => {
       await new Promise((r) => setTimeout(r, 60));
     });
 
-    expect(document.activeElement).toBe(input);
+    expect(document.activeElement).not.toBe(input);
     expect(document.activeElement).not.toBe(next);
 
     act(() => {

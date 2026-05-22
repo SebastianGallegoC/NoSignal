@@ -95,6 +95,8 @@ const SearchableSelectInner = ({
   const [dropUp, setDropUp] = useState(false);
   const anchorRef = useRef<HTMLDivElement>(null);
   const inputElRef = useRef<HTMLInputElement | null>(null);
+  /** Trampa de foco breve: evita que el blur salte al siguiente campo del formulario. */
+  const focusTrapRef = useRef<HTMLButtonElement>(null);
   /** Evita que onBlur revierta la opción recién elegida (típico en táctil). */
   const skipBlurCommitRef = useRef(false);
   const clearSkipTimerRef = useRef<number | null>(null);
@@ -112,18 +114,20 @@ const SearchableSelectInner = ({
   };
 
   /** Cierra teclado táctil sin pasar al siguiente campo del formulario. */
-  const retainComboboxFocus = () => {
-    const input = inputElRef.current;
-    if (!input) {
-      skipBlurCommitRef.current = false;
-      return;
-    }
+  const dismissKeyboardAfterSelection = () => {
     if (clearSkipTimerRef.current !== null) {
       window.clearTimeout(clearSkipTimerRef.current);
     }
     skipBlurCommitRef.current = true;
-    input.readOnly = true;
-    input.focus({ preventScroll: true });
+    const input = inputElRef.current;
+    if (input) {
+      input.readOnly = true;
+      input.blur();
+    }
+    focusTrapRef.current?.focus({ preventScroll: true });
+    requestAnimationFrame(() => {
+      focusTrapRef.current?.blur();
+    });
     clearSkipTimerRef.current = window.setTimeout(() => {
       if (inputElRef.current) {
         inputElRef.current.readOnly = false;
@@ -148,7 +152,7 @@ const SearchableSelectInner = ({
     e.preventDefault();
     e.stopPropagation();
     applyOption(option);
-    retainComboboxFocus();
+    dismissKeyboardAfterSelection();
   };
 
   useEffect(
@@ -215,13 +219,15 @@ const SearchableSelectInner = ({
             updateDropDirection();
           }}
           onFocus={() => {
+            if (inputElRef.current) {
+              inputElRef.current.readOnly = false;
+            }
             updateDropDirection();
             setOpen(true);
           }}
           onBlur={() => {
             binding.onBlur();
             if (skipBlurCommitRef.current) {
-              retainComboboxFocus();
               return;
             }
             setOpen(false);
@@ -233,22 +239,29 @@ const SearchableSelectInner = ({
               e.stopPropagation();
               setOpen(false);
               setText(labelForValue(fieldValue, options));
-              retainComboboxFocus();
+              dismissKeyboardAfterSelection();
             }
             if (e.key === 'Enter') {
               e.preventDefault();
               e.stopPropagation();
               if (open && filtered.length === 1) {
                 applyOption(filtered[0]);
-                retainComboboxFocus();
+                dismissKeyboardAfterSelection();
               } else if (open) {
                 setOpen(false);
-                retainComboboxFocus();
+                dismissKeyboardAfterSelection();
               } else {
-                retainComboboxFocus();
+                dismissKeyboardAfterSelection();
               }
             }
           }}
+        />
+        <button
+          type="button"
+          tabIndex={-1}
+          aria-hidden="true"
+          ref={focusTrapRef}
+          className="sr-only absolute h-0 w-0 overflow-hidden border-0 p-0 opacity-0"
         />
         <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-slate-500">
           <svg viewBox="0 0 20 20" fill="currentColor" className="h-4 w-4" aria-hidden="true">
