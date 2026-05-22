@@ -82,6 +82,18 @@ type InnerProps = {
 };
 
 const LISTBOX_MAX_HEIGHT_PX = 208;
+/** Desplazamiento máximo (px) para considerar tap vs scroll en la lista. */
+const LIST_TAP_MOVE_THRESHOLD_PX = 10;
+
+type ListPointerState = {
+  pointerId: number;
+  startX: number;
+  startY: number;
+  moved: boolean;
+  scrolled: boolean;
+  option: SelectOption;
+  target: HTMLLIElement;
+};
 
 const SearchableSelectInner = ({
   binding,
@@ -100,6 +112,7 @@ const SearchableSelectInner = ({
   /** Evita que onBlur revierta la opción recién elegida (típico en táctil). */
   const skipBlurCommitRef = useRef(false);
   const clearSkipTimerRef = useRef<number | null>(null);
+  const listPointerRef = useRef<ListPointerState | null>(null);
   const fieldValue = String(binding.value ?? '');
   const [text, setText] = useState(() => labelForValue(fieldValue, options));
 
@@ -124,10 +137,9 @@ const SearchableSelectInner = ({
       input.readOnly = true;
       input.blur();
     }
+    // Mantener foco aquí: si se hace blur, el navegador suele ir al siguiente
+    // campo (p. ej. type="date" justo después de nombre_actividad).
     focusTrapRef.current?.focus({ preventScroll: true });
-    requestAnimationFrame(() => {
-      focusTrapRef.current?.blur();
-    });
     clearSkipTimerRef.current = window.setTimeout(() => {
       if (inputElRef.current) {
         inputElRef.current.readOnly = false;
@@ -153,6 +165,87 @@ const SearchableSelectInner = ({
     e.stopPropagation();
     applyOption(option);
     dismissKeyboardAfterSelection();
+  };
+
+  const releaseListPointerSkip = () => {
+    if (clearSkipTimerRef.current !== null) {
+      window.clearTimeout(clearSkipTimerRef.current);
+    }
+    clearSkipTimerRef.current = window.setTimeout(() => {
+      skipBlurCommitRef.current = false;
+      clearSkipTimerRef.current = null;
+    }, 50);
+  };
+
+  const beginListPointer = (option: SelectOption, e: PointerEvent<HTMLLIElement>) => {
+    skipBlurCommitRef.current = true;
+    listPointerRef.current = {
+      pointerId: e.pointerId,
+      startX: e.clientX,
+      startY: e.clientY,
+      moved: false,
+      scrolled: false,
+      option,
+      target: e.currentTarget,
+    };
+    try {
+      e.currentTarget.setPointerCapture(e.pointerId);
+    } catch {
+      /* algunos entornos (p. ej. jsdom) no implementan pointer capture */
+    }
+  };
+
+  const moveListPointer = (e: PointerEvent<HTMLLIElement>) => {
+    const st = listPointerRef.current;
+    if (!st || st.pointerId !== e.pointerId) {
+      return;
+    }
+    const dx = e.clientX - st.startX;
+    const dy = e.clientY - st.startY;
+    if (dx * dx + dy * dy > LIST_TAP_MOVE_THRESHOLD_PX * LIST_TAP_MOVE_THRESHOLD_PX) {
+      st.moved = true;
+    }
+  };
+
+  const endListPointer = (e: PointerEvent<HTMLLIElement>) => {
+    const st = listPointerRef.current;
+    if (!st || st.pointerId !== e.pointerId) {
+      return;
+    }
+    try {
+      e.currentTarget.releasePointerCapture(e.pointerId);
+    } catch {
+      /* ignorar si ya se liberó */
+    }
+    const isTap =
+      e.currentTarget === st.target && !st.moved && !st.scrolled;
+    if (isTap) {
+      pickOptionFromList(st.option, e);
+    } else {
+      releaseListPointerSkip();
+    }
+    listPointerRef.current = null;
+  };
+
+  const cancelListPointer = (e: PointerEvent<HTMLLIElement>) => {
+    const st = listPointerRef.current;
+    if (!st || st.pointerId !== e.pointerId) {
+      return;
+    }
+    try {
+      e.currentTarget.releasePointerCapture(e.pointerId);
+    } catch {
+      /* ignorar */
+    }
+    releaseListPointerSkip();
+    listPointerRef.current = null;
+  };
+
+  const markListScrolled = () => {
+    const st = listPointerRef.current;
+    if (st) {
+      st.scrolled = true;
+    }
   };
 
   useEffect(
@@ -276,9 +369,10 @@ const SearchableSelectInner = ({
           <ul
             id={listId}
             role="listbox"
-            className={`absolute z-[5001] max-h-52 w-full overflow-auto rounded-xl border border-slate-200 bg-white py-1 shadow-lg ${
+            className={`absolute z-[5001] max-h-52 w-full overflow-auto rounded-xl border border-slate-200 bg-white py-1 shadow-lg touch-pan-y ${
               dropUp ? "bottom-full mb-1" : "top-full mt-1"
             }`}
+            onScroll={markListScrolled}
           >
             {filtered.map((o) => (
               <li
@@ -286,7 +380,10 @@ const SearchableSelectInner = ({
                 role="option"
                 aria-selected={binding.value === o.value}
                 className="cursor-pointer px-3 py-2 text-sm text-slate-800 hover:bg-teal-50"
-                onPointerDown={(e) => pickOptionFromList(o, e)}
+                onPointerDown={(e) => beginListPointer(o, e)}
+                onPointerMove={moveListPointer}
+                onPointerUp={endListPointer}
+                onPointerCancel={cancelListPointer}
               >
                 {o.label}
               </li>

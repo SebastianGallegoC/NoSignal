@@ -12,6 +12,23 @@ const OPTIONS = [
   { value: "Obligatoria", label: "Obligatoria" },
 ];
 
+const PTR = { bubbles: true, cancelable: true, pointerId: 1, clientX: 10, clientY: 10 };
+
+function tapListOption(option: HTMLLIElement) {
+  option.dispatchEvent(new PointerEvent("pointerdown", PTR));
+  option.dispatchEvent(new PointerEvent("pointerup", PTR));
+}
+
+function dragListOption(option: HTMLLIElement, clientY: number) {
+  option.dispatchEvent(new PointerEvent("pointerdown", PTR));
+  option.dispatchEvent(
+    new PointerEvent("pointermove", { ...PTR, clientY }),
+  );
+  option.dispatchEvent(
+    new PointerEvent("pointerup", { ...PTR, clientY }),
+  );
+}
+
 function SelectHarness({
   onValue,
 }: {
@@ -35,7 +52,7 @@ function SelectHarness({
 }
 
 describe("SearchableSelect", () => {
-  it("aplica la opción al elegir con mousedown (sin revertir por blur)", async () => {
+  it("aplica la opción al tap en la lista (sin revertir por blur)", async () => {
     const container = document.createElement("div");
     document.body.appendChild(container);
     const root = createRoot(container);
@@ -69,9 +86,7 @@ describe("SearchableSelect", () => {
     expect(option?.textContent).toContain("Voluntaria");
 
     await act(async () => {
-      option.dispatchEvent(
-        new PointerEvent("pointerdown", { bubbles: true, cancelable: true }),
-      );
+      tapListOption(option);
     });
 
     await act(async () => {
@@ -96,7 +111,7 @@ describe("SearchableSelect", () => {
       root.render(
         <form>
           <SelectHarness />
-          <input data-testid="siguiente" />
+          <input type="date" data-testid="siguiente" />
         </form>,
       );
     });
@@ -104,6 +119,9 @@ describe("SearchableSelect", () => {
     const input = container.querySelector(
       'input[role="combobox"]',
     ) as HTMLInputElement;
+    const trap = container.querySelector(
+      'button[tabindex="-1"]',
+    ) as HTMLButtonElement;
     const next = container.querySelector(
       '[data-testid="siguiente"]',
     ) as HTMLInputElement;
@@ -118,9 +136,7 @@ describe("SearchableSelect", () => {
     ).find((li) => li.textContent?.includes("Voluntaria")) as HTMLLIElement;
 
     await act(async () => {
-      option.dispatchEvent(
-        new PointerEvent("pointerdown", { bubbles: true, cancelable: true }),
-      );
+      tapListOption(option);
     });
 
     await act(async () => {
@@ -129,6 +145,52 @@ describe("SearchableSelect", () => {
 
     expect(document.activeElement).not.toBe(input);
     expect(document.activeElement).not.toBe(next);
+    expect(document.activeElement).toBe(trap);
+
+    act(() => {
+      root.unmount();
+    });
+    container.remove();
+  });
+
+  it("no aplica opción al arrastrar/scroll en la lista (solo al soltar un tap)", async () => {
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    const root = createRoot(container);
+    let current = "";
+
+    await act(async () => {
+      root.render(
+        <SelectHarness
+          onValue={(v) => {
+            current = v;
+          }}
+        />,
+      );
+    });
+
+    const input = container.querySelector(
+      'input[role="combobox"]',
+    ) as HTMLInputElement;
+
+    await act(async () => {
+      input.focus();
+      input.dispatchEvent(new Event("focus", { bubbles: true }));
+    });
+
+    const option = container.querySelector(
+      'li[role="option"][aria-selected="false"]',
+    ) as HTMLLIElement;
+
+    await act(async () => {
+      dragListOption(option, 80);
+    });
+
+    await act(async () => {
+      await new Promise((r) => setTimeout(r, 60));
+    });
+
+    expect(current).toBe("");
 
     act(() => {
       root.unmount();
