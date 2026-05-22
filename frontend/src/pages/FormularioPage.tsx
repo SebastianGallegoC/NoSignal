@@ -19,6 +19,7 @@ import {
   hasFormularioEditChanges,
   type FormularioEditBaseline,
 } from "@/lib/formEditDirty";
+import { getFormSubmitButtonState } from "@/lib/formSubmitUi";
 import { handleDiligenciadoFormEnterKey } from "@/lib/formKeyboard";
 import { useConnectivityStatus } from "@/hooks/useConnectivityStatus";
 import { useGPS } from "@/hooks/useGPS";
@@ -158,7 +159,11 @@ export const FormularioPage = () => {
     modoCoordenadas,
   ]);
 
-  const puedeEnviarFormulario = !isEditMode || hasEditChanges;
+  const submitButton = getFormSubmitButtonState(
+    isEditMode,
+    hasEditChanges,
+    enviando,
+  );
 
   const hayContenidoDiligenciado = useMemo(
     () =>
@@ -551,24 +556,18 @@ export const FormularioPage = () => {
           ))}
 
           <div className="sticky bottom-4 flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white/95 p-4 shadow-lg backdrop-blur">
-            {isEditMode && !hasEditChanges ? (
+            {submitButton.showNoChangesHint ? (
               <p className="text-center text-xs text-slate-500">
                 No hay cambios para actualizar.
               </p>
             ) : null}
             <Button
               type="button"
-              disabled={enviando || !puedeEnviarFormulario}
+              disabled={submitButton.disabled}
               className="bg-teal-700 text-white hover:bg-teal-800 disabled:opacity-50"
               onClick={() => void handleSubmit(onValid, onInvalid)()}
             >
-              {enviando
-                ? isEditMode
-                  ? "Actualizando…"
-                  : "Guardando…"
-                : isEditMode
-                  ? "Actualizar"
-                  : "Guardar / enviar"}
+              {submitButton.label}
             </Button>
           </div>
         </form>
