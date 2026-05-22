@@ -155,12 +155,18 @@ const SearchableSelectInner = ({
               setOpen(false);
               setText(labelForValue(fieldValue, options));
             }
-            if (e.key === 'Enter' && open && filtered.length === 1) {
-              e.preventDefault();
-              const only = filtered[0];
-              binding.onChange(only.value);
-              setText(labelForValue(only.value, options));
-              setOpen(false);
+            if (e.key === 'Enter') {
+              if (open && filtered.length === 1) {
+                e.preventDefault();
+                const only = filtered[0];
+                binding.onChange(only.value);
+                setText(labelForValue(only.value, options));
+                setOpen(false);
+              }
+              if (open) {
+                e.preventDefault();
+              }
+              (e.currentTarget as HTMLInputElement).blur();
             }
           }}
         />

@@ -15,6 +15,7 @@ import { FormularioOverviewPanel } from "@/components/form/FormularioOverviewPan
 import { FormFieldRow } from "@/components/form/FormFieldRow";
 import { Button } from "@/components/ui/button";
 import { FORM_SECTIONS } from "@/config/formSections";
+import { handleDiligenciadoFormEnterKey } from "@/lib/formKeyboard";
 import { useConnectivityStatus } from "@/hooks/useConnectivityStatus";
 import { useGPS } from "@/hooks/useGPS";
 import { useFormularioSubmit } from "@/hooks/useFormularioSubmit";
@@ -405,22 +406,7 @@ export const FormularioPage = () => {
           onSubmit={(e) => {
             e.preventDefault();
           }}
-          onKeyDown={(e) => {
-            if (e.key !== "Enter") {
-              return;
-            }
-            const target = e.target;
-            if (target instanceof HTMLTextAreaElement) {
-              return;
-            }
-            if (
-              target instanceof HTMLButtonElement &&
-              target.type === "submit"
-            ) {
-              return;
-            }
-            e.preventDefault();
-          }}
+          onKeyDown={handleDiligenciadoFormEnterKey}
         >
           {coordenadasSection ? (
             <details

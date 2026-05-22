@@ -5,6 +5,7 @@ import {
   SearchableSelectControlled,
   type SelectOption,
 } from "@/components/form/SearchableSelect";
+import { handleDiligenciadoFormEnterKey } from "@/lib/formKeyboard";
 import { sanitizeCoordManualInput } from "@/lib/coordNumericToken";
 import type { ImportPreviewRow } from "@/services/formularioExcelImport";
 import type { FormFieldKey, FormValues } from "@/types/formFields";
@@ -111,7 +112,7 @@ export const ImportPreviewRowCard = ({
           </ul>
         ) : null}
 
-        <div className="space-y-4">
+        <div className="space-y-4" onKeyDown={handleDiligenciadoFormEnterKey}>
           <section className="rounded-xl border border-slate-100 bg-slate-50/50 p-3">
             <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-600">
               Identificador
