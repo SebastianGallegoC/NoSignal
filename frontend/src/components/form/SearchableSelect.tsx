@@ -1,4 +1,12 @@
-import { useEffect, useId, useMemo, useRef, useState, type Ref } from 'react';
+import {
+  useEffect,
+  useId,
+  useMemo,
+  useRef,
+  useState,
+  type MutableRefObject,
+  type Ref,
+} from 'react';
 import type { Control } from 'react-hook-form';
 import { Controller } from 'react-hook-form';
 
@@ -83,8 +91,30 @@ const SearchableSelectInner = ({
   const [open, setOpen] = useState(false);
   const [dropUp, setDropUp] = useState(false);
   const anchorRef = useRef<HTMLDivElement>(null);
+  const inputElRef = useRef<HTMLInputElement | null>(null);
   const fieldValue = String(binding.value ?? '');
   const [text, setText] = useState(() => labelForValue(fieldValue, options));
+
+  const assignInputRef = (el: HTMLInputElement | null) => {
+    inputElRef.current = el;
+    const { inputRef } = binding;
+    if (typeof inputRef === "function") {
+      inputRef(el);
+    } else if (inputRef && typeof inputRef === "object" && "current" in inputRef) {
+      (inputRef as MutableRefObject<HTMLInputElement | null>).current = el;
+    }
+  };
+
+  const dismissKeyboard = () => {
+    inputElRef.current?.blur();
+  };
+
+  const applyOption = (option: SelectOption) => {
+    binding.onChange(option.value);
+    setText(labelForValue(option.value, options));
+    setOpen(false);
+    dismissKeyboard();
+  };
 
   useEffect(() => {
     setText(labelForValue(fieldValue, options));
@@ -126,7 +156,7 @@ const SearchableSelectInner = ({
         className={`relative mt-1 ${open ? "z-[5000]" : "z-0"}`}
       >
         <input
-          ref={binding.inputRef}
+          ref={assignInputRef}
           name={binding.name}
           autoComplete="off"
           role="combobox"
@@ -154,19 +184,19 @@ const SearchableSelectInner = ({
               e.preventDefault();
               setOpen(false);
               setText(labelForValue(fieldValue, options));
+              dismissKeyboard();
             }
             if (e.key === 'Enter') {
               if (open && filtered.length === 1) {
                 e.preventDefault();
-                const only = filtered[0];
-                binding.onChange(only.value);
-                setText(labelForValue(only.value, options));
-                setOpen(false);
-              }
-              if (open) {
+                applyOption(filtered[0]);
+              } else if (open) {
                 e.preventDefault();
+                setOpen(false);
+                dismissKeyboard();
+              } else {
+                dismissKeyboard();
               }
-              (e.currentTarget as HTMLInputElement).blur();
             }
           }}
         />
@@ -193,11 +223,9 @@ const SearchableSelectInner = ({
                 role="option"
                 aria-selected={binding.value === o.value}
                 className="cursor-pointer px-3 py-2 text-sm text-slate-800 hover:bg-teal-50"
-                onMouseDown={(e) => {
+                onPointerDown={(e) => {
                   e.preventDefault();
-                  binding.onChange(o.value);
-                  setText(labelForValue(o.value, options));
-                  setOpen(false);
+                  applyOption(o);
                 }}
               >
                 {o.label}
