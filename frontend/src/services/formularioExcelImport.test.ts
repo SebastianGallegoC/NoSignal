@@ -1,5 +1,5 @@
 import { Workbook } from "exceljs";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import {
   MATRIZ_COLUMN_COUNT,
@@ -7,7 +7,10 @@ import {
   MATRIZ_SHEET_NAME,
 } from "@/services/matrizCaracterizacionExport";
 
-import { GPS_PLACEHOLDER_WHEN_NOT_CAPTURED } from "@/constants/gpsConfig";
+import {
+  GPS_PLACEHOLDER_WHEN_NOT_CAPTURED,
+  MIN_GPS_PRECISION_METERS,
+} from "@/constants/gpsConfig";
 
 import {
   analyzeImportRow,
@@ -121,7 +124,7 @@ describe("parsePlantillaWorkbook", () => {
     expect(ok[0].gps).toEqual({
       latitud: 4.60971,
       longitud: -74.08175,
-      precision: 5,
+      precision: MIN_GPS_PRECISION_METERS,
     });
     expect(ok[0].datos_formulario.longitud).toBe("-74.081750");
     expect(ok[0].datos_formulario.latitud).toBe("4.609710");
@@ -172,6 +175,8 @@ describe("parsePlantillaWorkbook", () => {
     const ws = wb.addWorksheet(MATRIZ_SHEET_NAME);
     ws.getCell(7, 1).value = "Encabezado arbitrario";
     ws.getCell(7, 2).value = "Otro título";
+    ws.getCell(7, 27).value = "LATITUD";
+    ws.getCell(7, 28).value = "LONGITUD";
 
     const row = new Array<string | number | null>(MATRIZ_COLUMN_COUNT).fill(null);
     row[7] = "María Pérez";
@@ -354,6 +359,78 @@ describe("parsePlantillaWorkbook", () => {
     expect(rows[0].isValid).toBe(true);
     expect(rows[0].displayValues.longitud).toBe("");
     expect(rows[0].displayValues.latitud).toBe("4.609710");
+  });
+
+  it("importa Excel exportado por la app (roundtrip matriz → import)", async () => {
+    const { buildMatrizCaracterizacionWorkbook } = await import(
+      "./matrizCaracterizacionExport"
+    );
+    const f = {
+      id_formulario: "00000000-0000-4000-8000-000000000099",
+      modo_coordenadas: "manual" as const,
+      fecha_hora: new Date().toISOString(),
+      fecha_actualizacion: new Date().toISOString(),
+      gps: { latitud: 4.6, longitud: -74.1, precision: 4 },
+      datos_formulario: {
+        entidad_aportante: "CENS",
+        nombres_apellidos_beneficiario: "Roundtrip Test",
+        latitud: "4.6",
+        longitud: "-74.1",
+        metros_sobre_nivel_mar: "2500",
+      },
+      fotos: [],
+      estado_sincronizacion: "PENDIENTE" as const,
+    };
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({ ok: false, arrayBuffer: async () => new ArrayBuffer(0) }),
+    );
+    const wb = await buildMatrizCaracterizacionWorkbook(f);
+    const buf = await wb.xlsx.writeBuffer();
+    const u8 = new Uint8Array(buf as ArrayBuffer);
+    const buffer = u8.buffer.slice(u8.byteOffset, u8.byteOffset + u8.byteLength);
+
+    const { ok, errors } = await parsePlantillaWorkbook(buffer);
+    expect(errors).toHaveLength(0);
+    expect(ok).toHaveLength(1);
+    expect(ok[0].datos_formulario.nombres_apellidos_beneficiario).toBe(
+      "Roundtrip Test",
+    );
+    expect(ok[0].datos_formulario.metros_sobre_nivel_mar).toBe("2500");
+    expect(ok[0].gps.latitud).toBeCloseTo(4.6, 4);
+    expect(ok[0].gps.longitud).toBeCloseTo(-74.1, 4);
+  });
+
+  it("lee LAT/LON/MSNM por encabezado aunque estén desplazadas (plantilla 76 cols)", async () => {
+    const wb = new Workbook();
+    const ws = wb.addWorksheet(MATRIZ_SHEET_NAME);
+    MATRIZ_F_PSA_HEADERS.forEach((h, i) => {
+      let col = i + 1;
+      if (i >= 26) {
+        col = i + 7;
+      }
+      ws.getCell(7, col).value = h;
+    });
+    const benefCol = 8;
+    const latCol = 33;
+    const lonCol = 34;
+    const msnmCol = 35;
+    ws.getCell(8, benefCol).value = "Benef desplazado";
+    ws.getCell(8, latCol).value = "4.5";
+    ws.getCell(8, lonCol).value = "-74.2";
+    ws.getCell(8, msnmCol).value = "2600";
+    const buf = await wb.xlsx.writeBuffer();
+    const u8 = new Uint8Array(buf as ArrayBuffer);
+    const buffer = u8.buffer.slice(u8.byteOffset, u8.byteOffset + u8.byteLength);
+    const { ok, errors } = await parsePlantillaWorkbook(buffer);
+    expect(errors).toHaveLength(0);
+    expect(ok).toHaveLength(1);
+    expect(ok[0].datos_formulario.nombres_apellidos_beneficiario).toBe(
+      "Benef desplazado",
+    );
+    expect(ok[0].gps.latitud).toBeCloseTo(4.5, 4);
+    expect(ok[0].gps.longitud).toBeCloseTo(-74.2, 4);
+    expect(ok[0].datos_formulario.metros_sobre_nivel_mar).toBe("2600");
   });
 
   it("rechaza plantilla antigua con encabezados GMS en columnas 27–28", async () => {

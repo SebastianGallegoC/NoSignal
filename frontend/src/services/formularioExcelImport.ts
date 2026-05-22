@@ -4,11 +4,15 @@ import {
   inputKindForField,
   SI_NO_IMPORT_NORMALIZE_FIELDS,
 } from "@/config/formFieldMeta";
-import { GPS_PLACEHOLDER_WHEN_NOT_CAPTURED } from "@/constants/gpsConfig";
+import {
+  GPS_PLACEHOLDER_WHEN_NOT_CAPTURED,
+  MIN_GPS_PRECISION_METERS,
+} from "@/constants/gpsConfig";
 import { randomUuid } from "@/lib/randomUuid";
 import type { OfflineForm } from "@/services/db";
 import {
   MATRIZ_COLUMN_COUNT,
+  MATRIZ_F_PSA_HEADERS,
   MATRIZ_ROW_CELL_SOURCES,
   MATRIZ_SHEET_NAME,
 } from "@/services/matrizCaracterizacionExport";
@@ -266,12 +270,137 @@ function cellValueToImportString(cell: Cell): string {
   return valueToImportString(cell.value);
 }
 
-function readDataRowStrings(row: Row): string[] {
-  const out: string[] = [];
-  for (let c = 1; c <= MATRIZ_COLUMN_COUNT; c++) {
-    out.push(cellValueToImportString(row.getCell(c)));
+/** Normaliza texto de encabezado Excel para emparejar con MATRIZ_F_PSA_HEADERS. */
+export function normalizeMatrizHeaderLabel(raw: string): string {
+  return raw
+    .normalize("NFD")
+    .replace(/\p{M}/gu, "")
+    .toUpperCase()
+    .replace(/\s+/g, " ")
+    .replace(/[°º]/g, "")
+    .trim();
+}
+
+export type MatrizHeaderColumnMap = {
+  /** Por cada columna lógica 0..70, columna Excel (1-based); -1 si no se encontró. */
+  excelColByMatrizIndex: number[];
+};
+
+function findExcelColForExpected(
+  normExpected: string,
+  excelByNorm: Map<string, number>,
+): number | null {
+  const direct = excelByNorm.get(normExpected);
+  if (direct != null) {
+    return direct;
   }
-  return out;
+  if (normExpected.length <= 3) {
+    return null;
+  }
+  for (const [h, col] of excelByNorm) {
+    if (h === normExpected) {
+      return col;
+    }
+    if (
+      normExpected.length >= 10 &&
+      (h.includes(normExpected) || normExpected.includes(h))
+    ) {
+      return col;
+    }
+  }
+  return null;
+}
+
+function buildHeaderColumnMap(
+  ws: Worksheet,
+): { map: MatrizHeaderColumnMap } | { error: ImportRowError } {
+  const excelByNorm = new Map<string, number>();
+  for (let c = 1; c <= 80; c++) {
+    const norm = normalizeMatrizHeaderLabel(
+      cellValueToImportString(ws.getCell(7, c)),
+    );
+    if (!norm) {
+      continue;
+    }
+    if (!excelByNorm.has(norm)) {
+      excelByNorm.set(norm, c);
+    }
+  }
+
+  const headerKeys = [...excelByNorm.keys()];
+  const hasLatitud = headerKeys.some((k) => k.includes("LATITUD"));
+  const hasLongitud = headerKeys.some((k) => k.includes("LONGITUD"));
+  const hasGmsOnly =
+    headerKeys.some(
+      (k) =>
+        (k.includes("GRADO") || k.includes("MINUTO") || k.includes("SEGUNDO")) &&
+        (k.startsWith("X ") || k.includes(" X") || k.startsWith("Y ") || k.includes(" Y")),
+    ) && !hasLatitud;
+
+  if (hasGmsOnly) {
+    return {
+      error: {
+        row: 7,
+        message:
+          "El archivo parece usar la plantilla antigua (76 columnas con coordenadas GMS). Descargá la plantilla actual (71 columnas, grados decimales) desde PLANTILLA.xlsx e importá de nuevo.",
+      },
+    };
+  }
+
+  const excelColByMatrizIndex: number[] = [];
+  const missing: string[] = [];
+
+  MATRIZ_F_PSA_HEADERS.forEach((expected, i) => {
+    const normExpected = normalizeMatrizHeaderLabel(expected);
+    let col = findExcelColForExpected(normExpected, excelByNorm);
+    if (col == null && i < MATRIZ_COLUMN_COUNT) {
+      col = i + 1;
+    }
+    if (col == null) {
+      missing.push(expected);
+      excelColByMatrizIndex.push(-1);
+    } else {
+      excelColByMatrizIndex.push(col);
+    }
+  });
+
+  const benefCol = excelColByMatrizIndex[7];
+  if (benefCol == null || benefCol < 1) {
+    return {
+      error: {
+        row: 7,
+        message:
+          "No se encontró la columna «NOMBRES Y APELLIDOS BENEFICIARIO» en la fila 7. Usá la plantilla PLANTILLA.xlsx (71 columnas).",
+      },
+    };
+  }
+
+  if (!hasLatitud && !hasLongitud) {
+    return {
+      error: {
+        row: 7,
+        message:
+          "No se encontraron columnas LATITUD y LONGITUD en la fila 7. Verificá que el Excel sea la plantilla actual en grados decimales.",
+      },
+    };
+  }
+
+  if (missing.length > 8) {
+    return {
+      error: {
+        row: 7,
+        message: `La fila 7 no coincide con la plantilla (${missing.length} columnas no reconocidas). Descargá PLANTILLA.xlsx e importá de nuevo.`,
+      },
+    };
+  }
+
+  return { map: { excelColByMatrizIndex } };
+}
+
+function readDataRowStrings(row: Row, colMap: MatrizHeaderColumnMap): string[] {
+  return colMap.excelColByMatrizIndex.map((excelCol) =>
+    excelCol > 0 ? cellValueToImportString(row.getCell(excelCol)) : "",
+  );
 }
 
 function isRowCompletelyEmpty(cells: string[]): boolean {
@@ -392,7 +521,11 @@ function rowToOfflineForm(
   const { lon, lat } = mergeLonLatFromCells(lonStr, latStr);
   const gps: OfflineForm["gps"] =
     lon != null && lat != null
-      ? { latitud: lat, longitud: lon, precision: 5 }
+      ? {
+          latitud: lat,
+          longitud: lon,
+          precision: MIN_GPS_PRECISION_METERS,
+        }
       : { ...GPS_PLACEHOLDER_WHEN_NOT_CAPTURED };
 
   if (lon != null) {
@@ -544,38 +677,22 @@ export function analyzeImportRow(
   };
 }
 
-/** Plantilla antigua (76 cols) tenía GMS en columnas 27–32; la actual usa LAT/LON/MSNM ahí. */
-function isLegacyGmsPlantillaHeader(ws: Worksheet): boolean {
-  const h27 = cellValueToImportString(ws.getCell(7, 27)).toUpperCase();
-  const h28 = cellValueToImportString(ws.getCell(7, 28)).toUpperCase();
-  const looksGms =
-    (h27.includes("GRADO") || h27.includes("MINUTO") || h27.includes("SEGUNDO")) &&
-    !h27.includes("LATIT");
-  const looksGmsY =
-    (h28.includes("GRADO") || h28.includes("MINUTO") || h28.includes("SEGUNDO")) &&
-    !h28.includes("LONGIT");
-  return looksGms || looksGmsY;
-}
-
 async function loadPlantillaSheet(
   buffer: ArrayBuffer,
-): Promise<{ worksheet: Worksheet } | { error: ImportRowError }> {
+): Promise<
+  { worksheet: Worksheet; colMap: MatrizHeaderColumnMap } | { error: ImportRowError }
+> {
   const wb = new Workbook();
   await wb.xlsx.load(buffer);
   const ws = wb.getWorksheet(MATRIZ_SHEET_NAME) ?? wb.worksheets[0];
   if (!ws) {
     return { error: { row: 0, message: "El archivo no contiene hojas." } };
   }
-  if (isLegacyGmsPlantillaHeader(ws)) {
-    return {
-      error: {
-        row: 7,
-        message:
-          "El archivo parece usar la plantilla antigua (76 columnas con coordenadas GMS). Descargá la plantilla actual (71 columnas, grados decimales) desde PLANTILLA.xlsx e importá de nuevo.",
-      },
-    };
+  const mapped = buildHeaderColumnMap(ws);
+  if ("error" in mapped) {
+    return mapped;
   }
-  return { worksheet: ws };
+  return { worksheet: ws, colMap: mapped.map };
 }
 
 /**
@@ -590,6 +707,7 @@ export async function previewPlantillaWorkbook(
   }
 
   const ws = loaded.worksheet;
+  const colMap = loaded.colMap;
   const nowIso = new Date().toISOString();
   const rows: ImportPreviewRow[] = [];
   let rowNum = 8;
@@ -597,7 +715,7 @@ export async function previewPlantillaWorkbook(
 
   while (rowNum <= maxRow) {
     const row = ws.getRow(rowNum);
-    const cells = readDataRowStrings(row);
+    const cells = readDataRowStrings(row, colMap);
 
     if (isRowCompletelyEmpty(cells)) {
       rowNum += 1;
@@ -629,6 +747,7 @@ export async function parsePlantillaWorkbook(
     return { ok: [], errors: [loaded.error] };
   }
   const ws = loaded.worksheet;
+  const colMap = loaded.colMap;
 
   const nowIso = new Date().toISOString();
   let rowNum = 8;
@@ -636,7 +755,7 @@ export async function parsePlantillaWorkbook(
 
   while (rowNum <= maxRow) {
     const row = ws.getRow(rowNum);
-    const cells = readDataRowStrings(row);
+    const cells = readDataRowStrings(row, colMap);
 
     if (isRowCompletelyEmpty(cells)) {
       rowNum += 1;

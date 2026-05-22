@@ -72,7 +72,9 @@ export const ImportarFormulariosPage = () => {
         setPreviewErrors(errors);
         setPreviewRows(rows);
         if (errors.length > 0) {
-          setMessage(null);
+          setMessage(
+            errors.map((e) => (e.row ? `Fila ${e.row}: ` : "") + e.message).join(" "),
+          );
         } else if (rows.length === 0) {
           setMessage("No había filas de datos para previsualizar (desde la fila 8).");
         } else {
