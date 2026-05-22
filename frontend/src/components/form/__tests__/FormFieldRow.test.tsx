@@ -13,7 +13,7 @@ function Wrapper({
   editable?: boolean;
 }) {
   const { register, control } = useForm<FormValues>({
-    defaultValues: {} as FormValues,
+    defaultValues: { longitud: "", latitud: "" } as FormValues,
   });
   return (
     <FormFieldRow
@@ -50,6 +50,32 @@ describe("FormFieldRow editableGpsFields", () => {
     });
     const input = container.querySelector("input") as HTMLInputElement;
     expect(input.readOnly).toBe(false);
+    expect(input.inputMode).toBe("text");
+    expect(input.lang).toBe("en");
+    act(() => {
+      root.unmount();
+    });
+    container.remove();
+  });
+
+  it("elimina comas al tipear coordenadas manuales", async () => {
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    const root = createRoot(container);
+    await act(async () => {
+      root.render(<Wrapper name="longitud" editable={true} />);
+    });
+    const input = container.querySelector("input") as HTMLInputElement;
+    await act(async () => {
+      const nativeInputValueSetter = Object.getOwnPropertyDescriptor(
+        window.HTMLInputElement.prototype,
+        "value",
+      )?.set;
+      nativeInputValueSetter?.call(input, "-74,08");
+      input.dispatchEvent(new Event("input", { bubbles: true }));
+      input.dispatchEvent(new Event("change", { bubbles: true }));
+    });
+    expect(input.value).toBe("-7408");
     act(() => {
       root.unmount();
     });

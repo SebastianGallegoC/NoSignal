@@ -7,6 +7,10 @@ import {
 } from "@/config/formFieldMeta";
 import { fieldSelectOptions } from "@/config/formSelectOptions";
 import {
+  sanitizeCoordManualInput,
+  validateCoordLatLonField,
+} from "@/lib/coordNumericToken";
+import {
   normalizeTelefonoStoredValue,
   TELEFONO_NO_TIENE_VALUE,
 } from "@/lib/telefonoNormalize";
@@ -138,13 +142,66 @@ export const FormFieldRow = ({
   const fieldInputClass =
     inputType === "date" ? dateInputClass : inputClass;
 
+  if (isManualCoordField) {
+    const coordKey = name as "latitud" | "longitud";
+    return (
+      <Controller
+        name={name}
+        control={control}
+        rules={{
+          validate: (v) => validateCoordLatLonField(String(v ?? ""), coordKey),
+        }}
+        render={({ field }) => {
+          const { onBlur: fieldOnBlur, ref, ...fieldRest } = field;
+          return (
+            <label className="flex min-w-0 max-w-full flex-col text-sm font-medium text-slate-800">
+              {label}
+              <input
+                {...fieldRest}
+                ref={ref}
+                type="text"
+                inputMode="text"
+                lang="en"
+                autoComplete="off"
+                spellCheck={false}
+                autoCorrect="off"
+                className={fieldInputClass}
+                placeholder={
+                  coordKey === "latitud" ? "ej: 4.609710" : "ej: -74.081750"
+                }
+                title="Usá el punto (.) como separador decimal."
+                onChange={(e) => {
+                  field.onChange(sanitizeCoordManualInput(e.target.value));
+                }}
+                onBlur={(e) => {
+                  fieldOnBlur();
+                  const cleaned = sanitizeCoordManualInput(e.target.value);
+                  if (cleaned !== String(field.value ?? "")) {
+                    field.onChange(cleaned);
+                  }
+                }}
+              />
+              <span className="mt-1 text-xs font-normal text-slate-500">
+                Separador decimal: punto (.). No uses coma (,).
+              </span>
+              {error ? (
+                <span className="mt-1 text-xs font-normal text-red-600">
+                  {error}
+                </span>
+              ) : null}
+            </label>
+          );
+        }}
+      />
+    );
+  }
+
   return (
     <label className="flex min-w-0 max-w-full flex-col text-sm font-medium text-slate-800">
       {label}
       <input
         className={`${fieldInputClass}${gpsReadOnlyClass}`}
         type={inputType}
-        inputMode={isManualCoordField ? "decimal" : undefined}
         min={isPositiveInt || isSatisfaccion ? 1 : undefined}
         max={isSatisfaccion ? 5 : undefined}
         step={
@@ -157,9 +214,7 @@ export const FormFieldRow = ({
         readOnly={isReadOnly}
         title={
           isGpsDerivedField
-            ? isReadOnly
-              ? "Este campo se actualiza al tomar ubicación GPS (6 decimales)."
-              : "Podés ingresar las coordenadas con la precisión decimal que necesites."
+            ? "Este campo se actualiza al tomar ubicación GPS (6 decimales)."
             : undefined
         }
         {...register(name)}

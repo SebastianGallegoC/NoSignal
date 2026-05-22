@@ -9,7 +9,10 @@ import {
   SI_NO_IMPORT_NORMALIZE_FIELDS,
 } from "@/config/formFieldMeta";
 import {
+  COORD_DECIMAL_COMMA_MSG,
+  COORD_LAT_LON_FIELD_KEYS,
   COORD_NUMERIC_FIELD_KEYS,
+  coordDecimalInputHasComma,
   normalizeCoordNumericCell,
 } from "@/lib/coordNumericToken";
 import type { OfflineForm } from "@/services/db";
@@ -88,16 +91,66 @@ export const validateFormValuesWithFieldDetails = (
     }
   }
 
+  for (const key of COORD_LAT_LON_FIELD_KEYS) {
+    if (isBlank(values[key])) {
+      continue;
+    }
+    const raw = String(values[key]);
+    if (coordDecimalInputHasComma(raw)) {
+      fieldIssues.push({
+        field: key,
+        code: "coord_decimal_comma",
+        message: COORD_DECIMAL_COMMA_MSG,
+      });
+      continue;
+    }
+    const norm = normalizeCoordNumericCell(raw);
+    if (norm === "" || !Number.isFinite(Number(norm))) {
+      fieldIssues.push({
+        field: key,
+        code: "coord_decimal_invalid",
+        message:
+          key === "latitud"
+            ? "LATITUD debe ser un número decimal con punto (.) como separador."
+            : "LONGITUD debe ser un número decimal con punto (.) como separador.",
+      });
+      continue;
+    }
+    const n = Number(norm);
+    if (key === "latitud" && (n < -90 || n > 90)) {
+      fieldIssues.push({
+        field: key,
+        code: "latitud_range",
+        message: "LATITUD debe estar entre -90 y 90.",
+      });
+    }
+    if (key === "longitud" && (n < -180 || n > 180)) {
+      fieldIssues.push({
+        field: key,
+        code: "longitud_range",
+        message: "LONGITUD debe estar entre -180 y 180.",
+      });
+    }
+  }
+
   if (!isBlank(values.metros_sobre_nivel_mar)) {
-    const msnm = Number(
-      normalizeCoordNumericCell(String(values.metros_sobre_nivel_mar)),
-    );
-    if (!Number.isFinite(msnm) || msnm < -500 || msnm > 9000) {
+    const msnmRaw = String(values.metros_sobre_nivel_mar);
+    if (coordDecimalInputHasComma(msnmRaw)) {
       fieldIssues.push({
         field: "metros_sobre_nivel_mar",
-        code: "metros_sobre_nivel_mar_range",
-        message: "Metros sobre el nivel del mar deben estar entre -500 y 9000.",
+        code: "coord_decimal_comma",
+        message: COORD_DECIMAL_COMMA_MSG,
       });
+    } else {
+      const msnm = Number(normalizeCoordNumericCell(msnmRaw));
+      if (!Number.isFinite(msnm) || msnm < -500 || msnm > 9000) {
+        fieldIssues.push({
+          field: "metros_sobre_nivel_mar",
+          code: "metros_sobre_nivel_mar_range",
+          message:
+            "Metros sobre el nivel del mar deben estar entre -500 y 9000 (usá punto decimal).",
+        });
+      }
     }
   }
 

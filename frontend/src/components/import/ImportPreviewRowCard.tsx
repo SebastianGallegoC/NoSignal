@@ -5,6 +5,7 @@ import {
   SearchableSelectControlled,
   type SelectOption,
 } from "@/components/form/SearchableSelect";
+import { sanitizeCoordManualInput } from "@/lib/coordNumericToken";
 import type { ImportPreviewRow } from "@/services/formularioExcelImport";
 import type { FormFieldKey, FormValues } from "@/types/formFields";
 
@@ -182,6 +183,7 @@ export const ImportPreviewRowCard = ({
                       />
                     );
                   }
+                  const isCoordLonLat = fk === "latitud" || fk === "longitud";
                   return (
                     <PreviewField
                       key={field}
@@ -191,7 +193,13 @@ export const ImportPreviewRowCard = ({
                       multiline={multiline}
                       inputType={isDate ? "date" : "text"}
                       onChange={(v) =>
-                        onPatch(sheetRow, { displayValues: { [fk]: v } })
+                        onPatch(sheetRow, {
+                          displayValues: {
+                            [fk]: isCoordLonLat
+                              ? sanitizeCoordManualInput(v)
+                              : v,
+                          },
+                        })
                       }
                     />
                   );

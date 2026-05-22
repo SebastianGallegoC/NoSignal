@@ -1,6 +1,11 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { formatCoordDecimalFromCell } from "@/lib/coordNumericToken";
+import {
+  COORD_DECIMAL_COMMA_MSG,
+  coordDecimalInputHasComma,
+  formatCoordDecimalFromCell,
+  sanitizeCoordManualInput,
+} from "@/lib/coordNumericToken";
 
 type Props = {
   isOpen: boolean;
@@ -34,9 +39,13 @@ export const ManualCoordinatesModal = ({
   const handleSubmit = () => {
     setError(null);
 
-    // Validar que los campos no estén vacíos
     if (!lat.trim() || !lon.trim()) {
       setError("Ingresa latitud y longitud.");
+      return;
+    }
+
+    if (coordDecimalInputHasComma(lat) || coordDecimalInputHasComma(lon)) {
+      setError(COORD_DECIMAL_COMMA_MSG);
       return;
     }
 
@@ -97,10 +106,13 @@ export const ManualCoordinatesModal = ({
             </label>
             <input
               type="text"
-              inputMode="decimal"
+              inputMode="text"
+              lang="en"
+              autoComplete="off"
+              spellCheck={false}
               placeholder="ej: 4.710989"
               value={lat}
-              onChange={(e) => setLat(e.target.value)}
+              onChange={(e) => setLat(sanitizeCoordManualInput(e.target.value))}
               className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
             />
           </div>
@@ -111,10 +123,13 @@ export const ManualCoordinatesModal = ({
             </label>
             <input
               type="text"
-              inputMode="decimal"
+              inputMode="text"
+              lang="en"
+              autoComplete="off"
+              spellCheck={false}
               placeholder="ej: -74.009008"
               value={lon}
-              onChange={(e) => setLon(e.target.value)}
+              onChange={(e) => setLon(sanitizeCoordManualInput(e.target.value))}
               className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
             />
           </div>

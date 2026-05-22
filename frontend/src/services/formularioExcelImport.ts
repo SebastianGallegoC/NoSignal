@@ -650,14 +650,14 @@ export function analyzeImportRow(
     mergeFieldError(
       fieldErrors,
       "longitud",
-      "LONGITUD debe ser un número decimal (ej. -74.08175; también se admite coma como separador).",
+      "LONGITUD debe ser un número decimal con punto (.) (ej. -74.08175).",
     );
   }
   if (latTrim !== "" && parseCoord(latStr) == null && mergedLat == null) {
     mergeFieldError(
       fieldErrors,
       "latitud",
-      "LATITUD debe ser un número decimal (ej. 4.60971; también se admite coma como separador).",
+      "LATITUD debe ser un número decimal con punto (.) (ej. 4.60971).",
     );
   }
 

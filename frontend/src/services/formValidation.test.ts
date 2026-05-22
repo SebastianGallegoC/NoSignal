@@ -110,6 +110,27 @@ describe("formValidation — campos texto libre tras cambios de importación", (
     ).toHaveLength(0);
   });
 
+  it("rechaza coma en latitud y longitud", () => {
+    const values = emptyValues();
+    values.latitud = "4,60971";
+    values.longitud = "-74,08";
+    const { fieldIssues } = validateFormValuesWithFieldDetails(values);
+    expect(fieldIssues.some((i) => i.field === "latitud")).toBe(true);
+    expect(fieldIssues.some((i) => i.field === "longitud")).toBe(true);
+  });
+
+  it("acepta coordenadas con punto decimal", () => {
+    const values = emptyValues();
+    values.latitud = "4.60971";
+    values.longitud = "-74.08175";
+    const { fieldIssues } = validateFormValuesWithFieldDetails(values);
+    expect(
+      fieldIssues.filter(
+        (i) => i.field === "latitud" || i.field === "longitud",
+      ),
+    ).toHaveLength(0);
+  });
+
   it("no marca zona vacía como error (select sin validación estricta en import)", () => {
     const values = emptyValues();
     values.zona = "";

@@ -1,12 +1,16 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  COORD_DECIMAL_COMMA_MSG,
   COORD_DECIMAL_PLACES,
+  coordDecimalInputHasComma,
   formatCoordForDatosFormulario,
   formatCoordDecimalFromCell,
   formatGpsCoordDecimal,
   normalizeCoordNumericCell,
   roundCoordDecimal,
+  sanitizeCoordManualInput,
+  validateCoordLatLonField,
 } from "./coordNumericToken";
 
 describe("normalizeCoordNumericCell", () => {
@@ -28,6 +32,26 @@ describe("normalizeCoordNumericCell", () => {
     ["solo texto", ""],
   ])("%s → %s", (input, expected) => {
     expect(normalizeCoordNumericCell(input)).toBe(expected);
+  });
+});
+
+describe("sanitizeCoordManualInput", () => {
+  it("elimina comas sin convertirlas a punto", () => {
+    expect(sanitizeCoordManualInput("-74,08")).toBe("-7408");
+    expect(sanitizeCoordManualInput("4,609")).toBe("4609");
+    expect(sanitizeCoordManualInput("-74.08175")).toBe("-74.08175");
+    expect(sanitizeCoordManualInput(".5")).toBe(".5");
+  });
+
+  it("detecta coma en entrada cruda", () => {
+    expect(coordDecimalInputHasComma("4,5")).toBe(true);
+    expect(coordDecimalInputHasComma("4.5")).toBe(false);
+  });
+
+  it("validateCoordLatLonField rechaza coma", () => {
+    expect(validateCoordLatLonField("4,6", "latitud")).toBe(
+      COORD_DECIMAL_COMMA_MSG,
+    );
   });
 });
 
