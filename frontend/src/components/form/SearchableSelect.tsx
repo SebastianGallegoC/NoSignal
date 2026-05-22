@@ -4,8 +4,10 @@ import {
   useMemo,
   useRef,
   useState,
+  type MouseEvent,
   type MutableRefObject,
   type Ref,
+  type TouchEvent,
 } from 'react';
 import type { Control } from 'react-hook-form';
 import { Controller } from 'react-hook-form';
@@ -92,6 +94,8 @@ const SearchableSelectInner = ({
   const [dropUp, setDropUp] = useState(false);
   const anchorRef = useRef<HTMLDivElement>(null);
   const inputElRef = useRef<HTMLInputElement | null>(null);
+  /** Evita que onBlur revierta la opción recién elegida (típico en táctil). */
+  const skipBlurCommitRef = useRef(false);
   const fieldValue = String(binding.value ?? '');
   const [text, setText] = useState(() => labelForValue(fieldValue, options));
 
@@ -110,10 +114,24 @@ const SearchableSelectInner = ({
   };
 
   const applyOption = (option: SelectOption) => {
+    skipBlurCommitRef.current = true;
+    const nextLabel = labelForValue(option.value, options);
     binding.onChange(option.value);
-    setText(labelForValue(option.value, options));
+    setText(nextLabel);
     setOpen(false);
-    dismissKeyboard();
+    window.setTimeout(() => {
+      dismissKeyboard();
+      skipBlurCommitRef.current = false;
+    }, 0);
+  };
+
+  const pickOptionFromList = (
+    option: SelectOption,
+    e: MouseEvent | TouchEvent,
+  ) => {
+    e.preventDefault();
+    e.stopPropagation();
+    applyOption(option);
   };
 
   useEffect(() => {
@@ -176,6 +194,9 @@ const SearchableSelectInner = ({
           }}
           onBlur={() => {
             binding.onBlur();
+            if (skipBlurCommitRef.current) {
+              return;
+            }
             setOpen(false);
             commitOrRevert();
           }}
@@ -223,10 +244,8 @@ const SearchableSelectInner = ({
                 role="option"
                 aria-selected={binding.value === o.value}
                 className="cursor-pointer px-3 py-2 text-sm text-slate-800 hover:bg-teal-50"
-                onPointerDown={(e) => {
-                  e.preventDefault();
-                  applyOption(o);
-                }}
+                onMouseDown={(e) => pickOptionFromList(o, e)}
+                onTouchStart={(e) => pickOptionFromList(o, e)}
               >
                 {o.label}
               </li>
