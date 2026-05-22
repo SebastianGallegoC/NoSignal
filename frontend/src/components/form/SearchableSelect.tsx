@@ -97,7 +97,7 @@ const SearchableSelectInner = ({
   const inputElRef = useRef<HTMLInputElement | null>(null);
   /** Evita que onBlur revierta la opción recién elegida (típico en táctil). */
   const skipBlurCommitRef = useRef(false);
-  const clearSkipTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const clearSkipTimerRef = useRef<number | null>(null);
   const fieldValue = String(binding.value ?? '');
   const [text, setText] = useState(() => labelForValue(fieldValue, options));
 
@@ -118,8 +118,8 @@ const SearchableSelectInner = ({
       skipBlurCommitRef.current = false;
       return;
     }
-    if (clearSkipTimerRef.current) {
-      clearTimeout(clearSkipTimerRef.current);
+    if (clearSkipTimerRef.current !== null) {
+      window.clearTimeout(clearSkipTimerRef.current);
     }
     skipBlurCommitRef.current = true;
     input.readOnly = true;
@@ -153,8 +153,8 @@ const SearchableSelectInner = ({
 
   useEffect(
     () => () => {
-      if (clearSkipTimerRef.current) {
-        clearTimeout(clearSkipTimerRef.current);
+      if (clearSkipTimerRef.current !== null) {
+        window.clearTimeout(clearSkipTimerRef.current);
       }
     },
     [],
