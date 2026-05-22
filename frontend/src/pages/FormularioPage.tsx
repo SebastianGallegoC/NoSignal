@@ -402,7 +402,25 @@ export const FormularioPage = () => {
 
         <form
           className="flex min-w-0 flex-col gap-4"
-          onSubmit={handleSubmit(onValid, onInvalid)}
+          onSubmit={(e) => {
+            e.preventDefault();
+          }}
+          onKeyDown={(e) => {
+            if (e.key !== "Enter") {
+              return;
+            }
+            const target = e.target;
+            if (target instanceof HTMLTextAreaElement) {
+              return;
+            }
+            if (
+              target instanceof HTMLButtonElement &&
+              target.type === "submit"
+            ) {
+              return;
+            }
+            e.preventDefault();
+          }}
         >
           {coordenadasSection ? (
             <details
@@ -500,9 +518,10 @@ export const FormularioPage = () => {
 
           <div className="sticky bottom-4 flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white/95 p-4 shadow-lg backdrop-blur">
             <Button
-              type="submit"
+              type="button"
               disabled={enviando}
               className="bg-teal-700 text-white hover:bg-teal-800"
+              onClick={() => void handleSubmit(onValid, onInvalid)()}
             >
               {enviando ? "Guardando…" : "Guardar / enviar"}
             </Button>
