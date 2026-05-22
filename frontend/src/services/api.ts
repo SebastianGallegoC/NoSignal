@@ -9,6 +9,8 @@ import {
   idSuffix,
 } from '@/debug/agentSessionLog';
 
+import { isVisitaNumero } from '@/lib/visitaNumero';
+
 import type { OfflineForm } from './db';
 
 const API_BASE = import.meta.env.VITE_API_URL ?? '';
@@ -22,7 +24,7 @@ type ApiFormPayload = {
     precision: number;
   };
   datos_formulario: Record<string, unknown>;
-  fotos: Array<{ nombre_archivo: string; data: string; visita?: 1 | 2 | 3 | null }>;
+  fotos: Array<{ nombre_archivo: string; data: string; visita?: 1 | 2 | 3 | 4 | null }>;
 };
 
 /** Normaliza imágenes para el validador del API (prefijo data:image/…). */
@@ -56,8 +58,7 @@ function payloadForApi(form: OfflineForm): ApiFormPayload {
     fotos: form.fotos.map((f) => ({
       nombre_archivo: f.nombre_archivo,
       data: ensureFotoDataUrl(f.data),
-      visita:
-        f.visita === 1 || f.visita === 2 || f.visita === 3 ? f.visita : null,
+      visita: isVisitaNumero(f.visita) ? f.visita : null,
     })),
   };
   if (fechaAct !== form.fecha_hora) {

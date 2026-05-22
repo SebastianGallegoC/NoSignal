@@ -1,3 +1,4 @@
+import { isVisitaNumero } from '@/lib/visitaNumero';
 import { fetchFormPhotoDataUrl } from '@/services/api';
 import type { FotoForm, HistorialForm, PrecargaForm } from '@/services/db';
 import { mapServerFotos, type DisplayRow } from '@/services/formHistory';
@@ -30,15 +31,14 @@ export const DETAIL_SOURCE_LABEL: Record<DetailSourceKind, string> = {
   live: 'Local en edicion',
 };
 
-/** Preserva visita 1–3; si falta (p. ej. legado o map previo), asume 1 para pasar validacion al enviar. */
+/** Preserva visita 1–4; si falta (p. ej. legado o map previo), asume 1 para pasar validacion al enviar. */
 export function fotosConVisitaDesdeDetalle(source: FotoSnapshotLike[]): FotoForm[] {
   const out: FotoForm[] = [];
   for (const f of source) {
     if (!f.data?.trim()) {
       continue;
     }
-    const visita: 1 | 2 | 3 =
-      f.visita === 1 || f.visita === 2 || f.visita === 3 ? f.visita : 1;
+    const visita = isVisitaNumero(f.visita) ? f.visita : 1;
     out.push({ nombre_archivo: f.nombre_archivo, data: f.data, visita });
   }
   return out;
@@ -73,10 +73,7 @@ export async function hydrateFotosFromServerIfNeeded(
       fetched.push({
         nombre_archivo: foto.nombre_archivo,
         data,
-        visita:
-          foto.visita === 1 || foto.visita === 2 || foto.visita === 3
-            ? foto.visita
-            : 1,
+        visita: isVisitaNumero(foto.visita) ? foto.visita : 1,
       });
     } catch {
       // Si una foto falla, continuamos con las demas.

@@ -100,7 +100,7 @@ describe("usePhotoCapture", () => {
     });
 
     expect(setBanner).toHaveBeenCalledWith(
-      "Seleccioná visita 1, 2 o 3 antes de cargar fotos.",
+      "Seleccioná visita 1, 2, 3 o 4 antes de cargar fotos.",
     );
     expect(compressionMocks.compressImageFile).not.toHaveBeenCalled();
     expect(setFotos).not.toHaveBeenCalled();

@@ -149,7 +149,7 @@ def save_photos(
             handler.write(raw)
 
         entry: dict[str, Any] = {"path": file_path}
-        if foto.visita in (1, 2, 3):
+        if foto.visita in (1, 2, 3, 4):
             entry["visita"] = foto.visita
         saved_entries.append(entry)
 

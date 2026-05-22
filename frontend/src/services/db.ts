@@ -3,7 +3,9 @@ import Dexie, { type Table } from 'dexie';
 import { stripGmsKeysFromDatos } from '@/lib/stripGmsFromDatos';
 
 export type SyncStatus = 'PENDIENTE' | 'SINCRONIZANDO' | 'ERROR';
-export type VisitaNumero = 1 | 2 | 3;
+import type { VisitaNumero } from "@/lib/visitaNumero";
+
+export type { VisitaNumero };
 export type FotoForm = {
   nombre_archivo: string;
   data: string;

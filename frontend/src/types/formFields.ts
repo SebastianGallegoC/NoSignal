@@ -60,6 +60,7 @@ export const REQUIRED_FIELDS = [
   'fecha_visita_1',
   'fecha_visita_2',
   'fecha_visita_3',
+  'fecha_visita_4',
   'estado_huerta_final',
   'estado_arbol_final',
   'produccion_kg',

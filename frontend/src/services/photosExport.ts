@@ -1,6 +1,7 @@
 import JSZip from "jszip";
 
-import type { FotoForm, OfflineForm, VisitaNumero } from "@/services/db";
+import { isVisitaNumero, VISITA_NUMEROS, type VisitaNumero } from "@/lib/visitaNumero";
+import type { FotoForm, OfflineForm } from "@/services/db";
 import { matrizCaracterizacionFilename } from "@/services/matrizCaracterizacionExport";
 
 const WIN_ILLEGAL = /[\x00-\x1f<>:"/\\|?*]/g;
@@ -112,10 +113,11 @@ function partitionFotos(fotos: FotoForm[]): {
     1: [],
     2: [],
     3: [],
+    4: [],
   };
   const sinVisita: FotoForm[] = [];
   for (const f of fotos) {
-    if (f.visita === 1 || f.visita === 2 || f.visita === 3) {
+    if (isVisitaNumero(f.visita)) {
       byVisita[f.visita].push(f);
     } else {
       sinVisita.push(f);
@@ -134,7 +136,7 @@ export async function buildPhotosZip(form: OfflineForm): Promise<Blob> {
   const root = buildBeneficiarioFolderName(form);
   const { byVisita, sinVisita } = partitionFotos(fotos);
 
-  const visitas: VisitaNumero[] = [1, 2, 3];
+  const visitas = VISITA_NUMEROS;
   for (const n of visitas) {
     const list = byVisita[n];
     const folder = `${root}/${visitaFolderLabel(n)}`;
@@ -202,15 +204,12 @@ export async function buildPhotosBulkZip(forms: OfflineForm[]): Promise<Blob> {
       continue;
     }
     const folderBase = `${root}/${bulkFormFolderName(form)}`;
-    const byVisita: Record<VisitaNumero, FotoForm[]> = { 1: [], 2: [], 3: [] };
+    const byVisita: Record<VisitaNumero, FotoForm[]> = { 1: [], 2: [], 3: [], 4: [] };
     for (const foto of fotos) {
-      const visita: VisitaNumero =
-        foto.visita === 1 || foto.visita === 2 || foto.visita === 3
-          ? foto.visita
-          : 1;
+      const visita: VisitaNumero = isVisitaNumero(foto.visita) ? foto.visita : 1;
       byVisita[visita].push(foto);
     }
-    for (const visita of [1, 2, 3] as const) {
+    for (const visita of VISITA_NUMEROS) {
       const list = byVisita[visita];
       if (list.length === 0) {
         continue;

@@ -3,12 +3,13 @@ import type { ChangeEvent, MutableRefObject } from 'react';
 
 import { useCameraCapture } from '@/hooks/useCameraCapture';
 import { compressImageFile, fileToDataUrl } from '@/services/imageCompression';
+import type { VisitaNumero } from '@/lib/visitaNumero';
 import type { FotoForm } from '@/services/db';
 
 type Args = {
   fotos: FotoForm[];
   setFotos: (value: FotoForm[] | ((prev: FotoForm[]) => FotoForm[])) => void;
-  visitaFotoSeleccionada: 1 | 2 | 3 | null;
+  visitaFotoSeleccionada: VisitaNumero | null;
   setBanner: (value: string | null) => void;
 };
 
@@ -31,7 +32,7 @@ export const usePhotoCapture = ({
   setBanner,
 }: Args): UsePhotoCaptureResult => {
   const processIncomingFiles = useCallback(
-    async (files: File[], visita: 1 | 2 | 3, saveToDevice = false) => {
+    async (files: File[], visita: VisitaNumero, saveToDevice = false) => {
       if (!files.length) {
         return;
       }
@@ -73,7 +74,7 @@ export const usePhotoCapture = ({
       const files = Array.from(event.target.files ?? []);
       event.target.value = '';
       if (!visitaFotoSeleccionada) {
-        setBanner('Seleccioná visita 1, 2 o 3 antes de cargar fotos.');
+        setBanner('Seleccioná visita 1, 2, 3 o 4 antes de cargar fotos.');
         return;
       }
       await processIncomingFiles(files, visitaFotoSeleccionada, false);
@@ -92,7 +93,7 @@ export const usePhotoCapture = ({
   } = useCameraCapture({
     onCapturedFile: async (file) => {
       if (!visitaFotoSeleccionada) {
-        setBanner('Seleccioná visita 1, 2 o 3 antes de tomar fotos.');
+        setBanner('Seleccioná visita 1, 2, 3 o 4 antes de tomar fotos.');
         return;
       }
       await processIncomingFiles([file], visitaFotoSeleccionada, false);

@@ -61,6 +61,7 @@ export const FormularioFotosSection = ({
           <option value="1">Visita 1</option>
           <option value="2">Visita 2</option>
           <option value="3">Visita 3</option>
+          <option value="4">Visita 4</option>
         </select>
       </label>
       <div className="mt-3 flex flex-wrap gap-2">
@@ -85,7 +86,7 @@ export const FormularioFotosSection = ({
       </div>
       {!visitaSeleccionada ? (
         <p className="mt-2 text-xs text-amber-700">
-          Primero seleccioná si las fotos corresponden a visita 1, 2 o 3.
+          Primero seleccioná si las fotos corresponden a visita 1, 2, 3 o 4.
         </p>
       ) : null}
       <input

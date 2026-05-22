@@ -124,8 +124,8 @@ describe("formValuesToCells", () => {
     row[0] = "";
     row[4] = "01/01/2026";
     row[7] = "Benef";
-    row[27] = "-74.1";
-    row[26] = "4.1";
+    row[26] = "-74.1";
+    row[27] = "4.1";
     const cells = row.map((v) => (v == null ? "" : String(v)));
     const values = cellsToFormValuesRaw(cells);
     const back = formValuesToCells(values, cells[0] ?? "");
@@ -137,8 +137,8 @@ describe("parsePlantillaWorkbook", () => {
   it("importa una fila con LONGITUD/LATITUD y genera OfflineForm", async () => {
     const row = new Array<string | number | null>(MATRIZ_COLUMN_COUNT).fill(null);
     row[7] = "María Pérez";
-    row[27] = "-74.08175";
-    row[26] = "4.60971";
+    row[26] = "-74.08175";
+    row[27] = "4.60971";
 
     const buffer = await buildMinimalPlantillaBuffer(row);
     const { ok, errors } = await parsePlantillaWorkbook(buffer);
@@ -167,8 +167,8 @@ describe("parsePlantillaWorkbook", () => {
     const row = new Array<string | number | null>(MATRIZ_COLUMN_COUNT).fill(null);
     row[0] = excelId;
     row[7] = "Copia";
-    row[27] = "-74.0";
-    row[26] = "4.0";
+    row[26] = "-74.0";
+    row[27] = "4.0";
     const buffer = await buildMinimalPlantillaBuffer(row);
     const { ok, errors } = await parsePlantillaWorkbook(buffer);
 
@@ -198,9 +198,9 @@ describe("parsePlantillaWorkbook", () => {
   it("analyzeImportRow acepta exposición solar como texto libre (sin Si/No/NR)", () => {
     const row = new Array<string | number | null>(MATRIZ_COLUMN_COUNT).fill(null);
     row[7] = "Ana";
-    row[40] = "Buena exposición todo el día";
-    row[27] = "-74.0";
-    row[26] = "4.0";
+    row[39] = "Buena exposición todo el día";
+    row[26] = "-74.0";
+    row[27] = "4.0";
     const cells = row.map((v) => (v == null ? "" : String(v)));
     const preview = analyzeImportRow(cells, 8, new Date().toISOString());
     expect(preview.fieldErrors.exposicion_solar_adecuada).toBeUndefined();
@@ -214,8 +214,8 @@ describe("parsePlantillaWorkbook", () => {
     const row = new Array<string | number | null>(MATRIZ_COLUMN_COUNT).fill(null);
     row[4] = "no-es-una-fecha";
     row[7] = "Ana";
-    row[27] = "-74.0";
-    row[26] = "4.0";
+    row[26] = "-74.0";
+    row[27] = "4.0";
     const cells = row.map((v) => (v == null ? "" : String(v)));
     const preview = analyzeImportRow(cells, 8, new Date().toISOString());
     expect(preview.isValid).toBe(false);
@@ -225,8 +225,8 @@ describe("parsePlantillaWorkbook", () => {
   it("previewPlantillaWorkbook devuelve una fila por datos", async () => {
     const row = new Array<string | number | null>(MATRIZ_COLUMN_COUNT).fill(null);
     row[7] = "Luis";
-    row[27] = "-74.05";
-    row[26] = "4.05";
+    row[26] = "-74.05";
+    row[27] = "4.05";
     const buffer = await buildMinimalPlantillaBuffer(row);
     const { rows, errors } = await previewPlantillaWorkbook(buffer);
     expect(errors).toHaveLength(0);
@@ -238,9 +238,9 @@ describe("parsePlantillaWorkbook", () => {
   it("acepta SI/NO/NR en Excel con distinta capitalización y tildes (mujer_cabeza_hogar)", async () => {
     const row = new Array<string | number | null>(MATRIZ_COLUMN_COUNT).fill(null);
     row[7] = "Benef tri";
-    row[32] = "  SÍ  ";
-    row[27] = "-74.0";
-    row[26] = "4.0";
+    row[31] = "  SÍ  ";
+    row[26] = "-74.0";
+    row[27] = "4.0";
     const buffer = await buildMinimalPlantillaBuffer(row);
     const { ok, errors } = await parsePlantillaWorkbook(buffer);
     expect(errors).toHaveLength(0);
@@ -250,9 +250,9 @@ describe("parsePlantillaWorkbook", () => {
   it("analyzeImportRow normaliza tri en displayValues", () => {
     const row = new Array<string | number | null>(MATRIZ_COLUMN_COUNT).fill(null);
     row[7] = "Ana";
-    row[32] = "no";
-    row[27] = "-74.0";
-    row[26] = "4.0";
+    row[31] = "no";
+    row[26] = "-74.0";
+    row[27] = "4.0";
     const cells = row.map((v) => (v == null ? "" : String(v)));
     const preview = analyzeImportRow(cells, 8, new Date().toISOString());
     expect(preview.isValid).toBe(true);
@@ -262,9 +262,9 @@ describe("parsePlantillaWorkbook", () => {
   it("importa area_arbol_disponible como Si/No con flexibilidad (columna Excel ~49)", async () => {
     const row = new Array<string | number | null>(MATRIZ_COLUMN_COUNT).fill(null);
     row[7] = "Con árbol";
-    row[43] = "  NO APLICA  ";
-    row[27] = "-74.0";
-    row[26] = "4.0";
+    row[42] = "  NO APLICA  ";
+    row[26] = "-74.0";
+    row[27] = "4.0";
     const buffer = await buildMinimalPlantillaBuffer(row);
     const { ok, errors } = await parsePlantillaWorkbook(buffer);
     expect(errors).toHaveLength(0);
@@ -275,27 +275,27 @@ describe("parsePlantillaWorkbook", () => {
     const row = new Array<string | number | null>(MATRIZ_COLUMN_COUNT).fill(null);
     row[7] = "Benef";
     row[12] = "  sin teléfono  ";
-    row[27] = "-74.0";
-    row[26] = "4.0";
+    row[26] = "-74.0";
+    row[27] = "4.0";
     const buffer = await buildMinimalPlantillaBuffer(row);
     const { ok, errors } = await parsePlantillaWorkbook(buffer);
     expect(errors).toHaveLength(0);
     expect(ok[0].datos_formulario.telefono).toBe("No tiene");
   });
 
-  it("importa LATITUD, LONGITUD y metros sobre el nivel del mar", async () => {
+  it("importa fecha_visita_4 desde columna FECHA VISITA 4", async () => {
     const row = new Array<string | number | null>(MATRIZ_COLUMN_COUNT).fill(null);
-    row[7] = "Con coords DD";
-    row[26] = "4.60971";
-    row[27] = "-74.08175";
-    row[28] = "2650";
+    row[7] = "Con visita 4";
+    row[26] = "-74.08175";
+    row[27] = "4.60971";
+    row[60] = "20/06/2026";
 
     const buffer = await buildMinimalPlantillaBuffer(row);
     const { ok, errors } = await parsePlantillaWorkbook(buffer);
 
     expect(errors).toHaveLength(0);
     expect(ok).toHaveLength(1);
-    expect(ok[0].datos_formulario.metros_sobre_nivel_mar).toBe("2650");
+    expect(ok[0].datos_formulario.fecha_visita_4).toBe("2026-06-20");
     expect(ok[0].gps.latitud).toBeCloseTo(4.60971, 5);
     expect(ok[0].gps.longitud).toBeCloseTo(-74.08175, 5);
   });
@@ -303,8 +303,8 @@ describe("parsePlantillaWorkbook", () => {
   it("LONGITUD/LATITUD con sufijo ° siguen siendo válidas", async () => {
     const row = new Array<string | number | null>(MATRIZ_COLUMN_COUNT).fill(null);
     row[7] = "Dec con símbolo";
-    row[27] = "-74,1°";
-    row[26] = "4,05″";
+    row[26] = "-74,1°";
+    row[27] = "4,05″";
 
     const buffer = await buildMinimalPlantillaBuffer(row);
     const { ok, errors } = await parsePlantillaWorkbook(buffer);
@@ -319,8 +319,8 @@ describe("parsePlantillaWorkbook", () => {
   it("LATITUD/LONGITUD con prefijo ° o guion Unicode se importan bien", async () => {
     const row = new Array<string | number | null>(MATRIZ_COLUMN_COUNT).fill(null);
     row[7] = "Coord raras";
-    row[27] = "\u221274,08175°";
-    row[26] = "°4,60971";
+    row[26] = "\u221274,08175°";
+    row[27] = "°4,60971";
 
     const buffer = await buildMinimalPlantillaBuffer(row);
     const { ok, errors } = await parsePlantillaWorkbook(buffer);
@@ -335,7 +335,7 @@ describe("parsePlantillaWorkbook", () => {
   it("LONGITUD sin LATITUD: GPS placeholder y solo longitud en datos", async () => {
     const row = new Array<string | number | null>(MATRIZ_COLUMN_COUNT).fill(null);
     row[7] = "Solo lon";
-    row[27] = "-74.08175";
+    row[26] = "-74.08175";
 
     const buffer = await buildMinimalPlantillaBuffer(row);
     const { rows, errors } = await previewPlantillaWorkbook(buffer);
@@ -356,7 +356,7 @@ describe("parsePlantillaWorkbook", () => {
   it("LATITUD sin LONGITUD: no completa longitud automáticamente", async () => {
     const row = new Array<string | number | null>(MATRIZ_COLUMN_COUNT).fill(null);
     row[7] = "Solo lat";
-    row[26] = "4.60971";
+    row[27] = "4.60971";
 
     const buffer = await buildMinimalPlantillaBuffer(row);
     const { rows, errors } = await previewPlantillaWorkbook(buffer);
@@ -402,12 +402,11 @@ describe("parsePlantillaWorkbook", () => {
     expect(ok[0].datos_formulario.nombres_apellidos_beneficiario).toBe(
       "Roundtrip Test",
     );
-    expect(ok[0].datos_formulario.metros_sobre_nivel_mar).toBe("2500");
     expect(ok[0].gps.latitud).toBeCloseTo(4.6, 4);
     expect(ok[0].gps.longitud).toBeCloseTo(-74.1, 4);
   });
 
-  it("lee LAT/LON/MSNM por encabezado aunque estén desplazadas (plantilla 76 cols)", async () => {
+  it("lee LONGITUD/LATITUD por encabezado aunque estén desplazadas", async () => {
     const wb = new Workbook();
     const ws = wb.addWorksheet(MATRIZ_SHEET_NAME);
     MATRIZ_F_PSA_HEADERS.forEach((h, i) => {
@@ -418,13 +417,11 @@ describe("parsePlantillaWorkbook", () => {
       ws.getCell(7, col).value = h;
     });
     const benefCol = 8;
-    const latCol = 33;
-    const lonCol = 34;
-    const msnmCol = 35;
+    const lonCol = 33;
+    const latCol = 34;
     ws.getCell(8, benefCol).value = "Benef desplazado";
-    ws.getCell(8, latCol).value = "4.5";
     ws.getCell(8, lonCol).value = "-74.2";
-    ws.getCell(8, msnmCol).value = "2600";
+    ws.getCell(8, latCol).value = "4.5";
     const buf = await wb.xlsx.writeBuffer();
     const u8 = new Uint8Array(buf as ArrayBuffer);
     const buffer = u8.buffer.slice(u8.byteOffset, u8.byteOffset + u8.byteLength);
@@ -436,7 +433,6 @@ describe("parsePlantillaWorkbook", () => {
     );
     expect(ok[0].gps.latitud).toBeCloseTo(4.5, 4);
     expect(ok[0].gps.longitud).toBeCloseTo(-74.2, 4);
-    expect(ok[0].datos_formulario.metros_sobre_nivel_mar).toBe("2600");
   });
 
   it("rechaza plantilla antigua con encabezados GMS en columnas 27–28", async () => {
@@ -464,8 +460,8 @@ describe("parsePlantillaWorkbook", () => {
   it("elimina claves GMS si vinieran en celdas de campo del Excel", async () => {
     const row = new Array<string | number | null>(MATRIZ_COLUMN_COUNT).fill(null);
     row[7] = "Con GMS en datos";
-    row[26] = "4.0";
-    row[27] = "-74.0";
+    row[26] = "-74.0";
+    row[27] = "4.0";
     const buffer = await buildMinimalPlantillaBuffer(row);
     const { ok, errors } = await parsePlantillaWorkbook(buffer);
     expect(errors).toHaveLength(0);
@@ -473,7 +469,7 @@ describe("parsePlantillaWorkbook", () => {
     expect(ok[0].datos_formulario).not.toHaveProperty("y_minutos");
   });
 
-  it("importa matriz actualizada de 70 columnas (LON/LAT invertidas, sin MSNM)", async () => {
+  it("importa matriz actualizada de 71 columnas (LON/LAT, FECHA VISITA 4, sin MSNM)", async () => {
     const wb = new Workbook();
     const ws = wb.addWorksheet(MATRIZ_SHEET_NAME);
     const headers70 = [
@@ -537,6 +533,7 @@ describe("parsePlantillaWorkbook", () => {
       "FECHA VISITA 1",
       "FECHA VISITA 2",
       "FECHA VISITA 3",
+      "FECHA VISITA 4",
       "ESTADO HUERTA FINAL",
       "ESTADO ARBOL FINAL",
       "PRODUCCIÓN KG",
@@ -575,7 +572,7 @@ describe("parsePlantillaWorkbook", () => {
     );
     expect(ok[0].gps.latitud).toBeCloseTo(4.60971, 5);
     expect(ok[0].gps.longitud).toBeCloseTo(-74.08175, 5);
-    expect(ok[0].datos_formulario.metros_sobre_nivel_mar).toBe("");
+    expect(ok[0].datos_formulario.metros_sobre_nivel_mar ?? "").toBe("");
     expect(ok[0].datos_formulario.zona).toBe("Urbana");
     expect(ok[0].datos_formulario.numero_personas_nucleo_familiar).toBe("4");
     expect(ok[0].datos_formulario.exposicion_solar_adecuada).toBe(
@@ -592,9 +589,9 @@ describe("parsePlantillaWorkbook", () => {
   it("conserva texto libre en distancia infraestructura al importar", async () => {
     const row = new Array<string | number | null>(MATRIZ_COLUMN_COUNT).fill(null);
     row[7] = "Benef distancia";
-    row[27] = "-74.0";
-    row[26] = "4.0";
-    row[45] = "  40 M  ";
+    row[26] = "-74.0";
+    row[27] = "4.0";
+    row[44] = "  40 M  ";
 
     const buffer = await buildMinimalPlantillaBuffer(row);
     const { ok, errors } = await parsePlantillaWorkbook(buffer);
@@ -609,8 +606,8 @@ describe("parsePlantillaWorkbook", () => {
     const row = new Array<string | number | null>(MATRIZ_COLUMN_COUNT).fill(null);
     row[7] = "Benef preview zona";
     row[19] = "URBANA";
-    row[27] = "-74.0";
-    row[26] = "4.0";
+    row[26] = "-74.0";
+    row[27] = "4.0";
     const buffer = await buildMinimalPlantillaBuffer(row);
     const { rows, errors } = await previewPlantillaWorkbook(buffer);
     expect(errors).toHaveLength(0);
@@ -621,8 +618,8 @@ describe("parsePlantillaWorkbook", () => {
     const row = new Array<string | number | null>(MATRIZ_COLUMN_COUNT).fill(null);
     row[7] = "Benef zona";
     row[19] = "RURAL";
-    row[27] = "-74.0";
-    row[26] = "4.0";
+    row[26] = "-74.0";
+    row[27] = "4.0";
 
     const buffer = await buildMinimalPlantillaBuffer(row);
     const { ok, errors } = await parsePlantillaWorkbook(buffer);

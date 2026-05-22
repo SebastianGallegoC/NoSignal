@@ -52,7 +52,7 @@ describe("formValidation — envío mínimo", () => {
     expect(issues).toHaveLength(0);
   });
 
-  it("validateOfflineFormPayload exige visita 1/2/3 en cada foto", () => {
+  it("validateOfflineFormPayload exige visita 1/2/3/4 en cada foto", () => {
     const datos: Record<string, unknown> = {};
     for (const k of REQUIRED_FIELDS) {
       datos[k] = "";
@@ -68,6 +68,31 @@ describe("formValidation — envío mínimo", () => {
     };
     const issues = validateOfflineFormPayload(form);
     expect(issues.map((i) => i.code)).toContain("fotos_visita_required");
+  });
+
+  it("validateOfflineFormPayload acepta foto con visita 4", () => {
+    const datos: Record<string, unknown> = {};
+    for (const k of REQUIRED_FIELDS) {
+      datos[k] = "";
+    }
+    datos.nombres_apellidos_beneficiario = "Ana Pérez";
+    const form: OfflineForm = {
+      id_formulario: "x",
+      fecha_hora: new Date().toISOString(),
+      gps: { latitud: 4.6, longitud: -74.08, precision: 4 },
+      datos_formulario: datos,
+      fotos: [
+        {
+          nombre_archivo: "v4.jpg",
+          data: "data:image/jpeg;base64,AA==",
+          visita: 4,
+        },
+      ],
+      estado_sincronizacion: "PENDIENTE",
+    };
+    expect(
+      validateOfflineFormPayload(form).map((i) => i.code),
+    ).not.toContain("fotos_visita_required");
   });
 
   it("validateOfflineFormPayload rechaza fecha_actualizacion anterior a fecha_hora", () => {
@@ -136,5 +161,15 @@ describe("formValidation — campos texto libre tras cambios de importación", (
     values.zona = "";
     const { fieldIssues } = validateFormValuesWithFieldDetails(values);
     expect(fieldIssues.filter((i) => i.field === "zona")).toHaveLength(0);
+  });
+
+  it("rechaza fechas de visita fuera de orden cuando visita 4 es anterior a visita 3", () => {
+    const values = emptyValues();
+    values.fecha_visita_1 = "2026-01-01";
+    values.fecha_visita_2 = "2026-02-01";
+    values.fecha_visita_3 = "2026-03-01";
+    values.fecha_visita_4 = "2026-02-15";
+    const { rowIssues } = validateFormValuesWithFieldDetails(values);
+    expect(rowIssues.map((i) => i.code)).toContain("fechas_visita_order");
   });
 });

@@ -99,10 +99,11 @@ describe("buildPhotosZip", () => {
     expect(paths).toContain(`${root}/Visita 1/.keep`);
     expect(paths).toContain(`${root}/Visita 2/solo.jpg`);
     expect(paths).toContain(`${root}/Visita 3/.keep`);
+    expect(paths).toContain(`${root}/Visita 4/.keep`);
     expect(paths.some((p) => p.includes("Sin visita"))).toBe(false);
   });
 
-  it("reparte por visita 1, 2 y 3", async () => {
+  it("reparte por visita 1, 2, 3 y 4", async () => {
     const root = buildBeneficiarioFolderName(
       baseForm({
         datos_formulario: { nombres_apellidos_beneficiario: "B" },
@@ -114,6 +115,7 @@ describe("buildPhotosZip", () => {
         { nombre_archivo: "a.jpg", data: JPEG_DATA_URL, visita: 1 },
         { nombre_archivo: "b.jpg", data: JPEG_DATA_URL, visita: 2 },
         { nombre_archivo: "c.jpg", data: JPEG_DATA_URL, visita: 3 },
+        { nombre_archivo: "d.jpg", data: JPEG_DATA_URL, visita: 4 },
       ],
     });
     const blob = await buildPhotosZip(f);
@@ -122,6 +124,7 @@ describe("buildPhotosZip", () => {
     expect(paths).toContain(`${root}/Visita 1/a.jpg`);
     expect(paths).toContain(`${root}/Visita 2/b.jpg`);
     expect(paths).toContain(`${root}/Visita 3/c.jpg`);
+    expect(paths).toContain(`${root}/Visita 4/d.jpg`);
     expect(paths.some((p) => p.endsWith("/.keep"))).toBe(false);
   });
 

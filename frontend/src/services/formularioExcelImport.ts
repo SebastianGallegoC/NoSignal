@@ -285,8 +285,8 @@ export type MatrizHeaderColumnMap = {
   excelColByMatrizIndex: number[];
 };
 
-/** Índices de MATRIZ_F_PSA_HEADERS cuya columna puede faltar (p. ej. matriz de 70 cols). */
-const OPTIONAL_MATRIZ_HEADER_INDICES = new Set<number>([28]);
+/** Índices de MATRIZ_F_PSA_HEADERS cuya columna puede faltar en Excel antiguos. */
+const OPTIONAL_MATRIZ_HEADER_INDICES = new Set<number>();
 
 /**
  * Etiquetas alternativas en Excel reales (p. ej. «MATRIZ ACTUALIZADA» sin MSNM).
@@ -304,8 +304,8 @@ const MATRIZ_HEADER_ALIASES: Readonly<Record<string, readonly string[]>> = {
       "DISTANCIA APROXIMADA DE REDES ELECTRICAS ADECUADA",
     ),
   ],
-  [normalizeMatrizHeaderLabel("Nº PERSONAS DEL NÚCLEO FAMILIAR")]: [
-    normalizeMatrizHeaderLabel("N° PERSONAS DEL NÚCLEO FAMILAR"),
+  [normalizeMatrizHeaderLabel("N° PERSONAS DEL NÚCLEO FAMILAR")]: [
+    normalizeMatrizHeaderLabel("Nº PERSONAS DEL NÚCLEO FAMILIAR"),
     normalizeMatrizHeaderLabel("N° PERSONAS DEL NÚCLEO FAMILIAR"),
   ],
 };

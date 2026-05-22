@@ -46,7 +46,7 @@ export interface FormularioSnapshot {
     path?: string;
     serverFormId?: string;
     serverIndex?: number;
-    visita?: 1 | 2 | 3;
+    visita?: 1 | 2 | 3 | 4;
   }>;
 }
 
@@ -99,6 +99,7 @@ export const FormularioRespuestaReadOnly = ({
   const fotosVisita1 = fotos.filter((f) => f.visita === 1);
   const fotosVisita2 = fotos.filter((f) => f.visita === 2);
   const fotosVisita3 = fotos.filter((f) => f.visita === 3);
+  const fotosVisita4 = fotos.filter((f) => f.visita === 4);
   const fotosSinVisita = fotos.filter((f) => f.visita == null);
   const [previewFoto, setPreviewFoto] = useState<ImagePreview | null>(null);
   const [remoteSrcMap, setRemoteSrcMap] = useState<
@@ -167,6 +168,7 @@ export const FormularioRespuestaReadOnly = ({
             { title: "Visita 1", items: fotosVisita1 },
             { title: "Visita 2", items: fotosVisita2 },
             { title: "Visita 3", items: fotosVisita3 },
+            { title: "Visita 4", items: fotosVisita4 },
             { title: "Sin visita registrada", items: fotosSinVisita },
           ]
             .filter((group) => group.items.length > 0)

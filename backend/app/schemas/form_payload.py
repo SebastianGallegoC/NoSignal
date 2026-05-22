@@ -22,7 +22,7 @@ class GPSPayload(BaseModel):
 class PhotoPayload(BaseModel):
     nombre_archivo: str
     data: str
-    visita: Literal[1, 2, 3] | None = None
+    visita: Literal[1, 2, 3, 4] | None = None
 
     @field_validator("data")
     @classmethod

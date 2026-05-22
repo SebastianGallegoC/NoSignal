@@ -13,6 +13,7 @@ import { ConfirmDeleteFormModal } from "@/components/ConfirmDeleteFormModal";
 import type { FormularioSnapshot } from "@/components/form/FormularioRespuestaReadOnly";
 import { Button } from "@/components/ui/button";
 import { ACCESS_TOKEN_KEY } from "@/lib/authStorage";
+import { isVisitaNumero } from "@/lib/visitaNumero";
 import {
   formatDateTimeNoSeconds,
   formatISODateTimeForDisplay,
@@ -364,9 +365,7 @@ export const FormulariosDiligenciadosPage = () => {
               fotos.push({
                 nombre_archivo: foto.nombre_archivo,
                 data,
-                ...(foto.visita === 1 || foto.visita === 2 || foto.visita === 3
-                  ? { visita: foto.visita }
-                  : {}),
+                ...(isVisitaNumero(foto.visita) ? { visita: foto.visita } : {}),
               });
             } catch {
               // omitimos fotos que fallen al descargar
@@ -484,7 +483,7 @@ export const FormulariosDiligenciadosPage = () => {
           const fotos: Array<{
             nombre_archivo: string;
             data: string;
-            visita?: 1 | 2 | 3;
+            visita?: 1 | 2 | 3 | 4;
           }> = [];
           for (const foto of baseFotos) {
             if (foto.serverFormId == null || foto.serverIndex == null) {
@@ -498,9 +497,7 @@ export const FormulariosDiligenciadosPage = () => {
               fotos.push({
                 nombre_archivo: foto.nombre_archivo,
                 data,
-                ...(foto.visita === 1 || foto.visita === 2 || foto.visita === 3
-                  ? { visita: foto.visita }
-                  : {}),
+                ...(isVisitaNumero(foto.visita) ? { visita: foto.visita } : {}),
               });
             } catch {
               failedFotos += 1;
@@ -540,7 +537,7 @@ export const FormulariosDiligenciadosPage = () => {
               nombre_archivo: f.nombre_archivo,
               data: f.data,
             };
-            if (f.visita === 1 || f.visita === 2 || f.visita === 3) {
+            if (isVisitaNumero(f.visita)) {
               return { ...base, visita: f.visita };
             }
             return base;
@@ -551,7 +548,7 @@ export const FormulariosDiligenciadosPage = () => {
             ): f is {
               nombre_archivo: string;
               data: string;
-              visita?: 1 | 2 | 3;
+              visita?: 1 | 2 | 3 | 4;
             } => f !== null,
           );
 

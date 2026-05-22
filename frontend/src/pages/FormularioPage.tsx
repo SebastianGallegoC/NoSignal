@@ -19,6 +19,7 @@ import { handleDiligenciadoFormEnterKey } from "@/lib/formKeyboard";
 import { useConnectivityStatus } from "@/hooks/useConnectivityStatus";
 import { useGPS } from "@/hooks/useGPS";
 import { useFormularioSubmit } from "@/hooks/useFormularioSubmit";
+import type { VisitaNumero } from "@/services/db";
 import {
   clearFormDraft,
   loadFormDraft,
@@ -72,9 +73,8 @@ export const FormularioPage = () => {
   const [fotos, setFotos] = useState<FotoForm[]>(
     () => loadedDraft?.fotos ?? [],
   );
-  const [visitaFotoSeleccionada, setVisitaFotoSeleccionada] = useState<
-    1 | 2 | 3 | null
-  >(null);
+  const [visitaFotoSeleccionada, setVisitaFotoSeleccionada] =
+    useState<VisitaNumero | null>(null);
   const [previewFoto, setPreviewFoto] = useState<ImagePreview | null>(null);
   const [formId, setFormId] = useState(
     () => loadedDraft?.formId ?? randomUuid(),

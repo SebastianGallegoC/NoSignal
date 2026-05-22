@@ -74,7 +74,9 @@ export const validateFormPayload = (form: OfflineForm): string[] => {
   }
   if (
     Array.isArray(form.fotos) &&
-    form.fotos.some((f) => f.visita !== 1 && f.visita !== 2 && f.visita !== 3)
+    form.fotos.some(
+      (f) => f.visita !== 1 && f.visita !== 2 && f.visita !== 3 && f.visita !== 4,
+    )
   ) {
     errors.push('fotos_visita_required');
   }

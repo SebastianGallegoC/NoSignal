@@ -57,7 +57,7 @@ function parseDateSafe(value: unknown): number | null {
 /**
  * Validación por campo (y mensajes de fila) para mostrar errores en UI de importación.
  * El envío a cola solo exige nombre del beneficiario (vía `validateOfflineFormPayload`);
- * el resto de campos puede ir vacío. Si hay fotos, deben tener visita 1–3.
+ * el resto de campos puede ir vacío. Si hay fotos, deben tener visita 1–4.
  */
 export const validateFormValuesWithFieldDetails = (
   values: FormValues,
@@ -215,7 +215,12 @@ export const validateFormValuesWithFieldDetails = (
     }
   }
 
-  const visitaKeys = ["fecha_visita_1", "fecha_visita_2", "fecha_visita_3"] as const;
+  const visitaKeys = [
+    "fecha_visita_1",
+    "fecha_visita_2",
+    "fecha_visita_3",
+    "fecha_visita_4",
+  ] as const;
   let visitaParseOk = true;
   for (const key of visitaKeys) {
     if (!isBlank(values[key]) && parseDateSafe(values[key]) == null) {
@@ -231,14 +236,17 @@ export const validateFormValuesWithFieldDetails = (
   const f1 = parseDateSafe(values.fecha_visita_1);
   const f2 = parseDateSafe(values.fecha_visita_2);
   const f3 = parseDateSafe(values.fecha_visita_3);
+  const f4 = parseDateSafe(values.fecha_visita_4);
   if (
     visitaParseOk &&
-    ((f1 != null && f2 != null && f1 > f2) || (f2 != null && f3 != null && f2 > f3))
+    ((f1 != null && f2 != null && f1 > f2) ||
+      (f2 != null && f3 != null && f2 > f3) ||
+      (f3 != null && f4 != null && f3 > f4))
   ) {
     rowIssues.push({
       code: "fechas_visita_order",
       message:
-        "Las fechas de visita deben estar en orden cronológico: visita 1 ≤ visita 2 ≤ visita 3.",
+        "Las fechas de visita deben estar en orden cronológico: visita 1 ≤ visita 2 ≤ visita 3 ≤ visita 4.",
     });
   }
 
@@ -315,11 +323,11 @@ export const validateOfflineFormPayload = (form: OfflineForm): ValidationIssue[]
 
   if (
     Array.isArray(form.fotos) &&
-    form.fotos.some((f) => f.visita !== 1 && f.visita !== 2 && f.visita !== 3)
+    form.fotos.some((f) => f.visita !== 1 && f.visita !== 2 && f.visita !== 3 && f.visita !== 4)
   ) {
     issues.push({
       code: "fotos_visita_required",
-      message: "Cada foto debe estar asociada a visita 1, 2 o 3.",
+      message: "Cada foto debe estar asociada a visita 1, 2, 3 o 4.",
     });
   }
 
