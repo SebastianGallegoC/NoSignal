@@ -17,6 +17,7 @@ import {
   buildOfflineFormFromImportCells,
   cellsToFormValuesRaw,
   formValuesToCells,
+  normalizeMatrizHeaderLabel,
   normalizeSiNoImportValue,
   normalizeTriImportValue,
   parseFechaCellForDatos,
@@ -80,6 +81,30 @@ describe("normalizeSiNoImportValue (área árbol / solo Si–No)", () => {
 
   it("NR no se reinterpreta: queda para error de validación Si/No", () => {
     expect(normalizeSiNoImportValue("nr")).toBe("nr");
+  });
+});
+
+describe("normalizeMatrizHeaderLabel", () => {
+  it("distingue typo FAMILAR del encabezado oficial (el alias de importación los une)", () => {
+    const oficial = normalizeMatrizHeaderLabel(
+      "Nº PERSONAS DEL NÚCLEO FAMILIAR",
+    );
+    const excelUsuario = normalizeMatrizHeaderLabel(
+      "N° PERSONAS DEL NÚCLEO FAMILAR",
+    );
+    expect(excelUsuario).not.toBe(oficial);
+    expect(excelUsuario).toContain("FAMILAR");
+    expect(oficial).toContain("FAMILIAR");
+  });
+
+  it("empareja distancia aproximada con encabezado oficial sin (M)", () => {
+    const oficial = normalizeMatrizHeaderLabel(
+      "DISTANCIA DE INFRAESTRUCTURA ADECUADA",
+    );
+    const aprox = normalizeMatrizHeaderLabel(
+      "DISTANCIA DE INFRAESTRUCTURA ADECUADA APROXIMADA",
+    );
+    expect(oficial).not.toBe(aprox);
   });
 });
 
@@ -167,6 +192,21 @@ describe("parsePlantillaWorkbook", () => {
     expect(ok[0].gps).toEqual({ ...GPS_PLACEHOLDER_WHEN_NOT_CAPTURED });
     expect(ok[0].datos_formulario.nombres_apellidos_beneficiario).toBe(
       "Sin GPS en Excel",
+    );
+  });
+
+  it("analyzeImportRow acepta exposición solar como texto libre (sin Si/No/NR)", () => {
+    const row = new Array<string | number | null>(MATRIZ_COLUMN_COUNT).fill(null);
+    row[7] = "Ana";
+    row[40] = "Buena exposición todo el día";
+    row[27] = "-74.0";
+    row[26] = "4.0";
+    const cells = row.map((v) => (v == null ? "" : String(v)));
+    const preview = analyzeImportRow(cells, 8, new Date().toISOString());
+    expect(preview.fieldErrors.exposicion_solar_adecuada).toBeUndefined();
+    expect(preview.isValid).toBe(true);
+    expect(preview.displayValues.exposicion_solar_adecuada).toBe(
+      "Buena exposición todo el día",
     );
   });
 
@@ -563,6 +603,18 @@ describe("parsePlantillaWorkbook", () => {
     expect(ok[0].datos_formulario.distancia_infraestructura_adecuada).toBe(
       "40 M",
     );
+  });
+
+  it("previewPlantillaWorkbook normaliza zona URBANA en displayValues", async () => {
+    const row = new Array<string | number | null>(MATRIZ_COLUMN_COUNT).fill(null);
+    row[7] = "Benef preview zona";
+    row[19] = "URBANA";
+    row[27] = "-74.0";
+    row[26] = "4.0";
+    const buffer = await buildMinimalPlantillaBuffer(row);
+    const { rows, errors } = await previewPlantillaWorkbook(buffer);
+    expect(errors).toHaveLength(0);
+    expect(rows[0].displayValues.zona).toBe("Urbana");
   });
 
   it("normaliza zona en mayúsculas al importar", async () => {

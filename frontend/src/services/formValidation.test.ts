@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import type { OfflineForm } from "@/services/db";
 import {
   validateFormValues,
+  validateFormValuesWithFieldDetails,
   validateOfflineFormPayload,
 } from "@/services/formValidation";
 import { REQUIRED_FIELDS, type FormValues } from "@/types/formFields";
@@ -86,5 +87,33 @@ describe("formValidation — envío mínimo", () => {
     };
     const issues = validateOfflineFormPayload(form);
     expect(issues.map((i) => i.code)).toContain("fecha_actualizacion_before_envio");
+  });
+});
+
+describe("formValidation — campos texto libre tras cambios de importación", () => {
+  it("acepta exposicion_solar_adecuada como texto (no exige Si/No/NR)", () => {
+    const values = emptyValues();
+    values.nombres_apellidos_beneficiario = "Ana";
+    values.exposicion_solar_adecuada = "Sol directo en la mañana";
+    const { fieldIssues } = validateFormValuesWithFieldDetails(values);
+    expect(
+      fieldIssues.filter((i) => i.field === "exposicion_solar_adecuada"),
+    ).toHaveLength(0);
+  });
+
+  it("acepta distancia_infraestructura_adecuada con texto y sufijo M", () => {
+    const values = emptyValues();
+    values.distancia_infraestructura_adecuada = "40 M aprox";
+    const { fieldIssues } = validateFormValuesWithFieldDetails(values);
+    expect(
+      fieldIssues.filter((i) => i.field === "distancia_infraestructura_adecuada"),
+    ).toHaveLength(0);
+  });
+
+  it("no marca zona vacía como error (select sin validación estricta en import)", () => {
+    const values = emptyValues();
+    values.zona = "";
+    const { fieldIssues } = validateFormValuesWithFieldDetails(values);
+    expect(fieldIssues.filter((i) => i.field === "zona")).toHaveLength(0);
   });
 });

@@ -40,6 +40,10 @@ describe("matrizCaracterizacionExport — encabezados y definición de fila", ()
     expect(MATRIZ_ROW_CELL_SOURCES.length).toBe(MATRIZ_COLUMN_COUNT);
     expect(MATRIZ_F_PSA_HEADERS[0]).toBe("ID");
     expect(MATRIZ_F_PSA_HEADERS[7]).toContain("BENEFICIARIO");
+    expect(MATRIZ_F_PSA_HEADERS[45]).toBe(
+      "DISTANCIA DE INFRAESTRUCTURA ADECUADA",
+    );
+    expect(MATRIZ_F_PSA_HEADERS[45]).not.toContain("(M)");
   });
 
   it("cada campo del formulario (salvo longitud/latitud decimales) aparece en la definición de exportación", () => {
@@ -121,6 +125,24 @@ describe("buildMatrizCaracterizacionRow", () => {
     const row = buildMatrizCaracterizacionRow(f);
     expect(row[26]).toBe("");
     expect(row[27]).toBe("");
+  });
+
+  it("exporta distancia_infraestructura_adecuada como texto sin quitar unidades", () => {
+    const f = minimalForm();
+    f.datos_formulario = {
+      distancia_infraestructura_adecuada: "40 M aprox",
+    };
+    const row = buildMatrizCaracterizacionRow(f);
+    expect(row[45]).toBe("40 M aprox");
+  });
+
+  it("exporta exposicion_solar_adecuada como texto libre", () => {
+    const f = minimalForm();
+    f.datos_formulario = {
+      exposicion_solar_adecuada: "Mañana y tarde",
+    };
+    const row = buildMatrizCaracterizacionRow(f);
+    expect(row[40]).toBe("Mañana y tarde");
   });
 
   it("formatea fecha_inicio YYYY-MM-DD en columna FECHA INICIO (índice 4)", () => {

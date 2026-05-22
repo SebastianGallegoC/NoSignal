@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { normalizeDistanciaInfraestructuraMetersCell } from "./distanciaInfraestructuraNormalize";
 
+/** Utilidad legada (parseo a metros); la importación ya no la usa. */
 describe("normalizeDistanciaInfraestructuraMetersCell", () => {
   it.each([
     ["40 m", "40"],
