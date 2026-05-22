@@ -82,7 +82,7 @@ describe("buildPhotosZip", () => {
     await expect(buildPhotosZip(f)).rejects.toThrow("No hay fotos");
   });
 
-  it("incluye Visita 1–3 y .keep en carpetas vacías", async () => {
+  it("solo crea carpetas de visita con fotos", async () => {
     const root = "Fotos-María Pérez";
     const f = baseForm({
       fotos: [
@@ -96,10 +96,10 @@ describe("buildPhotosZip", () => {
     const blob = await buildPhotosZip(f);
     const zip = await JSZip.loadAsync(blob);
     const paths = Object.keys(zip.files).filter((p) => !zip.files[p].dir);
-    expect(paths).toContain(`${root}/Visita 1/.keep`);
-    expect(paths).toContain(`${root}/Visita 2/solo.jpg`);
-    expect(paths).toContain(`${root}/Visita 3/.keep`);
-    expect(paths).toContain(`${root}/Visita 4/.keep`);
+    expect(paths).toEqual([`${root}/Visita 2/solo.jpg`]);
+    expect(paths.some((p) => p.includes("Visita 1"))).toBe(false);
+    expect(paths.some((p) => p.includes("Visita 3"))).toBe(false);
+    expect(paths.some((p) => p.includes("Visita 4"))).toBe(false);
     expect(paths.some((p) => p.includes("Sin visita"))).toBe(false);
   });
 
@@ -141,7 +141,7 @@ describe("buildPhotosZip", () => {
     const paths = Object.keys(zip.files).filter((p) => !zip.files[p].dir);
     expect(paths).toContain(`${root}/Sin visita/orphan.jpg`);
     expect(paths).toContain(`${root}/Visita 1/v1.jpg`);
-    expect(paths).toContain(`${root}/Visita 2/.keep`);
+    expect(paths.some((p) => p.includes("Visita 2"))).toBe(false);
   });
 
   it("resuelve colisión de nombre en la misma carpeta", async () => {

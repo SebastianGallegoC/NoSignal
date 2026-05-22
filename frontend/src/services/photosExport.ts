@@ -139,16 +139,15 @@ export async function buildPhotosZip(form: OfflineForm): Promise<Blob> {
   const visitas = VISITA_NUMEROS;
   for (const n of visitas) {
     const list = byVisita[n];
-    const folder = `${root}/${visitaFolderLabel(n)}`;
     if (list.length === 0) {
-      zip.file(`${folder}/.keep`, "");
-    } else {
-      const used = new Set<string>();
-      for (const foto of list) {
-        const fileName = uniqueNameInFolder(foto.nombre_archivo, used);
-        const bytes = dataUrlToUint8Array(foto.data);
-        zip.file(`${folder}/${fileName}`, bytes);
-      }
+      continue;
+    }
+    const folder = `${root}/${visitaFolderLabel(n)}`;
+    const used = new Set<string>();
+    for (const foto of list) {
+      const fileName = uniqueNameInFolder(foto.nombre_archivo, used);
+      const bytes = dataUrlToUint8Array(foto.data);
+      zip.file(`${folder}/${fileName}`, bytes);
     }
   }
 
