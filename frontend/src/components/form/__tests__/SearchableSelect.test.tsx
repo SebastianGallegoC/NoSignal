@@ -70,15 +70,12 @@ describe("SearchableSelect", () => {
 
     await act(async () => {
       option.dispatchEvent(
-        new MouseEvent("mousedown", { bubbles: true, cancelable: true }),
-      );
-      option.dispatchEvent(
-        new TouchEvent("touchstart", { bubbles: true, cancelable: true }),
+        new PointerEvent("pointerdown", { bubbles: true, cancelable: true }),
       );
     });
 
     await act(async () => {
-      await new Promise((r) => setTimeout(r, 10));
+      await new Promise((r) => setTimeout(r, 60));
     });
 
     expect(current).toBe("Voluntaria");
@@ -122,14 +119,15 @@ describe("SearchableSelect", () => {
 
     await act(async () => {
       option.dispatchEvent(
-        new MouseEvent("mousedown", { bubbles: true, cancelable: true }),
+        new PointerEvent("pointerdown", { bubbles: true, cancelable: true }),
       );
     });
 
     await act(async () => {
-      await new Promise((r) => setTimeout(r, 10));
+      await new Promise((r) => setTimeout(r, 60));
     });
 
+    expect(document.activeElement).toBe(input);
     expect(document.activeElement).not.toBe(next);
 
     act(() => {

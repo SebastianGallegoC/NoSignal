@@ -17,6 +17,12 @@ export function handleDiligenciadoFormEnterKey(
   if (target instanceof HTMLButtonElement) {
     return;
   }
+  if (
+    target instanceof HTMLInputElement &&
+    target.getAttribute("role") === "combobox"
+  ) {
+    return;
+  }
   e.preventDefault();
   const active = document.activeElement;
   if (active instanceof HTMLElement) {

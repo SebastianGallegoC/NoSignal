@@ -22,6 +22,25 @@ describe("handleDiligenciadoFormEnterKey", () => {
     input.remove();
   });
 
+  it("no hace blur en combobox (lo maneja SearchableSelect)", () => {
+    const input = document.createElement("input");
+    input.setAttribute("role", "combobox");
+    document.body.appendChild(input);
+    input.focus();
+    const blur = vi.spyOn(input, "blur");
+    const preventDefault = vi.fn();
+
+    handleDiligenciadoFormEnterKey({
+      key: "Enter",
+      target: input,
+      preventDefault,
+    } as unknown as KeyboardEvent<HTMLFormElement>);
+
+    expect(preventDefault).not.toHaveBeenCalled();
+    expect(blur).not.toHaveBeenCalled();
+    input.remove();
+  });
+
   it("no interviene en textarea (salto de línea)", () => {
     const ta = document.createElement("textarea");
     const preventDefault = vi.fn();

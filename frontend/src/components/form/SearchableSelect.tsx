@@ -6,6 +6,7 @@ import {
   useState,
   type MouseEvent,
   type MutableRefObject,
+  type PointerEvent,
   type Ref,
   type TouchEvent,
 } from 'react';
@@ -94,10 +95,9 @@ const SearchableSelectInner = ({
   const [dropUp, setDropUp] = useState(false);
   const anchorRef = useRef<HTMLDivElement>(null);
   const inputElRef = useRef<HTMLInputElement | null>(null);
-  /** Tras elegir opción: recibe el foco para cerrar teclado sin saltar al siguiente campo. */
-  const focusSentinelRef = useRef<HTMLDivElement>(null);
   /** Evita que onBlur revierta la opción recién elegida (típico en táctil). */
   const skipBlurCommitRef = useRef(false);
+  const clearSkipTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const fieldValue = String(binding.value ?? '');
   const [text, setText] = useState(() => labelForValue(fieldValue, options));
 
@@ -111,8 +111,26 @@ const SearchableSelectInner = ({
     }
   };
 
-  const dismissKeyboard = () => {
-    focusSentinelRef.current?.focus({ preventScroll: true });
+  /** Cierra teclado táctil sin pasar al siguiente campo del formulario. */
+  const retainComboboxFocus = () => {
+    const input = inputElRef.current;
+    if (!input) {
+      skipBlurCommitRef.current = false;
+      return;
+    }
+    if (clearSkipTimerRef.current) {
+      clearTimeout(clearSkipTimerRef.current);
+    }
+    skipBlurCommitRef.current = true;
+    input.readOnly = true;
+    input.focus({ preventScroll: true });
+    clearSkipTimerRef.current = window.setTimeout(() => {
+      if (inputElRef.current) {
+        inputElRef.current.readOnly = false;
+      }
+      skipBlurCommitRef.current = false;
+      clearSkipTimerRef.current = null;
+    }, 50);
   };
 
   const applyOption = (option: SelectOption) => {
@@ -121,20 +139,26 @@ const SearchableSelectInner = ({
     binding.onChange(option.value);
     setText(nextLabel);
     setOpen(false);
-    dismissKeyboard();
-    window.setTimeout(() => {
-      skipBlurCommitRef.current = false;
-    }, 0);
   };
 
   const pickOptionFromList = (
     option: SelectOption,
-    e: MouseEvent | TouchEvent,
+    e: MouseEvent | TouchEvent | PointerEvent,
   ) => {
     e.preventDefault();
     e.stopPropagation();
     applyOption(option);
+    retainComboboxFocus();
   };
+
+  useEffect(
+    () => () => {
+      if (clearSkipTimerRef.current) {
+        clearTimeout(clearSkipTimerRef.current);
+      }
+    },
+    [],
+  );
 
   useEffect(() => {
     setText(labelForValue(fieldValue, options));
@@ -175,12 +199,6 @@ const SearchableSelectInner = ({
         ref={anchorRef}
         className={`relative mt-1 ${open ? "z-[5000]" : "z-0"}`}
       >
-        <div
-          ref={focusSentinelRef}
-          tabIndex={-1}
-          aria-hidden="true"
-          className="pointer-events-none absolute h-px w-px overflow-hidden opacity-0"
-        />
         <input
           ref={assignInputRef}
           name={binding.name}
@@ -203,6 +221,7 @@ const SearchableSelectInner = ({
           onBlur={() => {
             binding.onBlur();
             if (skipBlurCommitRef.current) {
+              retainComboboxFocus();
               return;
             }
             setOpen(false);
@@ -211,20 +230,22 @@ const SearchableSelectInner = ({
           onKeyDown={(e) => {
             if (e.key === 'Escape') {
               e.preventDefault();
+              e.stopPropagation();
               setOpen(false);
               setText(labelForValue(fieldValue, options));
-              dismissKeyboard();
+              retainComboboxFocus();
             }
             if (e.key === 'Enter') {
+              e.preventDefault();
+              e.stopPropagation();
               if (open && filtered.length === 1) {
-                e.preventDefault();
                 applyOption(filtered[0]);
+                retainComboboxFocus();
               } else if (open) {
-                e.preventDefault();
                 setOpen(false);
-                dismissKeyboard();
+                retainComboboxFocus();
               } else {
-                dismissKeyboard();
+                retainComboboxFocus();
               }
             }
           }}
@@ -252,8 +273,7 @@ const SearchableSelectInner = ({
                 role="option"
                 aria-selected={binding.value === o.value}
                 className="cursor-pointer px-3 py-2 text-sm text-slate-800 hover:bg-teal-50"
-                onMouseDown={(e) => pickOptionFromList(o, e)}
-                onTouchStart={(e) => pickOptionFromList(o, e)}
+                onPointerDown={(e) => pickOptionFromList(o, e)}
               >
                 {o.label}
               </li>
