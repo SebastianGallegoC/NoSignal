@@ -59,6 +59,23 @@ describe("hasFormularioEditChanges", () => {
     expect(hasFormularioEditChanges(base, { ...base })).toBe(false);
   });
 
+  it("detecta cambio de modo de coordenadas", () => {
+    const base = baseline({ modoCoordenadas: "automatico" });
+    const current = baseline({ modoCoordenadas: "manual" });
+    expect(hasFormularioEditChanges(base, current)).toBe(true);
+  });
+
+  it("detecta quitar una foto", () => {
+    const foto = {
+      nombre_archivo: "a.jpg",
+      data: "data:1",
+      visita: 1 as const,
+    };
+    const base = baseline({ fotos: [foto] });
+    const current = baseline({ fotos: [] });
+    expect(hasFormularioEditChanges(base, current)).toBe(true);
+  });
+
   it("trata coordenadas equivalentes como sin cambio (4.6 vs 4.600000)", () => {
     const base = baseline({
       formValues: {
@@ -84,6 +101,18 @@ describe("formValuesEqualForEdit", () => {
     const b = { ...emptyValues(), telefono: "300" };
     expect(formValuesEqualForEdit(a, b)).toBe(true);
   });
+
+  it("normaliza metros_sobre_nivel_mar numéricamente", () => {
+    const a = { ...emptyValues(), metros_sobre_nivel_mar: "2600.00" };
+    const b = { ...emptyValues(), metros_sobre_nivel_mar: "2600" };
+    expect(formValuesEqualForEdit(a, b)).toBe(true);
+  });
+
+  it("detecta cambio real en un selector", () => {
+    const a = { ...emptyValues(), genero: "Masculino" };
+    const b = { ...emptyValues(), genero: "Femenino" };
+    expect(formValuesEqualForEdit(a, b)).toBe(false);
+  });
 });
 
 describe("fotosEqualForEdit", () => {
@@ -96,5 +125,29 @@ describe("fotosEqualForEdit", () => {
     expect(
       fotosEqualForEdit([foto], [{ ...foto, visita: 4 }]),
     ).toBe(false);
+  });
+
+  it("distingue distinto nombre de archivo", () => {
+    const a = {
+      nombre_archivo: "a.jpg",
+      data: "data:1",
+      visita: 1 as const,
+    };
+    const b = { ...a, nombre_archivo: "b.jpg" };
+    expect(fotosEqualForEdit([a], [b])).toBe(false);
+  });
+
+  it("es sensible al orden de la lista", () => {
+    const f1 = {
+      nombre_archivo: "1.jpg",
+      data: "data:1",
+      visita: 1 as const,
+    };
+    const f2 = {
+      nombre_archivo: "2.jpg",
+      data: "data:2",
+      visita: 2 as const,
+    };
+    expect(fotosEqualForEdit([f1, f2], [f2, f1])).toBe(false);
   });
 });
