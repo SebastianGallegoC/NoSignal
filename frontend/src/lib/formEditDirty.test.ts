@@ -16,7 +16,6 @@ function baseline(overrides: Partial<FormularioEditBaseline> = {}): FormularioEd
   return {
     formValues: emptyValues(),
     fotos: [],
-    gps: null,
     modoCoordenadas: "automatico",
     ...overrides,
   };
@@ -55,10 +54,27 @@ describe("hasFormularioEditChanges", () => {
           visita: 2,
         },
       ],
-      gps: { latitud: 4.6, longitud: -74.1, precision: 5 },
       modoCoordenadas: "manual",
     });
     expect(hasFormularioEditChanges(base, { ...base })).toBe(false);
+  });
+
+  it("trata coordenadas equivalentes como sin cambio (4.6 vs 4.600000)", () => {
+    const base = baseline({
+      formValues: {
+        ...emptyValues(),
+        latitud: "4.600000",
+        longitud: "-74.080000",
+      },
+    });
+    const current = baseline({
+      formValues: {
+        ...emptyValues(),
+        latitud: "4.6",
+        longitud: "-74.08",
+      },
+    });
+    expect(hasFormularioEditChanges(base, current)).toBe(false);
   });
 });
 

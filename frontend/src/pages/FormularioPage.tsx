@@ -130,40 +130,52 @@ export const FormularioPage = () => {
 
   const isEditMode = originalFechaHora != null;
 
-  const editBaseline = useMemo((): FormularioEditBaseline | null => {
-    if (!loadedDraft?.originalFechaHora) {
-      return null;
+  const editBaselineRef = useRef<FormularioEditBaseline | null>(null);
+  const [editBaselineReady, setEditBaselineReady] = useState(false);
+
+  const fotosRef = useRef(fotos);
+  const modoCoordenadasRef = useRef(modoCoordenadas);
+  fotosRef.current = fotos;
+  modoCoordenadasRef.current = modoCoordenadas;
+
+  useEffect(() => {
+    if (!isEditMode) {
+      editBaselineRef.current = null;
+      setEditBaselineReady(false);
+      return;
     }
-    return {
-      formValues: initialFormValues,
-      fotos: loadedDraft.fotos ?? [],
-      gps: loadedDraft.gps ?? null,
-      modoCoordenadas: loadedDraft.modoCoordenadas ?? "automatico",
+    editBaselineRef.current = null;
+    setEditBaselineReady(false);
+    const timer = window.setTimeout(() => {
+      editBaselineRef.current = {
+        formValues: getValues(),
+        fotos: fotosRef.current.map((f) => ({ ...f })),
+        modoCoordenadas: modoCoordenadasRef.current,
+      };
+      setEditBaselineReady(true);
+    }, 150);
+    return () => {
+      window.clearTimeout(timer);
     };
-  }, [initialFormValues, loadedDraft]);
+  }, [isEditMode, formId, getValues]);
 
   const hasEditChanges = useMemo(() => {
-    if (!isEditMode || !editBaseline) {
+    if (!isEditMode) {
       return true;
+    }
+    if (!editBaselineReady || !editBaselineRef.current) {
+      return false;
     }
     const current: FormularioEditBaseline = {
       formValues,
       fotos,
-      gps: gps
-        ? {
-            latitud: gps.latitud,
-            longitud: gps.longitud,
-            precision: gps.precision,
-          }
-        : null,
       modoCoordenadas,
     };
-    return hasFormularioEditChanges(editBaseline, current);
+    return hasFormularioEditChanges(editBaselineRef.current, current);
   }, [
-    editBaseline,
+    editBaselineReady,
     formValues,
     fotos,
-    gps,
     isEditMode,
     modoCoordenadas,
   ]);

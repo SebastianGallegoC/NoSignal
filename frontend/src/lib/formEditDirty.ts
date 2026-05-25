@@ -1,21 +1,30 @@
-import type { GpsDraft } from "@/services/formDraftStorage";
+import {
+  COORD_NUMERIC_FIELD_KEYS,
+  normalizeCoordNumericCell,
+} from "@/lib/coordNumericToken";
 import type { FotoForm } from "@/services/db";
-import { REQUIRED_FIELDS, type FormValues } from "@/types/formFields";
+import { REQUIRED_FIELDS, type FormFieldKey, type FormValues } from "@/types/formFields";
 
 export type FormularioEditBaseline = {
   formValues: FormValues;
   fotos: FotoForm[];
-  gps: GpsDraft | null;
   modoCoordenadas: "automatico" | "manual";
 };
 
-function normalizeFieldValue(raw: unknown): string {
-  return String(raw ?? "").trim();
+function normalizeFieldValue(key: FormFieldKey, raw: unknown): string {
+  const trimmed = String(raw ?? "").trim();
+  if (COORD_NUMERIC_FIELD_KEYS.has(key)) {
+    const norm = normalizeCoordNumericCell(trimmed);
+    if (norm !== "" && Number.isFinite(Number(norm))) {
+      return String(Number(norm));
+    }
+  }
+  return trimmed;
 }
 
 export function formValuesEqualForEdit(a: FormValues, b: FormValues): boolean {
   for (const key of REQUIRED_FIELDS) {
-    if (normalizeFieldValue(a[key]) !== normalizeFieldValue(b[key])) {
+    if (normalizeFieldValue(key, a[key]) !== normalizeFieldValue(key, b[key])) {
       return false;
     }
   }
@@ -42,23 +51,6 @@ export function fotosEqualForEdit(a: FotoForm[], b: FotoForm[]): boolean {
   return true;
 }
 
-export function gpsEqualForEdit(
-  a: GpsDraft | null,
-  b: GpsDraft | null,
-): boolean {
-  if (a == null && b == null) {
-    return true;
-  }
-  if (a == null || b == null) {
-    return false;
-  }
-  return (
-    a.latitud === b.latitud &&
-    a.longitud === b.longitud &&
-    a.precision === b.precision
-  );
-}
-
 /** True si el estado actual difiere del cargado al abrir «Editar». */
 export function hasFormularioEditChanges(
   baseline: FormularioEditBaseline,
@@ -71,9 +63,6 @@ export function hasFormularioEditChanges(
     return true;
   }
   if (!fotosEqualForEdit(baseline.fotos, current.fotos)) {
-    return true;
-  }
-  if (!gpsEqualForEdit(baseline.gps, current.gps)) {
     return true;
   }
   return false;
