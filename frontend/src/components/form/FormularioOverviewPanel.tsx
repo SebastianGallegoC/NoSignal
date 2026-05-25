@@ -36,7 +36,7 @@ export const FormularioOverviewPanel = ({
           Ubicación
         </h2>
         <p className="text-xs text-slate-500">
-          Elegí si usás el GPS del dispositivo o coordenadas manuales.
+          Elige si usas el GPS del dispositivo o coordenadas manuales.
         </p>
       </div>
 
