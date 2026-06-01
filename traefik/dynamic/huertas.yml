@@ -1,7 +1,7 @@
 http:
   routers:
     nosignal-api:
-      rule: Host(`api.nosignal.site`)
+      rule: Host(`api.huertas.nosignal.site`)
       entryPoints:
         - websecure
       tls:
@@ -9,7 +9,7 @@ http:
       service: nosignal-api
 
     nosignal-frontend:
-      rule: Host(`nosignal.site`)
+      rule: Host(`huertas.nosignal.site`)
       entryPoints:
         - websecure
       tls:
