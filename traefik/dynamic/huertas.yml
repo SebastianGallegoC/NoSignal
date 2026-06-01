@@ -1,6 +1,3 @@
-# Obsoleto: usar traefik/dynamic/huertas.yml (Traefik carga el directorio dynamic/).
-# Este archivo se mantiene solo como referencia; el compose monta dynamic/huertas.yml.
-
 http:
   routers:
     nosignal-api:
